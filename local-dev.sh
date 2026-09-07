@@ -167,7 +167,6 @@ RC_GO_SERVICES=(
   external-workload-integrator
   go-operator
   helm-hooks-handler
-  inference-workload-controller
   init-ca
   karta-migrate
   metrics-exporter
@@ -175,10 +174,8 @@ RC_GO_SERVICES=(
   pod-group-assigner
   project-controller
   runai-crd-upgrader
-  runaijob-controller
   shared-objects-controller
   status-updater
-  workload-controller
   workload-exporter
   runtime-rules
 )
@@ -1740,6 +1737,11 @@ build_all_rc() {
     local svc_dir="${REPO_ROOT}/runai-cluster/cluster/${svc}"
     if [[ ! -d "${svc_dir}" ]]; then
       warn "Skipping ${svc}: directory not found"
+      continue
+    fi
+    # Library-only modules (no Makefile) are compiled by their consumers.
+    if [[ ! -f "${svc_dir}/Makefile" ]]; then
+      warn "Skipping ${svc}: no Makefile (library module, not a service)"
       continue
     fi
     jobs+=("build_go_service '${svc_dir}' '${RC_IMAGE_TAG}' '${RC_REBUILT_FILE}'")

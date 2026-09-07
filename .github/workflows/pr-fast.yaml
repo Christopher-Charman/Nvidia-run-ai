@@ -47,7 +47,6 @@ jobs:
   # Gives fork contributors the logs of the real make targets they touched.
   #   * Selective — only services with changed files (discover job).
   #   * Matrix    — changed-service x {build,test,lint,validate}.
-  #   * No run-ai/runai-actions are used.
   discover:
     needs: guard
     runs-on: ubuntu-latest
