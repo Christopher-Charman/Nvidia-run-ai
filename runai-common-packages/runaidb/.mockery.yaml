@@ -1,0 +1,33 @@
+dir: "{{.InterfaceDir}}/mocks"
+inpackage: false
+with-expecter: false
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"
+filename: "{{.InterfaceName}}.go"
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb:
+    interfaces:
+      DBInitializer:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb/orm:
+    interfaces:
+      DB:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb/internal/logger:
+    interfaces:
+      Logger:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb/internal/postgres:
+    interfaces:
+      locker:
+        config:
+          mockname: "Locker"
+      migrationStrategy:
+        config:
+          mockname: "MigrationStrategy"
+      migrationRunner:
+        config:
+          mockname: "MigrationRunner"
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb/internal/dbinit:
+    interfaces:
+      Factory:
+      Connector:
+      Migrator:
+      SessionCreator:
