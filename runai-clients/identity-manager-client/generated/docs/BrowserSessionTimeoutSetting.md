@@ -1,0 +1,66 @@
+# BrowserSessionTimeoutSetting
+
+## Properties
+
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**IdleTimeout** | Pointer to **NullableFloat32** | Duration in minutes that a user can remain inactive before their browser session automatically expires and requires re-authentication | [optional] [default to 60]
+
+## Methods
+
+### NewBrowserSessionTimeoutSetting
+
+`func NewBrowserSessionTimeoutSetting() *BrowserSessionTimeoutSetting`
+
+NewBrowserSessionTimeoutSetting instantiates a new BrowserSessionTimeoutSetting object
+This constructor will assign default values to properties that have it defined,
+and makes sure properties required by API are set, but the set of arguments
+will change when the set of required properties is changed
+
+### NewBrowserSessionTimeoutSettingWithDefaults
+
+`func NewBrowserSessionTimeoutSettingWithDefaults() *BrowserSessionTimeoutSetting`
+
+NewBrowserSessionTimeoutSettingWithDefaults instantiates a new BrowserSessionTimeoutSetting object
+This constructor will only assign default values to properties that have it defined,
+but it doesn't guarantee that properties required by API are set
+
+### GetIdleTimeout
+
+`func (o *BrowserSessionTimeoutSetting) GetIdleTimeout() float32`
+
+GetIdleTimeout returns the IdleTimeout field if non-nil, zero value otherwise.
+
+### GetIdleTimeoutOk
+
+`func (o *BrowserSessionTimeoutSetting) GetIdleTimeoutOk() (*float32, bool)`
+
+GetIdleTimeoutOk returns a tuple with the IdleTimeout field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIdleTimeout
+
+`func (o *BrowserSessionTimeoutSetting) SetIdleTimeout(v float32)`
+
+SetIdleTimeout sets IdleTimeout field to given value.
+
+### HasIdleTimeout
+
+`func (o *BrowserSessionTimeoutSetting) HasIdleTimeout() bool`
+
+HasIdleTimeout returns a boolean if a field has been set.
+
+### SetIdleTimeoutNil
+
+`func (o *BrowserSessionTimeoutSetting) SetIdleTimeoutNil(b bool)`
+
+ SetIdleTimeoutNil sets the value for IdleTimeout to be an explicit nil
+
+### UnsetIdleTimeout
+`func (o *BrowserSessionTimeoutSetting) UnsetIdleTimeout()`
+
+UnsetIdleTimeout ensures that no value is present for IdleTimeout, not even an explicit nil
+
+[[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
+
+
