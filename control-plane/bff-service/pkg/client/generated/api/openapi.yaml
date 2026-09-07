@@ -1,0 +1,558 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: support@run.ai
+    name: Run.AI
+    url: https://www.run.ai/
+  description: Backend for Frontend Service API
+  title: Backend for Frontend Service
+  version: "1.0"
+servers:
+- url: https://app.run.ai
+- url: https://staging.run.ai
+- url: https://test.run.ai
+- url: http://localhost:8080
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Executed successfully.
+      summary: health check
+      tags:
+      - Health
+      x-no-authorization: true
+      x-runai-team: Phoenix
+    x-internal: true
+    x-runai-team: Sphinx
+  /_version:
+    get:
+      description: |
+        Get version.
+      operationId: get_version
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionResponse'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: get version
+      tags:
+      - Version
+      x-no-authorization: true
+      x-runai-team: Sphinx
+    x-internal: true
+  /api/v1/ui-analytics/settings:
+    get:
+      operationId: get_settings
+      parameters:
+      - description: If exists will return the relevant resource for the tenant ID
+        example: "1008"
+        explode: true
+        in: query
+        name: tenantId
+        required: false
+        schema:
+          default: ""
+          type: string
+        style: form
+        x-scope:
+        - system
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSettingsGetAllResponse'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get UI analytics settings
+      tags:
+      - UI Analytics Settings
+      x-runai-team: Sphinx
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    x-internal: true
+    x-scope:
+    - system
+    - tenant
+  /api/v1/ui-analytics/settings/{key}:
+    get:
+      operationId: get_setting_by_key
+      parameters:
+      - description: The settings key
+        explode: false
+        in: path
+        name: key
+        required: true
+        schema:
+          $ref: '#/components/schemas/settingsKeyEnum'
+        style: simple
+      - description: If exists will return the relevant resource for the tenant ID
+        example: "1008"
+        explode: true
+        in: query
+        name: tenantId
+        required: false
+        schema:
+          default: ""
+          type: string
+        style: form
+        x-scope:
+        - system
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                enableCpuDashboards:
+                  $ref: '#/components/examples/ui_analytics_setting_examples'
+              schema:
+                $ref: '#/components/schemas/GetSettingResponse'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get UI analytics setting by key
+      tags:
+      - UI Analytics Settings
+      x-runai-team: Sphinx
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    put:
+      operationId: update_setting_by_key
+      parameters:
+      - description: The settings key
+        explode: false
+        in: path
+        name: key
+        required: true
+        schema:
+          $ref: '#/components/schemas/settingsKeyEnum'
+        style: simple
+      - description: If exists will return the relevant resource for the tenant ID
+        example: "1008"
+        explode: true
+        in: query
+        name: tenantId
+        required: false
+        schema:
+          default: ""
+          type: string
+        style: form
+        x-scope:
+        - system
+      requestBody:
+        content:
+          application/json:
+            examples:
+              enableCpuDashboards:
+                $ref: '#/components/examples/ui_analytics_setting_examples'
+            schema:
+              $ref: '#/components/schemas/EnableCpuDashboards'
+        required: true
+      responses:
+        "200":
+          description: Setting successfully updated
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update UI analytics setting by key
+      tags:
+      - UI Analytics Settings
+      x-runai-team: Sphinx
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    x-internal: true
+    x-scope:
+    - system
+    - tenant
+components:
+  examples:
+    ui_analytics_setting_examples:
+      value:
+        enabled: false
+  parameters:
+    TenantId:
+      description: If exists will return the relevant resource for the tenant ID
+      example: "1008"
+      explode: true
+      in: query
+      name: tenantId
+      required: false
+      schema:
+        default: ""
+        type: string
+      style: form
+      x-scope:
+      - system
+    settingsKey:
+      description: The settings key
+      explode: false
+      in: path
+      name: key
+      required: true
+      schema:
+        $ref: '#/components/schemas/settingsKeyEnum'
+      style: simple
+  responses:
+    "400BadRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: Required parameter is missing
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad request.
+    "500InternalServerError":
+      content:
+        application/json:
+          example:
+            code: 500
+            message: Something went wrong.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "503ServiceUnavailable":
+      content:
+        application/json:
+          example:
+            code: 503
+            message: Please try again in few minutes.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "401Unauthorized":
+      content:
+        application/json:
+          example:
+            code: 401
+            message: Issuer is not familiar.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized
+    "403Forbidden":
+      content:
+        application/json:
+          example:
+            code: 403
+            message: You do not have sufficient permissions.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden
+    "404NotFound":
+      content:
+        application/json:
+          example:
+            code: 404
+            message: Resource id not found.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found
+    "204NoContent":
+      description: No Content.
+    "400BadSubmissionRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: The workload request does not comply with the policy set by the
+              administrator
+          schema:
+            $ref: '#/components/schemas/SubmissionError'
+      description: Bad submission request.
+    "406NotAcceptable":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not acceptable request
+    "409Conflict":
+      content:
+        application/json:
+          example:
+            code: 409
+            message: Resource with this name already exists
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource already exists
+    "412PreconditionFailed":
+      content:
+        application/json:
+          example:
+            code: 412
+            message: Precondition failed
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found.
+    "413RequestEntityTooLarge":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Request entity too large
+    "415UnsupportedMediaType":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unsupported media type
+    "501NotImplemented":
+      content:
+        application/json:
+          example:
+            code: 501
+            message: Not implemented
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+  schemas:
+    VersionResponse:
+      example:
+        version: 0.0.0
+      properties:
+        version:
+          description: The version of the BFF service
+          example: 0.0.0
+          type: string
+      required:
+      - version
+      type: object
+    Error:
+      example:
+        code: 400
+        message: Bad request - Resource should have a name
+      properties:
+        code:
+          maximum: 599
+          minimum: 100
+          type: integer
+        message:
+          type: string
+        details:
+          type: string
+      required:
+      - code
+      - message
+    EnableCpuDashboards:
+      example:
+        enabled: false
+      properties:
+        enabled:
+          nullable: true
+          type: boolean
+      type: object
+    AnalyticsSettingsGetAllResponse:
+      example:
+        enableCpuDashboards:
+          enabled: false
+      properties:
+        enableCpuDashboards:
+          $ref: '#/components/schemas/EnableCpuDashboards'
+      type: object
+    settingsKeyEnum:
+      enum:
+      - enableCpuDashboards
+      type: string
+    GetSettingResponse:
+      description: Dynamic settings response that varies by setting key
+      type: object
+    ComplianceIssues:
+      nullable: true
+      properties:
+        complianceIssues:
+          items:
+            $ref: '#/components/schemas/ComplianceIssues_complianceIssues_inner'
+          type: array
+      type: object
+    SubmissionError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - $ref: '#/components/schemas/ComplianceIssues'
+    ComplianceIssues_complianceIssues_inner:
+      properties:
+        field:
+          example: compute.gpuDevicesRequest
+          type: string
+        details:
+          example: value must be no less than 3
+          type: string
+      required:
+      - details
+      - field
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      description: Bearer authentication
+      scheme: bearer
+      type: http
