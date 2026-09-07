@@ -1,0 +1,1760 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: support@run.ai
+    name: Run.AI
+    url: https://www.run.ai/
+  description: API for notifications-service config endpoint
+  title: Notifications Service Config API
+  version: 1.0.0
+servers:
+- url: https://app.run.ai
+- url: https://staging.run.ai
+- url: https://test.run.ai
+- url: http://localhost:8080
+security:
+- bearerAuth: []
+paths:
+  /:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Executed successfully.
+      summary: health check
+      tags:
+      - Health
+      x-runai-team: Phoenix
+      x-no-authorization: true
+  /api/v1/notification-types:
+    get:
+      description: Get list of available notification types
+      operationId: getNotificationTypes
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTypes'
+          description: Notification types
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get notification types
+      tags:
+      - Notification Types
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/notification-state:
+    get:
+      description: Get notification state
+      operationId: getNotificationState
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationState'
+          description: Notification state
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get notification state
+      tags:
+      - Notification State
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    patch:
+      description: Update tenant notifications state
+      operationId: updateNotificationState
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationState'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationState'
+          description: Notification Channel config
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update notification state
+      tags:
+      - Notification State
+      x-authorize:
+        resource-type: settings
+        action: create
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/notification-channels:
+    get:
+      description: Get supported Notification Channels
+      operationId: getNotificationChannels
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NotificationChannelMeta'
+                type: array
+          description: Notification Channel types
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get supported Notification Channels
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: read
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    post:
+      description: Create configuration of notification channel
+      operationId: createNotificationChannelConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        "200":
+          description: Notification Channel config created
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "409":
+          content:
+            application/json:
+              example:
+                code: 409
+                message: Resource with this name already exists
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource already exists
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create configuration of notification channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: update
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/notification-channels/slack/create-app:
+    post:
+      description: Create Slack app
+      operationId: createSlackApp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSlackAppRequestBody'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSlackAppResponse'
+          description: Created Slack app response
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create Slack app
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: update
+      x-runai-team: Phoenix
+      x-test-coverage: not-applicable
+  /api/v1/notification-channels/slack/add-app:
+    get:
+      description: Add Slack app
+      operationId: addSlackApp
+      responses:
+        "302":
+          description: Redirect
+          headers:
+            location:
+              description: Redirect to oauth url for confirmation
+              explode: false
+              style: simple
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Add Slack app
+      tags:
+      - Slack
+      x-authorize:
+        resource-type: settings
+        action: update
+      x-runai-team: Phoenix
+      x-test-coverage: not-applicable
+  /api/v1/notification-channels/slack/auth-app:
+    get:
+      description: Authorize a Slack app
+      operationId: AuthorizeSlackApp
+      parameters:
+      - description: "Handles the OAuth redirect from Slack. Exchanges the authorization\
+          \ code for an access token, new tenant associated sink for notifications\
+          \ created."
+        explode: true
+        in: query
+        name: code
+        required: true
+        schema:
+          type: string
+        style: form
+      - description: A CSRF token or UI redirect hint sent by the frontend.
+        explode: true
+        in: query
+        name: state
+        required: true
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          description: Authenticated Slack app and sink created
+        "400":
+          description: Invalid request.
+        "500":
+          description: Internal server error during token exchange.
+      summary: Authorize a Slack app
+      tags:
+      - Slack
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage: not-applicable
+  /api/v1/notification-channels/{name}:
+    delete:
+      description: Delete configuration of Notification Channel
+      operationId: deleteNotificationChannelConfig
+      parameters:
+      - description: Notification Channel name
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Notification Channel config deleted
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete configuration of Notification Channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: delete
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    get:
+      description: Get configuration of notification channel
+      operationId: getNotificationChannelConfig
+      parameters:
+      - description: Notification Channel name
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+          description: Notification channel config
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get configuration of notification channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: read
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    patch:
+      description: Patch configuration of Notification Channel
+      operationId: patchNotificationChannelConfig
+      parameters:
+      - description: Notification Channel name
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannelForPatch'
+      responses:
+        "200":
+          description: Notification Channel config patched
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Patch configuration of Notification Channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: update
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    put:
+      description: Update configuration of Notification Channel
+      operationId: updateNotificationChannelConfig
+      parameters:
+      - description: Notification Channel name
+        explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannel'
+      responses:
+        "200":
+          description: Notification Channel config updated
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update configuration of Notification Channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: update
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/validate-notification-channel:
+    post:
+      description: Validate configuration of Notification Channel
+      operationId: validateNotificationChannel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannelForValidate'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                example: true
+                type: boolean
+          description: Notification Channel validity
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "409":
+          content:
+            application/json:
+              example:
+                code: 409
+                message: Resource with this name already exists
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource already exists
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Validate configuration of Notification Channel
+      tags:
+      - NotificationChannels
+      x-authorize:
+        resource-type: settings
+        action: read
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/subscriptions:
+    get:
+      description: Get current users subscriptions
+      operationId: getMySubscriptions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscriptions'
+          description: A Subscription
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get current users subscriptions
+      tags:
+      - Subscriptions
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    post:
+      description: Create user subscription
+      operationId: createSubscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: Subscription created successfully
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create user subscription
+      tags:
+      - Subscriptions
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+  /api/v1/subscriptions/{id}:
+    delete:
+      description: Delete user subscription
+      operationId: deleteSubscription
+      parameters:
+      - description: Subscription id
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Subscription deleted successfully
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete user subscription
+      tags:
+      - Subscriptions
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+    put:
+      description: Update user subscription
+      operationId: updateSubscription
+      parameters:
+      - description: Subscription id
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionForPut'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: Subscription created successfully
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "501":
+          content:
+            application/json:
+              example:
+                code: 501
+                message: Not implemented
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update user subscription
+      tags:
+      - Subscriptions
+      x-no-authorization: true
+      x-runai-team: Phoenix
+      x-test-coverage:
+      - src/test/suites/advancedSuite/notificationsService/notifications.test.ts
+components:
+  parameters:
+    NotificationChannelName:
+      description: Notification Channel name
+      explode: false
+      in: path
+      name: name
+      required: true
+      schema:
+        type: string
+      style: simple
+    SubscriptionId:
+      description: Subscription id
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+  responses:
+    "401Unauthorized":
+      content:
+        application/json:
+          example:
+            code: 401
+            message: Issuer is not familiar.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized
+    "403Forbidden":
+      content:
+        application/json:
+          example:
+            code: 403
+            message: You do not have sufficient permissions.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden
+    "404NotFound":
+      content:
+        application/json:
+          example:
+            code: 404
+            message: Resource id not found.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found
+    "500InternalServerError":
+      content:
+        application/json:
+          example:
+            code: 500
+            message: Something went wrong.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "501NotImplemented":
+      content:
+        application/json:
+          example:
+            code: 501
+            message: Not implemented
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "503ServiceUnavailable":
+      content:
+        application/json:
+          example:
+            code: 503
+            message: Please try again in few minutes.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "400BadRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: Required parameter is missing
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad request.
+    "409Conflict":
+      content:
+        application/json:
+          example:
+            code: 409
+            message: Resource with this name already exists
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource already exists
+  schemas:
+    NotificationType:
+      example:
+        category: Workload status change
+        type: Creating
+        description: Workload and associated resources are being created in the cluster
+      properties:
+        category:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+      required:
+      - category
+      - description
+      - type
+      type: object
+    NotificationTypes:
+      items:
+        $ref: '#/components/schemas/NotificationType'
+      type: array
+    Error:
+      example:
+        code: 400
+        message: Bad request - Resource should have a name
+      properties:
+        code:
+          maximum: 599
+          minimum: 100
+          type: integer
+        message:
+          type: string
+        details:
+          type: string
+      required:
+      - code
+      - message
+    NotificationState:
+      example:
+        enabled: false
+      properties:
+        enabled:
+          default: false
+          type: boolean
+      type: object
+    NotificationChannelMeta:
+      example:
+        name: my-email
+        type: email
+      properties:
+        name:
+          type: string
+        type:
+          default: email
+          enum:
+          - email
+          - slack
+          type: string
+      required:
+      - name
+      - type
+      type: object
+    NotificationChannelType:
+      default: email
+      enum:
+      - email
+      - slack
+      type: string
+    EmailAuthType:
+      default: auth_login
+      enum:
+      - auth_login
+      - auth_plain
+      - ""
+      type: string
+    EmailNotificationChannelConfig:
+      example:
+        username: email@gmail.com
+        password: 123456
+        smtpHost: smtp.gmail.com
+        from: email@gmail.com
+        subject: My subject
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        smtpHost:
+          type: string
+        from:
+          type: string
+        smtpPort:
+          default: 587
+          type: integer
+        authType:
+          $ref: '#/components/schemas/EmailAuthType'
+        smtpTlsEnabled:
+          nullable: true
+          type: boolean
+        recipients:
+          default: []
+          items:
+            type: string
+          type: array
+        fromDisplayName:
+          default: Run:ai
+          type: string
+        directNotifications:
+          nullable: true
+          type: boolean
+        useAttachments:
+          nullable: true
+          type: boolean
+        subject:
+          default: "Run:ai notification - {{ .category }} {{ .reason }}"
+          type: string
+      type: object
+    SlackNotificationChannelConfig:
+      example:
+        apiToken: xoxb-339636082819-8212861439062-F76IYDQCcoJtX1SeC8k3M
+      properties:
+        recipients:
+          default: []
+          items:
+            type: string
+          type: array
+        directNotifications:
+          nullable: true
+          type: boolean
+        apiToken:
+          type: string
+      type: object
+    NotificationChannelConfig:
+      oneOf:
+      - $ref: '#/components/schemas/EmailNotificationChannelConfig'
+      - $ref: '#/components/schemas/SlackNotificationChannelConfig'
+      type: object
+    NotificationChannelForPatch:
+      example:
+        type: email
+        config: ""
+      properties:
+        type:
+          $ref: '#/components/schemas/NotificationChannelType'
+        config:
+          allOf:
+          - $ref: '#/components/schemas/NotificationChannelConfig'
+      type: object
+    NotificationChannel:
+      allOf:
+      - $ref: '#/components/schemas/NotificationChannelForPatch'
+      - properties:
+          name:
+            type: string
+        type: object
+      example:
+        name: name
+        type: email
+        config: ""
+      required:
+      - config
+      - name
+      - type
+      type: object
+    CreateSlackAppRequestBody:
+      example:
+        accessToken: xoxe.xoxp-1-Mi0yLTMzOTYzNjA4MjgxOS04MDI4MzM3NjUzNzQ2LTgyMDIzNzM1NTM5OTEtODMxNjcyNDM2MjY1OS03MjA4NmUzZGIyMTNlNjU5MjVjMDgzZTJmMTk1NWMzOWUwMGEyOGYzN2U1ZWYxYjA1ZjgxY2IzNDA5YThhMTAq
+      properties:
+        accessToken:
+          description: The access token required for creating slack app
+          type: string
+      required:
+      - accessToken
+      type: object
+    CreateSlackAppResponse:
+      example:
+        slackAppUrl: https://api.slack.com/apps/A089PHD5S0Q
+      properties:
+        slackAppUrl:
+          type: string
+      required:
+      - slackAppUrl
+      type: object
+    NotificationChannelForValidate:
+      allOf:
+      - $ref: '#/components/schemas/NotificationChannelForPatch'
+      example:
+        type: email
+        config: ""
+      required:
+      - config
+      - type
+      type: object
+    SubscriptionEvent:
+      properties:
+        category:
+          type: string
+        types:
+          items:
+            type: string
+          type: array
+      required:
+      - category
+      - types
+      type: object
+    SubscriptionEvents:
+      items:
+        $ref: '#/components/schemas/SubscriptionEvent'
+      type: array
+    SubscriptionForPut:
+      example:
+        events:
+        - category: cat1
+          types:
+          - type1
+          - type2
+        - category: cat2
+          types:
+          - type3
+          - type4
+        channels:
+        - email
+        - email1
+      properties:
+        events:
+          items:
+            $ref: '#/components/schemas/SubscriptionEvent'
+          type: array
+        channels:
+          items:
+            type: string
+          type: array
+      required:
+      - channels
+      - events
+      type: object
+    Subscription:
+      allOf:
+      - $ref: '#/components/schemas/SubscriptionForPut'
+      - properties:
+          id:
+            type: string
+        type: object
+      example:
+        id: 1234
+        events:
+        - category: cat1
+          types:
+          - type1
+          - type2
+        - category: cat2
+          types:
+          - type3
+          - type4
+        channels:
+        - email
+        - email1
+      required:
+      - channels
+      - events
+      type: object
+    Subscriptions:
+      items:
+        $ref: '#/components/schemas/Subscription'
+      type: array
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      description: Bearer authentication
+      scheme: bearer
+      type: http
