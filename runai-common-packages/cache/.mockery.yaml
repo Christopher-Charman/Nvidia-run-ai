@@ -1,0 +1,73 @@
+dir: "{{.InterfaceDir}}/mocks"
+inpackage: false
+with-expecter: false
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"
+filename: "{{.InterfaceName}}.go"
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/cache/v2:
+    interfaces:
+      Cacher:
+        configs:
+          - dir: "{{.InterfaceDir}}/testing"
+            filename: "mock_Cacher.go"
+            mockname: "Mock{{.InterfaceName}}"
+            outpkg: "testing"
+          - dir: "{{.InterfaceDir}}/mocks"
+            filename: "{{.InterfaceName}}.go"
+            mockname: "{{.InterfaceName}}"
+            outpkg: "mocks"
+      Locker:
+        configs:
+          - dir: "{{.InterfaceDir}}/testing"
+            filename: "mock_Locker.go"
+            mockname: "Mock{{.InterfaceName}}"
+            outpkg: "testing"
+          - dir: "{{.InterfaceDir}}/mocks"
+            filename: "{{.InterfaceName}}.go"
+            mockname: "{{.InterfaceName}}"
+            outpkg: "mocks"
+      storeRegistryer:
+        config:
+          mockname: "StoreRegistryer"
+      cacheClienter:
+        config:
+          mockname: "CacheClienter"
+      cacheClientFactoryer:
+        config:
+          dir: "{{.InterfaceDir}}"
+          filename: "mock_CacheClientFactoryer.go"
+          mockname: "MockCacheClientFactoryer"
+          inpackage: true
+      observableCacheClienter:
+        config:
+          dir: "{{.InterfaceDir}}"
+          filename: "mock_ObservableCacheClienter.go"
+          mockname: "MockObservableCacheClienter"
+          inpackage: true
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/cache/v2/internal/observability:
+    interfaces:
+      MetricsWriterer:
+        config:
+          dir: "{{.InterfaceDir}}"
+          filename: "mock_MetricsWriterer.go"
+          mockname: "Mock{{.InterfaceName}}"
+          inpackage: true
+      MemoryRetrieverer:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      LengthRetrieverer:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      StoreLister:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+  github.com/nats-io/nats.go/jetstream:
+    config:
+      dir: internal/nats/mocks
+      recursive: true
+    interfaces:
+      JetStream:
+      KeyValue:
+      KeyValueEntry:
+      KeyLister:
