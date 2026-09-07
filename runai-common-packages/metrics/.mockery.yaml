@@ -1,0 +1,28 @@
+dir: "{{.InterfaceDir}}/mocks"
+with-expecter: false
+outpkg: "mocks"
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/metrics/runaimetrics:
+    interfaces:
+      MetricCounter:
+      MetricGauge:
+      MetricHistogram:
+      MetricSummary:
+      CounterVector:
+      GaugeVector:
+      HistogramVector:
+      SummaryVector:
+
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/metrics:
+    config:
+      all: true
+      inpackage: false
+      dir: "{{.InterfaceDir}}/mocks"
+      outpkg: "mocks"
+
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/metrics/internal/registry:
+    config:
+      all: true
+      inpackage: false
+      dir: "{{.InterfaceDir}}/mocks"
+      outpkg: "mocks"
