@@ -1,0 +1,4355 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: support@run.ai
+    name: Run.AI
+    url: https://www.run.ai/
+  description: An API for managing RunAi authorization objects and perform as the
+    RunAi authorization layer.
+  title: Authorization
+  version: "1.0"
+servers:
+- url: https://app.run.ai
+- url: https://staging.run.ai
+- url: https://test.run.ai
+- url: http://localhost:8080
+security:
+- bearerAuth: []
+paths:
+  /:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Executed successfully.
+      summary: health check
+      tags:
+      - Health
+      x-no-authorization: true
+      x-test-coverage: not-applicable
+      x-runai-team: Suricata
+    x-internal: true
+    x-runai-team: Suricata
+  /api/v1/authorization/roles:
+    get:
+      description: Use to retrieve a list of roles.
+      operationId: get_roles_v1
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roles'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get a list of roles.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/applicationAggregatedApi.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      x-authorize:
+        resource-type: roles
+        action: read
+  /api/v1/authorization/roles/{roleIdPath}:
+    get:
+      description: Retrieve the details of a role by id.
+      operationId: get_role_v1
+      parameters:
+      - description: The id of the role to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: roleIdPath
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get a role by id.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-authorize:
+        resource-type: roles
+        action: read
+        resource-id: roleId
+  /api/v2/authorization/roles:
+    get:
+      description: Use to retrieve a list of roles.
+      operationId: get_roles
+      parameters:
+      - description: The maximum number of entries to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          format: int32
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: The offset of the first item returned in the collection.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          example: 100
+          format: int32
+          type: integer
+        style: form
+      - description: Sort results in descending or ascending order.
+        explode: true
+        in: query
+        name: sortOrder
+        required: false
+        schema:
+          default: asc
+          enum:
+          - asc
+          - desc
+          type: string
+        style: form
+      - description: Sort results by a parameter.
+        explode: true
+        in: query
+        name: sortBy
+        required: false
+        schema:
+          $ref: '#/components/schemas/RolesSortFilterFields'
+        style: form
+      - description: "Filter results by a parameter. Use the format field-name operator\
+          \ value. Operators are == Equals, != Not equals, <= Less than or equal,\
+          \ >= Greater than or equal, =@ contains, !@ Does not contains, =^ Starts\
+          \ with and =$ Ends with. Dates are in ISO 8601 timestamp format and available\
+          \ for operators ==, !=, <= and >=."
+        example:
+        - name!=some-access-rule-name
+        - createdAt>=2023-01-01T00:00:00Z
+        explode: false
+        in: query
+        name: filterBy
+        required: false
+        schema:
+          items:
+            pattern: ^(name|createdAt|createdBy|custom|scopeType|enabled)(==|!=|<=|>=|=@|!@|=\^|=\$).+$
+            type: string
+          type: array
+        style: form
+      - description: Filter results by a free text search.
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          example: test project
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_roles_200_response'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get a list of roles.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/applicationAggregatedApi.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      x-authorize:
+        resource-type: roles
+        action: read
+    post:
+      description: Use to create a role.
+      operationId: create_role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreationFields'
+        description: The role to create.
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Created
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create a role.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-authorize:
+        resource-type: roles
+        action: create
+  /api/v2/authorization/roles/{roleIdPath}:
+    delete:
+      description: Use to delete a role by id. In order to delete a role it must not
+        be used by any access rule.
+      operationId: delete_role
+      parameters:
+      - description: The id of the role to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: roleIdPath
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: No Content.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete a role by id.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-authorize:
+        resource-type: roles
+        action: delete
+    get:
+      description: Retrieve the details of a role by id.
+      operationId: get_role
+      parameters:
+      - description: The id of the role to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: roleIdPath
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get a role by id.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-authorize:
+        resource-type: roles
+        action: read
+    put:
+      description: Use to update a role by id. In order to update a role it must not
+        be used by any access rule.
+      operationId: update_role
+      parameters:
+      - description: The id of the role to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: roleIdPath
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreationFields'
+        description: The role data to update.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update a role by id.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-authorize:
+        resource-type: roles
+        action: update
+  /api/v2/authorization/roles/{roleIdPath}/active:
+    post:
+      operationId: role_active
+      parameters:
+      - description: The id of the role to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: roleIdPath
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleActiveFields'
+        description: The role data to update.
+        required: true
+      responses:
+        "204":
+          description: No Content.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Enable or Disable a role by id.
+      tags:
+      - Roles
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-authorize:
+        resource-type: roles
+        action: update
+  /api/v1/authorization/access-rules:
+    get:
+      description: Retrieve a list of access rules.
+      operationId: get_access_rules
+      parameters:
+      - description: The type of resource we want to filter by.
+        explode: true
+        in: query
+        name: subjectType
+        required: false
+        schema:
+          example: user
+          type: string
+        style: form
+      - deprecated: true
+        description: Part of the subject id that we want to filter by.
+        explode: true
+        in: query
+        name: subjectIdFilter
+        required: false
+        schema:
+          example: some.user
+          type: string
+        style: form
+      - description: The ids of the subjects to filter the response for.
+        explode: false
+        in: query
+        name: subjectIds
+        required: false
+        schema:
+          items:
+            example: some.user@run.ai
+            type: string
+          type: array
+        style: form
+      - description: The maximum number of entries to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          format: int32
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: The offset of the first item returned in the collection.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          example: 100
+          format: int32
+          type: integer
+        style: form
+      - description: Filter by last update time.
+        explode: true
+        in: query
+        name: lastUpdated
+        required: false
+        schema:
+          example: 2021-12-14T16:04:15.099Z
+          type: string
+        style: form
+      - description: True to include deleted objects in the result.
+        explode: true
+        in: query
+        name: includeDeleted
+        required: false
+        schema:
+          default: false
+          example: false
+          type: boolean
+        style: form
+      - description: Filter using the Universally Unique Identifier (UUID) of the
+          cluster.
+        explode: true
+        in: query
+        name: clusterId
+        required: false
+        schema:
+          example: d73a738f-fab3-430a-8fa3-5241493d7128
+          format: uuid
+          type: string
+        style: form
+      - deprecated: true
+        description: The type of resource we want to filter by.
+        explode: true
+        in: query
+        name: scopeType
+        required: false
+        schema:
+          example: project
+          type: string
+        style: form
+      - description: The scope resource id that we want to filter by.
+        explode: true
+        in: query
+        name: scopeId
+        required: false
+        schema:
+          example: "2"
+          type: string
+        style: form
+      - deprecated: true
+        description: The role id we want to filter by.
+        explode: true
+        in: query
+        name: roleId
+        required: false
+        schema:
+          format: int32
+          minimum: 1
+          type: integer
+        style: form
+      - description: Sort results in descending or ascending order.
+        explode: true
+        in: query
+        name: sortOrder
+        required: false
+        schema:
+          default: asc
+          enum:
+          - asc
+          - desc
+          type: string
+        style: form
+      - description: Sort results by a parameter.
+        explode: true
+        in: query
+        name: sortBy
+        required: false
+        schema:
+          $ref: '#/components/schemas/AccessRulesSortFilterFields'
+        style: form
+      - description: "Filter results by a parameter. Use the format field-name operator\
+          \ value. Operators are == Equals, != Not equals, <= Less than or equal,\
+          \ >= Greater than or equal, =@ contains, !@ Does not contains, =^ Starts\
+          \ with and =$ Ends with. Dates are in ISO 8601 timestamp format and available\
+          \ for operators ==, !=, <= and >=."
+        example:
+        - name!=some-access-rule-name
+        - createdAt>=2023-01-01T00:00:00Z
+        explode: false
+        in: query
+        name: filterBy
+        required: false
+        schema:
+          items:
+            pattern: ^(subjectId|subjectType|roleId|scopeId|scopeType|roleName|scopeName|createdAt|deletedAt|createdBy|phase)(==|!=|<=|>=|=@|!@|=\^|=\$).+$
+            type: string
+          type: array
+        style: form
+      - description: Filter results by a free text search.
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          example: test project
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_access_rules_200_response'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: List the access rules.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/applicationAggregatedApi.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRuleUserV2.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      - e2e/src/test/suites/advancedSuite/authorization/authorizationUI.test.ts
+      x-authorize:
+        resource-type: access_rules
+        action: read
+    post:
+      description: "Use to bind a predefined role to a subject (user, group or application)\
+        \ in a scope."
+      operationId: create_access_rule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRuleCreationFields'
+        description: The access rule to create.
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRule'
+          description: Created
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create an access rule.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/applicationAggregatedApi.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRuleUserV2.test.ts
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      - e2e/src/test/suites/advancedSuite/authorization/authorizationUI.test.ts
+      x-authorize:
+        resource-type: access_rules
+        action: create
+      x-audit: true
+  /api/v1/authorization/access-rules/sync:
+    get:
+      description: Retrieve a list of access rules.
+      operationId: get_access_rules_sync
+      parameters:
+      - description: The maximum number of entries to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          format: int32
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: The offset of the first item returned in the collection.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          example: 100
+          format: int32
+          type: integer
+        style: form
+      - description: Filter by last update time.
+        explode: true
+        in: query
+        name: lastUpdated
+        required: false
+        schema:
+          example: 2021-12-14T16:04:15.099Z
+          type: string
+        style: form
+      - description: Filter using the Universally Unique Identifier (UUID) of the
+          cluster.
+        explode: true
+        in: query
+        name: clusterId
+        required: false
+        schema:
+          example: d73a738f-fab3-430a-8fa3-5241493d7128
+          format: uuid
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_access_rules_sync_200_response'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: List the access rules.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-authorize:
+        resource-type: access_rules
+        action: sync
+  /api/v1/authorization/access-rules/{accessRuleId}:
+    delete:
+      description: Use to delete the subject permissions assigned by access rule id.
+      operationId: delete_access_rule
+      parameters:
+      - description: The id of the access rule to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: accessRuleId
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "204":
+          description: No Content.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete an access rule.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      x-authorize:
+        resource-type: access_rules
+        action: delete
+        resource-id: accessRuleId
+      x-audit: true
+    get:
+      description: Use to retrieve the details of an access rule by id.
+      operationId: get_access_rule
+      parameters:
+      - description: The id of the access rule to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: accessRuleId
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRuleById'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get an access rule.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/permissions/accessRulesApi.test.ts
+      x-authorize:
+        resource-type: access_rules
+        action: read
+        resource-id: accessRuleId
+  /api/v1/authorization/access-rules/count:
+    get:
+      description: Use to retrieve the number of access rules.
+      operationId: count_access_rules
+      parameters:
+      - description: True to include deleted objects in the result.
+        explode: true
+        in: query
+        name: includeDeleted
+        required: false
+        schema:
+          default: false
+          example: false
+          type: boolean
+        style: form
+      - description: "Filter results by a parameter. Use the format field-name operator\
+          \ value. Operators are == Equals, != Not equals, <= Less than or equal,\
+          \ >= Greater than or equal, =@ contains, !@ Does not contains, =^ Starts\
+          \ with and =$ Ends with. Dates are in ISO 8601 timestamp format and available\
+          \ for operators ==, !=, <= and >=."
+        example:
+        - name!=some-access-rule-name
+        - createdAt>=2023-01-01T00:00:00Z
+        explode: false
+        in: query
+        name: filterBy
+        required: false
+        schema:
+          items:
+            pattern: ^(subjectId|subjectType|roleId|scopeId|scopeType|roleName|scopeName|createdAt|deletedAt|createdBy|phase)(==|!=|<=|>=|=@|!@|=\^|=\$).+$
+            type: string
+          type: array
+        style: form
+      - description: Filter results by a free text search.
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          example: test project
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/count_access_rules_200_response'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Count access rules.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/authorization/authorizationUI.test.ts
+      x-authorize:
+        resource-type: access_rules
+        action: read
+  /api/v1/authorization/access-rules/{accessRuleId}/{clusterUuid}/status:
+    put:
+      description: Use to update the status of the access rule in the cluster by id.
+      operationId: update_access_rule_status
+      parameters:
+      - description: The id of the access rule to retrieve
+        example: 32
+        explode: false
+        in: path
+        name: accessRuleId
+        required: true
+        schema:
+          format: int32
+          minimum: 0
+          type: integer
+        style: simple
+      - description: The Universally Unique Identifier (UUID) of the cluster.
+        explode: false
+        in: path
+        name: clusterUuid
+        required: true
+        schema:
+          example: 9f55255e-11ed-47c7-acef-fc4054768dbc
+          format: uuid
+          minLength: 1
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRuleStatusRequest'
+        description: The status of the access rule in the cluster.
+        required: true
+      responses:
+        "204":
+          description: No Content.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update an access rule.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-authorize:
+        resource-type: access_rules
+        action: sync
+    x-internal: true
+  /api/v1/authorization/access-rules/{clusterUuid}/sync:
+    post:
+      description: Use to synchronize the statuses of the access rules in the cluster.
+      operationId: sync_access_rules
+      parameters:
+      - description: The Universally Unique Identifier (UUID) of the cluster.
+        explode: false
+        in: path
+        name: clusterUuid
+        required: true
+        schema:
+          example: 9f55255e-11ed-47c7-acef-fc4054768dbc
+          format: uuid
+          minLength: 1
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRulesSyncRequest'
+        description: The statuses to sync.
+      responses:
+        "204":
+          description: No Content.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              example:
+                code: 404
+                message: Resource id not found.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: The specified resource was not found
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Sync access rules.
+      tags:
+      - Access rules
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-authorize:
+        resource-type: access_rules
+        action: sync
+    x-internal: true
+  /api/v1/authorization/access-rules/batch:
+    post:
+      operationId: access_rules_batch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRulesBatchFields'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRuleDeletionBatchResponse'
+          description: Request completed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete Multiple Access Rules
+      tags:
+      - Access rules
+      x-runai-team: suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/access_rules_batch_api_test.go
+      x-authorize:
+        resource-type: access_rules
+        action: delete
+  /api/v1/authorization/access-rules/batch-create:
+    post:
+      description: "Creates a batch of access rules in a single operation. Requires\
+        \ a list of access rule objects, each specifying the subject, role, and scope.\
+        \ Returns the result of the operation, including which rules were successfully\
+        \ created and any that failed, along with error messages if applicable."
+      operationId: access_rules_batch_create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRulesBatchCreateFields'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRulesBatchCreateResponse'
+          description: Request completed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create Multiple Access Rules
+      tags:
+      - Access rules
+      x-runai-team: suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/access_rules_batch_api_test.go
+      x-authorize:
+        resource-type: access_rules
+        action: create
+  /api/v1/authorization/permissions:
+    get:
+      description: Retrieve a summary of user permissions.
+      operationId: get_permissions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permissions'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get a summary of user permissions.
+      tags:
+      - Permissions
+      x-no-authorization: true
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/advancedSuite/authorization/authorizationUI.test.ts
+  /api/v1/authorization/permitted-scopes:
+    post:
+      description: Use to calculate user permitted scopes for an action on a resource.
+      operationId: get_permitted_scopes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/get_permitted_scopes_request'
+        description: The request parameters.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermittedScopesActions'
+          description: Executed successfully.
+        "401":
+          content:
+            application/json:
+              example:
+                code: 401
+                message: Issuer is not familiar.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Calculate permitted scopes.
+      tags:
+      - Permissions
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/role_api_test.go
+      x-no-authorization: true
+  /api/v1/authorization/evaluate:
+    post:
+      operationId: evaluate_permission
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackendEvaluationRequest'
+        description: The request parameters.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermittedScopes'
+          description: Executed successfully.
+        "204":
+          description: No Content.
+        "403":
+          content:
+            application/json:
+              example:
+                code: 403
+                message: You do not have sufficient permissions.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: "Evaluate user permission to the requested resource. The returned permitted\
+        \ scopes are the scopes that the action on the resource is permitted, with\
+        \ OR between the multiple scopes."
+      tags:
+      - Permissions
+      x-no-authorization: true
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+    x-internal: true
+  /api/v1/authorization/me/access-rules:
+    get:
+      description: Retrieve the access rules assigned to the requesting user.
+      operationId: get_me_access_rules
+      parameters:
+      - description: The maximum number of entries to return.
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 50
+          format: int32
+          maximum: 500
+          minimum: 1
+          type: integer
+        style: form
+      - description: The offset of the first item returned in the collection.
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          example: 100
+          format: int32
+          type: integer
+        style: form
+      - description: Filter results by a free text search.
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          example: test project
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeAccessRulesResponse'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: List the access rules assigned to the requesting user.
+      tags:
+      - Me
+      x-no-authorization: true
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/me_api_test.go
+  /api/v1/authorization/me/access-rules/count:
+    get:
+      description: Use to retrieve the number of access rules assigned to the requesting
+        user.
+      operationId: count_me_access_rules
+      parameters:
+      - description: Filter results by a free text search.
+        explode: true
+        in: query
+        name: search
+        required: false
+        schema:
+          example: test project
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/count_access_rules_200_response'
+          description: Executed successfully.
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Count the access rules assigned to the requesting user.
+      tags:
+      - Me
+      x-runai-team: Suricata
+      x-test-coverage:
+      - control-plane/authorization/pkg/services/me_api_test.go
+      x-no-authorization: true
+  /internal/authorization/access-rules:
+    post:
+      operationId: create_internal_access_rule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalCreateAccessRuleRequest'
+        description: The request parameters.
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRule'
+          description: Executed successfully.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Create internal access rule with out privileged escalation validation.
+      tags:
+      - Internal
+      x-no-authorization: true
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+    x-internal: true
+  /internal/authorization/subject-access-rules:
+    delete:
+      operationId: delete_subject_access_rules
+      parameters:
+      - description: The type of resource we want to filter by.
+        explode: true
+        in: query
+        name: subjectType
+        required: true
+        schema:
+          example: user
+          type: string
+        style: form
+      - description: The subject id that we want to filter by.
+        explode: true
+        in: query
+        name: subjectId
+        required: true
+        schema:
+          example: some.user@run.ai
+          type: string
+        style: form
+      - description: "True to perform validations only, without side effects."
+        explode: true
+        in: query
+        name: dryRun
+        required: false
+        schema:
+          default: false
+          example: false
+          type: boolean
+        style: form
+      responses:
+        "204":
+          description: No Content.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete access rules that assigned to the requested subject.
+      tags:
+      - Internal
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/parallel/applicationsV1/applicationsDeprecated.test.ts
+      - e2e/src/test/suites/defaultSuite/usersV1/usersDeprecated.test.ts
+      x-no-authorization: true
+    get:
+      operationId: get_subject_access_rules
+      parameters:
+      - description: The type of resource we want to filter by.
+        explode: true
+        in: query
+        name: subjectType
+        required: true
+        schema:
+          example: user
+          type: string
+        style: form
+      - description: The ids of the subjects to filter the response for.
+        explode: false
+        in: query
+        name: subjectIds
+        required: false
+        schema:
+          items:
+            example: some.user@run.ai
+            type: string
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRules'
+          description: Executed successfully.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: List specific subject access rules.
+      tags:
+      - Internal
+      x-runai-team: Suricata
+      x-test-coverage:
+      - e2e/src/test/suites/parallel/applicationsV1/applicationsDeprecated.test.ts
+      - e2e/src/test/suites/defaultSuite/usersV1/usersDeprecated.test.ts
+      x-no-authorization: true
+    x-internal: true
+  /internal/authorization/scope-access-rules:
+    delete:
+      operationId: delete_scope_access_rules
+      parameters:
+      - description: The resource scope type to filter by.
+        explode: true
+        in: query
+        name: scopeType
+        required: true
+        schema:
+          enum:
+          - tenant
+          - cluster
+          - department
+          - project
+          type: string
+        style: form
+      - description: The scope resource id that we want to filter by.
+        explode: true
+        in: query
+        name: scopeId
+        required: true
+        schema:
+          example: "2"
+          type: string
+        style: form
+      - description: Filter by last update time.
+        explode: true
+        in: query
+        name: lastUpdated
+        required: false
+        schema:
+          example: 2021-12-14T16:04:15.099Z
+          type: string
+        style: form
+      - description: The roles we want to filter by.
+        explode: true
+        in: query
+        name: roles
+        required: false
+        schema:
+          example: "ML engineer,L1 researcher"
+          type: string
+        style: form
+      responses:
+        "204":
+          description: No Content.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Delete access rules that assigned to the requested scope resource
+      tags:
+      - Internal
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    get:
+      operationId: get_scope_access_rules
+      parameters:
+      - description: Filter using the Universally Unique Identifier (UUID) of the
+          cluster.
+        explode: true
+        in: query
+        name: clusterId
+        required: false
+        schema:
+          example: d73a738f-fab3-430a-8fa3-5241493d7128
+          format: uuid
+          type: string
+        style: form
+      - description: The roles we want to filter by.
+        explode: true
+        in: query
+        name: roles
+        required: false
+        schema:
+          example: "ML engineer,L1 researcher"
+          type: string
+        style: form
+      - description: The department scope resource ids that we want to filter by.
+        explode: true
+        in: query
+        name: departmentIds
+        required: false
+        schema:
+          example: "1,2"
+          type: string
+        style: form
+      - description: The project scope resource ids that we want to filter by.
+        explode: true
+        in: query
+        name: projectIds
+        required: false
+        schema:
+          example: "1,2"
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_access_rules_200_response'
+          description: Executed successfully.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get access rules that assigned to the requested scope resource
+      tags:
+      - Internal
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    put:
+      operationId: update_scope_access_rules
+      parameters:
+      - description: The resource scope type to filter by.
+        explode: true
+        in: query
+        name: scopeType
+        required: true
+        schema:
+          enum:
+          - tenant
+          - cluster
+          - department
+          - project
+          type: string
+        style: form
+      - description: The scope resource id that we want to filter by.
+        explode: true
+        in: query
+        name: scopeId
+        required: true
+        schema:
+          example: "2"
+          type: string
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/update_scope_access_rules_request'
+        description: The access rule fields to update.
+        required: true
+      responses:
+        "204":
+          description: No Content.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Update access rules that assigned to the requested scope resource
+      tags:
+      - Internal
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+      x-no-authorization: true
+    x-internal: true
+  /internal/authorization/groups:
+    get:
+      operationId: get_groups
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_groups_200_response'
+          description: Executed successfully.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: Get all group names of a tenant
+      tags:
+      - Internal
+      x-no-authorization: true
+      x-runai-team: Suricata
+      x-test-coverage: not-applicable
+    x-internal: true
+components:
+  parameters:
+    RoleIdPath:
+      description: The id of the role to retrieve
+      example: 32
+      explode: false
+      in: path
+      name: roleIdPath
+      required: true
+      schema:
+        format: int32
+        minimum: 0
+        type: integer
+      style: simple
+    Limit:
+      description: The maximum number of entries to return.
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 50
+        format: int32
+        maximum: 500
+        minimum: 1
+        type: integer
+      style: form
+    Offset:
+      description: The offset of the first item returned in the collection.
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        example: 100
+        format: int32
+        type: integer
+      style: form
+    SortOrder:
+      description: Sort results in descending or ascending order.
+      explode: true
+      in: query
+      name: sortOrder
+      required: false
+      schema:
+        default: asc
+        enum:
+        - asc
+        - desc
+        type: string
+      style: form
+    RolesSort:
+      description: Sort results by a parameter.
+      explode: true
+      in: query
+      name: sortBy
+      required: false
+      schema:
+        $ref: '#/components/schemas/RolesSortFilterFields'
+      style: form
+    RolesFilter:
+      description: "Filter results by a parameter. Use the format field-name operator\
+        \ value. Operators are == Equals, != Not equals, <= Less than or equal, >=\
+        \ Greater than or equal, =@ contains, !@ Does not contains, =^ Starts with\
+        \ and =$ Ends with. Dates are in ISO 8601 timestamp format and available for\
+        \ operators ==, !=, <= and >=."
+      example:
+      - name!=some-access-rule-name
+      - createdAt>=2023-01-01T00:00:00Z
+      explode: false
+      in: query
+      name: filterBy
+      required: false
+      schema:
+        items:
+          pattern: ^(name|createdAt|createdBy|custom|scopeType|enabled)(==|!=|<=|>=|=@|!@|=\^|=\$).+$
+          type: string
+        type: array
+      style: form
+    Search:
+      description: Filter results by a free text search.
+      explode: true
+      in: query
+      name: search
+      required: false
+      schema:
+        example: test project
+        type: string
+      style: form
+    SubjectTypeOptional:
+      description: The type of resource we want to filter by.
+      explode: true
+      in: query
+      name: subjectType
+      required: false
+      schema:
+        example: user
+        type: string
+      style: form
+    SubjectIdOptional:
+      deprecated: true
+      description: Part of the subject id that we want to filter by.
+      explode: true
+      in: query
+      name: subjectIdFilter
+      required: false
+      schema:
+        example: some.user
+        type: string
+      style: form
+    SubjectIds:
+      description: The ids of the subjects to filter the response for.
+      explode: false
+      in: query
+      name: subjectIds
+      required: false
+      schema:
+        items:
+          example: some.user@run.ai
+          type: string
+        type: array
+      style: form
+    LastUpdated:
+      description: Filter by last update time.
+      explode: true
+      in: query
+      name: lastUpdated
+      required: false
+      schema:
+        example: 2021-12-14T16:04:15.099Z
+        type: string
+      style: form
+    IncludeDeleted:
+      description: True to include deleted objects in the result.
+      explode: true
+      in: query
+      name: includeDeleted
+      required: false
+      schema:
+        default: false
+        example: false
+        type: boolean
+      style: form
+    FilterByCluster:
+      description: Filter using the Universally Unique Identifier (UUID) of the cluster.
+      explode: true
+      in: query
+      name: clusterId
+      required: false
+      schema:
+        example: d73a738f-fab3-430a-8fa3-5241493d7128
+        format: uuid
+        type: string
+      style: form
+    ScopeTypeOptionalQueryDeprecated:
+      deprecated: true
+      description: The type of resource we want to filter by.
+      explode: true
+      in: query
+      name: scopeType
+      required: false
+      schema:
+        example: project
+        type: string
+      style: form
+    ScopeIdOptional:
+      description: The scope resource id that we want to filter by.
+      explode: true
+      in: query
+      name: scopeId
+      required: false
+      schema:
+        example: "2"
+        type: string
+      style: form
+    RoleId:
+      deprecated: true
+      description: The role id we want to filter by.
+      explode: true
+      in: query
+      name: roleId
+      required: false
+      schema:
+        format: int32
+        minimum: 1
+        type: integer
+      style: form
+    AccessRulesSort:
+      description: Sort results by a parameter.
+      explode: true
+      in: query
+      name: sortBy
+      required: false
+      schema:
+        $ref: '#/components/schemas/AccessRulesSortFilterFields'
+      style: form
+    AccessRulesFilter:
+      description: "Filter results by a parameter. Use the format field-name operator\
+        \ value. Operators are == Equals, != Not equals, <= Less than or equal, >=\
+        \ Greater than or equal, =@ contains, !@ Does not contains, =^ Starts with\
+        \ and =$ Ends with. Dates are in ISO 8601 timestamp format and available for\
+        \ operators ==, !=, <= and >=."
+      example:
+      - name!=some-access-rule-name
+      - createdAt>=2023-01-01T00:00:00Z
+      explode: false
+      in: query
+      name: filterBy
+      required: false
+      schema:
+        items:
+          pattern: ^(subjectId|subjectType|roleId|scopeId|scopeType|roleName|scopeName|createdAt|deletedAt|createdBy|phase)(==|!=|<=|>=|=@|!@|=\^|=\$).+$
+          type: string
+        type: array
+      style: form
+    AccessRuleId:
+      description: The id of the access rule to retrieve
+      example: 32
+      explode: false
+      in: path
+      name: accessRuleId
+      required: true
+      schema:
+        format: int32
+        minimum: 0
+        type: integer
+      style: simple
+    ClusterUuid:
+      description: The Universally Unique Identifier (UUID) of the cluster.
+      explode: false
+      in: path
+      name: clusterUuid
+      required: true
+      schema:
+        example: 9f55255e-11ed-47c7-acef-fc4054768dbc
+        format: uuid
+        minLength: 1
+        type: string
+      style: simple
+    SubjectType:
+      description: The type of resource we want to filter by.
+      explode: true
+      in: query
+      name: subjectType
+      required: true
+      schema:
+        example: user
+        type: string
+      style: form
+    SubjectId:
+      description: The subject id that we want to filter by.
+      explode: true
+      in: query
+      name: subjectId
+      required: true
+      schema:
+        example: some.user@run.ai
+        type: string
+      style: form
+    DryRun:
+      description: "True to perform validations only, without side effects."
+      explode: true
+      in: query
+      name: dryRun
+      required: false
+      schema:
+        default: false
+        example: false
+        type: boolean
+      style: form
+    Roles:
+      description: The roles we want to filter by.
+      explode: true
+      in: query
+      name: roles
+      required: false
+      schema:
+        example: "ML engineer,L1 researcher"
+        type: string
+      style: form
+    DepartmentIds:
+      description: The department scope resource ids that we want to filter by.
+      explode: true
+      in: query
+      name: departmentIds
+      required: false
+      schema:
+        example: "1,2"
+        type: string
+      style: form
+    ProjectIds:
+      description: The project scope resource ids that we want to filter by.
+      explode: true
+      in: query
+      name: projectIds
+      required: false
+      schema:
+        example: "1,2"
+        type: string
+      style: form
+    ScopeType:
+      description: The resource scope type to filter by.
+      explode: true
+      in: query
+      name: scopeType
+      required: true
+      schema:
+        enum:
+        - tenant
+        - cluster
+        - department
+        - project
+        type: string
+      style: form
+    ScopeId:
+      description: The scope resource id that we want to filter by.
+      explode: true
+      in: query
+      name: scopeId
+      required: true
+      schema:
+        example: "2"
+        type: string
+      style: form
+    ScopeTypeQuery:
+      $ref: '#/components/parameters/ScopeTypeOptionalQueryDeprecated'
+  responses:
+    "400BadRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: Required parameter is missing
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad request.
+    "401Unauthorized":
+      content:
+        application/json:
+          example:
+            code: 401
+            message: Issuer is not familiar.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized
+    "403Forbidden":
+      content:
+        application/json:
+          example:
+            code: 403
+            message: You do not have sufficient permissions.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden
+    "500InternalServerError":
+      content:
+        application/json:
+          example:
+            code: 500
+            message: Something went wrong.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "503ServiceUnavailable":
+      content:
+        application/json:
+          example:
+            code: 503
+            message: Please try again in few minutes.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "404NotFound":
+      content:
+        application/json:
+          example:
+            code: 404
+            message: Resource id not found.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found
+    "204NoContent":
+      description: No Content.
+    "400BadSubmissionRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: The workload request does not comply with the policy set by the
+              administrator
+          schema:
+            $ref: '#/components/schemas/SubmissionError'
+      description: Bad submission request.
+    "406NotAcceptable":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not acceptable request
+    "409Conflict":
+      content:
+        application/json:
+          example:
+            code: 409
+            message: Resource with this name already exists
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource already exists
+    "412PreconditionFailed":
+      content:
+        application/json:
+          example:
+            code: 412
+            message: Precondition failed
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found.
+    "413RequestEntityTooLarge":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Request entity too large
+    "415UnsupportedMediaType":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unsupported media type
+    "501NotImplemented":
+      content:
+        application/json:
+          example:
+            code: 501
+            message: Not implemented
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+  schemas:
+    ResourceType:
+      enum:
+      - department
+      - tenant
+      - project
+      - cluster
+      - cluster-config
+      - nodepools
+      - nodes
+      - settings
+      - security-settings
+      - users
+      - groups
+      - apps
+      - dashboards-overview
+      - dashboards-analytics
+      - dashboards-consumption
+      - roles
+      - access_rules
+      - jobs
+      - workloads
+      - workspaces
+      - trainings
+      - inferences
+      - environments
+      - pvc-assets
+      - git-assets
+      - host-path-assets
+      - nfs-assets
+      - s3-assets
+      - compute-resources
+      - templates
+      - credentials
+      - events-history
+      - policies
+      - cm-volume-assets
+      - datavolumes
+      - secret-volume-assets
+      - storage-class-configuration
+      - user-apps
+      - workload-properties
+      type: string
+    ResourceTypeGroupId:
+      enum:
+      - organization
+      - physical-resource
+      - iam
+      - dashboard
+      - workload
+      - workload-asset
+      type: string
+    Action:
+      enum:
+      - create
+      - read
+      - update
+      - delete
+      - sync
+      type: string
+    Permission:
+      example:
+        displayName: Projects
+        groupId: organization
+        actions:
+        - create
+        - create
+        resourceType: department
+      properties:
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        displayName:
+          example: Projects
+          type: string
+        groupId:
+          $ref: '#/components/schemas/ResourceTypeGroupId'
+        actions:
+          items:
+            $ref: '#/components/schemas/Action'
+          type: array
+      required:
+      - actions
+      - displayName
+      - groupId
+      - resourceType
+      type: object
+    Permissions:
+      items:
+        $ref: '#/components/schemas/Permission'
+      type: array
+      x-schema-name: Permissions
+    KubernetesPermissions:
+      description: This object indicate what kubernetes cluster permission should
+        this role should get
+      example:
+        predefinedRole: "12"
+      properties:
+        predefinedRole:
+          description: An id of a predefined role to copy the cluster permissions
+            from
+          example: "12"
+          nullable: true
+          type: string
+      type: object
+    RoleCreationFields:
+      example:
+        scopeId: scopeId
+        scopeType: tenant
+        kubernetesPermissions:
+          predefinedRole: "12"
+        permissions:
+        - displayName: Projects
+          groupId: organization
+          actions:
+          - create
+          - create
+          resourceType: department
+        - displayName: Projects
+          groupId: organization
+          actions:
+          - create
+          - create
+          resourceType: department
+        name: admin
+        description: can manage all resources
+        enabled: true
+      properties:
+        name:
+          example: admin
+          type: string
+        description:
+          example: can manage all resources
+          type: string
+        permissions:
+          items:
+            $ref: '#/components/schemas/Permission'
+          type: array
+          x-schema-name: Permissions
+        scopeType:
+          default: tenant
+          enum:
+          - system
+          - tenant
+          type: string
+          x-internal: true
+          x-csp: true
+        scopeId:
+          nullable: true
+          type: string
+          x-internal: true
+          x-csp: true
+        enabled:
+          default: true
+          nullable: true
+          type: boolean
+        kubernetesPermissions:
+          $ref: '#/components/schemas/KubernetesPermissions'
+      required:
+      - description
+      - name
+      - permissions
+      type: object
+    RoleCalculatedFields:
+      properties:
+        id:
+          example: 32
+          format: int32
+          type: integer
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        deletedAt:
+          format: date-time
+          nullable: true
+          type: string
+        createdBy:
+          example: user@run.ai
+          type: string
+        custom:
+          type: boolean
+        effectiveEnabled:
+          default: true
+          type: boolean
+      required:
+      - createdAt
+      - createdBy
+      - custom
+      - effectiveEnabled
+      - id
+      - updatedAt
+      type: object
+    Role:
+      allOf:
+      - $ref: '#/components/schemas/RoleCreationFields'
+      - $ref: '#/components/schemas/RoleCalculatedFields'
+      example:
+        scopeId: scopeId
+        custom: true
+        description: can manage all resources
+        enabled: true
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        scopeType: tenant
+        kubernetesPermissions:
+          predefinedRole: "12"
+        createdBy: user@run.ai
+        permissions:
+        - displayName: Projects
+          groupId: organization
+          actions:
+          - create
+          - create
+          resourceType: department
+        - displayName: Projects
+          groupId: organization
+          actions:
+          - create
+          - create
+          resourceType: department
+        name: admin
+        id: 32
+        effectiveEnabled: true
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+    Roles:
+      items:
+        $ref: '#/components/schemas/Role'
+      type: array
+      x-schema-name: Roles
+    Error:
+      example:
+        code: 400
+        message: Bad request - Resource should have a name
+      properties:
+        code:
+          maximum: 599
+          minimum: 100
+          type: integer
+        message:
+          type: string
+        details:
+          type: string
+      required:
+      - code
+      - message
+    RolesSortFilterFields:
+      enum:
+      - name
+      - createdAt
+      - createdBy
+      - custom
+      - scopeType
+      - enabled
+      type: string
+    RoleActiveFields:
+      example:
+        scopeType: tenant
+        enabled: true
+      properties:
+        scopeType:
+          default: tenant
+          enum:
+          - system
+          - tenant
+          type: string
+          x-internal: true
+          x-csp: true
+        enabled:
+          default: true
+          type: boolean
+      required:
+      - enabled
+      type: object
+    AccessRulesSortFilterFields:
+      enum:
+      - subjectId
+      - subjectType
+      - roleId
+      - scopeId
+      - scopeType
+      - roleName
+      - scopeName
+      - createdAt
+      - deletedAt
+      - createdBy
+      - phase
+      type: string
+    SubjectType:
+      enum:
+      - user
+      - app
+      - group
+      type: string
+    ScopeType:
+      enum:
+      - system
+      - tenant
+      - cluster
+      - department
+      - project
+      type: string
+    ClusterId:
+      description: The id of the cluster.
+      example: 71f69d83-ba66-4822-adf5-55ce55efd210
+      format: uuid
+      type: string
+    AccessRuleCreationFields:
+      example:
+        scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+        scopeType: ""
+        roleId: 53142648
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        subjectType: ""
+        subjectId: user@run.ai
+      properties:
+        subjectId:
+          description: "The unique identifier of the subject (e.g., user, group, or\
+            \ app)."
+          example: user@run.ai
+          type: string
+        subjectType:
+          allOf:
+          - $ref: '#/components/schemas/SubjectType'
+          - description: "The subject assigned to the access rule. Valid values: user,\
+              \ group, app."
+        roleId:
+          description: The numeric ID of the assigned role.
+          example: 53142648
+          format: int32
+          type: integer
+        scopeId:
+          description: The unique identifier of the scope.
+          example: a418ed33-9399-48c0-a890-122cadd13bfd
+          type: string
+        scopeType:
+          allOf:
+          - $ref: '#/components/schemas/ScopeType'
+          - description: "The type of scope the access rule applies to. Valid values:\
+              \ system, tenant, cluster, department, project."
+        clusterId:
+          description: The id of the cluster.
+          example: 71f69d83-ba66-4822-adf5-55ce55efd210
+          format: uuid
+          type: string
+      required:
+      - roleId
+      - scopeId
+      - scopeType
+      - subjectId
+      - subjectType
+      type: object
+    EnrichmentDataFields:
+      properties:
+        roleName:
+          description: "The name of the assigned role (e.g., admin, viewer)."
+          example: admin
+          type: string
+        scopeName:
+          description: "Human-readable name of the scope (e.g., tenant-x)."
+          example: tenant-x
+          type: string
+      required:
+      - roleName
+      - scopeName
+      type: object
+    TenantId:
+      description: The id of the tenant.
+      example: 1001
+      format: int32
+      type: integer
+    AccessRuleMetadataFields:
+      properties:
+        id:
+          description: The ID of the access rule entry.
+          example: 32
+          format: int32
+          type: integer
+        createdAt:
+          description: The timestamp for when the access rule was created.
+          format: date-time
+          type: string
+        updatedAt:
+          description: The timestamp for the last time the access rule was updated.
+          format: date-time
+          type: string
+        deletedAt:
+          description: The timestamp indicating when the access rule was deleted.
+          format: date-time
+          nullable: true
+          type: string
+        tenantId:
+          description: The id of the tenant.
+          example: 1001
+          format: int32
+          type: integer
+        createdBy:
+          description: Identifier of the user who created the access rule.
+          example: user@run.ai
+          type: string
+      required:
+      - createdAt
+      - createdBy
+      - id
+      - updatedAt
+      type: object
+    AccessRulePhase:
+      description: Phase of the Access Rule in the cluster.
+      enum:
+      - Creating
+      - Ready
+      - NotReady
+      - Deleting
+      example: Ready
+      type: string
+    AccessRuleStatusResponse:
+      description: Status of the Access Rule in the cluster. Available only for clusters
+        of version 2.22.0 or above.
+      example:
+        phase: Ready
+        details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+        message: Failed to enforce department 'department-a'
+      properties:
+        phase:
+          $ref: '#/components/schemas/AccessRulePhase'
+        message:
+          description: Message for status of Access Rule in the cluster
+          example: Failed to enforce department 'department-a'
+          type: string
+        details:
+          description: Details for status of Access Rule in the clusters
+          example: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+          type: string
+      type: object
+    AccessRule:
+      allOf:
+      - $ref: '#/components/schemas/AccessRuleCreationFields'
+      - $ref: '#/components/schemas/EnrichmentDataFields'
+      - $ref: '#/components/schemas/AccessRuleMetadataFields'
+      - properties:
+          status:
+            $ref: '#/components/schemas/AccessRuleStatusResponse'
+        type: object
+      - required:
+        - tenantId
+      example:
+        scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+        roleId: 53142648
+        scopeName: tenant-x
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        subjectType: ""
+        subjectId: user@run.ai
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        scopeType: ""
+        createdBy: user@run.ai
+        roleName: admin
+        tenantId: 1001
+        id: 32
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+        status:
+          phase: Ready
+          details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+          message: Failed to enforce department 'department-a'
+    AccessRules:
+      items:
+        $ref: '#/components/schemas/AccessRule'
+      type: array
+      x-schema-name: AccessRules
+    AccessRuleSync:
+      allOf:
+      - $ref: '#/components/schemas/AccessRuleCreationFields'
+      - $ref: '#/components/schemas/EnrichmentDataFields'
+      - $ref: '#/components/schemas/AccessRuleMetadataFields'
+      - properties:
+          predefinedRole:
+            $ref: '#/components/schemas/AccessRuleSync_allOf_predefinedRole'
+          isDeleting:
+            default: false
+            description: Indicates if the access rule is in 'Deleting' phase and should
+              be deleted from the cluster
+            example: false
+            type: boolean
+        type: object
+      example:
+        isDeleting: false
+        scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+        roleId: 53142648
+        scopeName: tenant-x
+        predefinedRole:
+          name: admin
+          id: "12"
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        subjectType: ""
+        subjectId: user@run.ai
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        scopeType: ""
+        createdBy: user@run.ai
+        roleName: admin
+        tenantId: 1001
+        id: 32
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+    AccessRuleById:
+      allOf:
+      - $ref: '#/components/schemas/AccessRule'
+      - properties:
+          scopePath:
+            example: runai/production-cluster/dep-42/prj-73
+            nullable: true
+            type: string
+      example:
+        scopePath: runai/production-cluster/dep-42/prj-73
+        scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+        roleId: 53142648
+        scopeName: tenant-x
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        subjectType: ""
+        subjectId: user@run.ai
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        deletedAt: 2000-01-23T04:56:07.000+00:00
+        scopeType: ""
+        createdBy: user@run.ai
+        roleName: admin
+        tenantId: 1001
+        id: 32
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+        status:
+          phase: Ready
+          details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+          message: Failed to enforce department 'department-a'
+    AccessRuleClusterPhase:
+      description: Phase of the Access Rule in the cluster
+      enum:
+      - Ready
+      - NotReady
+      - Deleted
+      example: Ready
+      type: string
+    AccessRuleStatusRequest:
+      example:
+        phase: Ready
+        message: Failed to enforce department 'department-a'
+      properties:
+        phase:
+          $ref: '#/components/schemas/AccessRuleClusterPhase'
+        message:
+          description: Message for status of Access Rule in the cluster
+          example: Failed to enforce department 'department-a'
+          type: string
+      required:
+      - message
+      - phase
+      type: object
+    AccessRuleForSync:
+      allOf:
+      - $ref: '#/components/schemas/AccessRuleStatusRequest'
+      - properties:
+          accessRuleId:
+            description: The id of the access rule to retrieve
+            example: 32
+            format: int32
+            minimum: 0
+            type: integer
+        required:
+        - accessRuleId
+        type: object
+      example:
+        phase: Ready
+        accessRuleId: 32
+        message: Failed to enforce department 'department-a'
+    AccessRulesSyncRequest:
+      items:
+        $ref: '#/components/schemas/AccessRuleForSync'
+      type: array
+    IdsList:
+      description: List of ids to perform the action on.
+      items:
+        description: Id to perform the action on.
+        format: uuid
+        type: string
+      minLength: 1
+      type: array
+    AccessRulesBatchAction:
+      description: Specifies the operation to perform. Must be set to "delete".
+      enum:
+      - delete
+      - validate_delete
+      type: string
+    AccessRulesBatchFields:
+      description: "Deletes a batch of access rules in a single operation. It requires\
+        \ a list of rule IDs and an action flag explicitly set to \"delete\". It returns\
+        \ the result of the operation, including which items were successfully deleted\
+        \ and which failed."
+      example:
+        ids:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        action: delete
+      properties:
+        ids:
+          description: List of ids to perform the action on.
+          items:
+            description: Id to perform the action on.
+            format: uuid
+            type: string
+          minLength: 1
+          type: array
+        action:
+          $ref: '#/components/schemas/AccessRulesBatchAction'
+      required:
+      - action
+      - ids
+      type: object
+    AccessRuleDeletionBatchId:
+      description: The unique ID of the batch operation.
+      format: uuid
+      type: string
+    AccessRuleDeletionBatchIdsList:
+      description: List of access rule IDs that were successfully deleted.
+      items:
+        format: uuid
+        type: string
+      minLength: 1
+      type: array
+    AccessRuleDeletionBatchErrorCode:
+      description: A numeric code representing the error type.
+      format: int32
+      type: integer
+    AccessRuleDeletionBatchErrorMessage:
+      description: A human-readable message describing the access rule IDs that failed
+        to delete.
+      type: string
+    AccessRuleDeletionBatchResponseFailureItem:
+      example:
+        code: 0
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        message: message
+      properties:
+        id:
+          format: uuid
+          type: string
+        code:
+          description: A numeric code representing the error type.
+          format: int32
+          type: integer
+        message:
+          description: A human-readable message describing the access rule IDs that
+            failed to delete.
+          type: string
+      required:
+      - code
+      - id
+      - message
+      type: object
+    AccessRuleDeletionBatchResponse:
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        failed:
+        - code: 0
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          message: message
+        - code: 0
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          message: message
+        succeeded:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        id:
+          description: The unique ID of the batch operation.
+          format: uuid
+          type: string
+        succeeded:
+          description: List of access rule IDs that were successfully deleted.
+          items:
+            format: uuid
+            type: string
+          minLength: 1
+          type: array
+        failed:
+          description: Details of the access rule IDs that failed to delete.
+          items:
+            $ref: '#/components/schemas/AccessRuleDeletionBatchResponseFailureItem'
+          type: array
+      required:
+      - id
+      type: object
+    AccessRuleSubjects:
+      description: subjects for the access rules. must have at least one value
+      items:
+        $ref: '#/components/schemas/AccessRuleSubjects_inner'
+      type: array
+    ScopeId:
+      description: "The id of the cluster, department or project, depending on the\
+        \ scope type."
+      type: string
+    AccessRuleScopes:
+      description: scopes for the access rules. must have at least one value
+      items:
+        $ref: '#/components/schemas/AccessRuleScopes_inner'
+      type: array
+    AccessRulesBatchCreateFields:
+      example:
+        payload:
+          roleId: 53142648
+          subjects:
+          - subjectType: ""
+            subjectId: user@run.ai
+          - subjectType: ""
+            subjectId: user@run.ai
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          scopes:
+          - scopeId: scopeId
+            scopeType: ""
+          - scopeId: scopeId
+            scopeType: ""
+      properties:
+        payload:
+          $ref: '#/components/schemas/AccessRulesBatchCreateFields_payload'
+      required:
+      - payload
+      type: object
+    ErrorCode:
+      description: A numeric code representing the error type.
+      format: int32
+      type: integer
+    AccessRulesBatchCreateResponse:
+      example:
+        failed:
+        - code: 0
+          payload:
+            scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+            scopeType: ""
+            roleId: 53142648
+            clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+            subjectType: ""
+            subjectId: user@run.ai
+          message: message
+        - code: 0
+          payload:
+            scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+            scopeType: ""
+            roleId: 53142648
+            clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+            subjectType: ""
+            subjectId: user@run.ai
+          message: message
+        succeeded:
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          status:
+            phase: Ready
+            details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+            message: Failed to enforce department 'department-a'
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          status:
+            phase: Ready
+            details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+            message: Failed to enforce department 'department-a'
+      properties:
+        succeeded:
+          items:
+            $ref: '#/components/schemas/AccessRule'
+          type: array
+        failed:
+          items:
+            $ref: '#/components/schemas/AccessRulesBatchCreateResponse_failed_inner'
+          type: array
+      type: object
+    PermittedScopes:
+      example:
+        tenants:
+        - "1"
+        - "1"
+        system: false
+        projects:
+        - projects
+        - projects
+        departments:
+        - "7"
+        - "7"
+        tenant: "1"
+        clusters:
+        - a418ed33-9399-48c0-a890-122cadd13bfd
+        - a418ed33-9399-48c0-a890-122cadd13bfd
+      properties:
+        system:
+          example: false
+          type: boolean
+        tenants:
+          items:
+            example: "1"
+            type: string
+          type: array
+        tenant:
+          deprecated: true
+          example: "1"
+          type: string
+        clusters:
+          items:
+            example: a418ed33-9399-48c0-a890-122cadd13bfd
+            type: string
+          type: array
+        departments:
+          items:
+            example: "7"
+            type: string
+          type: array
+        projects:
+          items:
+            type: string
+          type: array
+      type: object
+    PermittedScopesActions:
+      example:
+        read:
+          tenants:
+          - "1"
+          - "1"
+          system: false
+          projects:
+          - projects
+          - projects
+          departments:
+          - "7"
+          - "7"
+          tenant: "1"
+          clusters:
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+        create:
+          tenants:
+          - "1"
+          - "1"
+          system: false
+          projects:
+          - projects
+          - projects
+          departments:
+          - "7"
+          - "7"
+          tenant: "1"
+          clusters:
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+        update:
+          tenants:
+          - "1"
+          - "1"
+          system: false
+          projects:
+          - projects
+          - projects
+          departments:
+          - "7"
+          - "7"
+          tenant: "1"
+          clusters:
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+        delete:
+          tenants:
+          - "1"
+          - "1"
+          system: false
+          projects:
+          - projects
+          - projects
+          departments:
+          - "7"
+          - "7"
+          tenant: "1"
+          clusters:
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+          - a418ed33-9399-48c0-a890-122cadd13bfd
+      properties:
+        create:
+          $ref: '#/components/schemas/PermittedScopes'
+        read:
+          $ref: '#/components/schemas/PermittedScopes'
+        update:
+          $ref: '#/components/schemas/PermittedScopes'
+        delete:
+          $ref: '#/components/schemas/PermittedScopes'
+      required:
+      - create
+      - delete
+      - read
+      - update
+      type: object
+    BackendEvaluationRequest:
+      example:
+        resourceId: a418ed33-9399-48c0-a890-122cadd13bfd
+        requestAction: ""
+        resourceType: ""
+      properties:
+        resourceId:
+          example: a418ed33-9399-48c0-a890-122cadd13bfd
+          nullable: true
+          type: string
+        resourceType:
+          allOf:
+          - $ref: '#/components/schemas/ResourceType'
+          nullable: true
+        requestAction:
+          allOf:
+          - $ref: '#/components/schemas/Action'
+          nullable: true
+      type: object
+    MeAccessRule:
+      allOf:
+      - $ref: '#/components/schemas/AccessRuleCreationFields'
+      - $ref: '#/components/schemas/EnrichmentDataFields'
+      - required:
+        - tenantId
+      - properties:
+          id:
+            example: 32
+            format: int32
+            type: integer
+          tenantId:
+            $ref: '#/components/schemas/TenantId'
+      example:
+        scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+        scopeType: ""
+        roleId: 53142648
+        scopeName: tenant-x
+        roleName: admin
+        tenantId: 1001
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        id: 32
+        subjectType: ""
+        subjectId: user@run.ai
+    MeAccessRules:
+      items:
+        $ref: '#/components/schemas/MeAccessRule'
+      type: array
+      x-schema-name: MeAccessRules
+    MeAccessRulesResponse:
+      example:
+        accessRules:
+          totalRecords: 1
+          displayRecords: 1
+          accessRules:
+          - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+            scopeType: ""
+            roleId: 53142648
+            scopeName: tenant-x
+            roleName: admin
+            tenantId: 1001
+            clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+            id: 32
+            subjectType: ""
+            subjectId: user@run.ai
+          - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+            scopeType: ""
+            roleId: 53142648
+            scopeName: tenant-x
+            roleName: admin
+            tenantId: 1001
+            clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+            id: 32
+            subjectType: ""
+            subjectId: user@run.ai
+      properties:
+        accessRules:
+          $ref: '#/components/schemas/MeAccessRulesResponse_accessRules'
+      type: object
+    AllowedInternalCreateRoles:
+      enum:
+      - System administrator
+      - Cluster application
+      - Installer application
+      - Cloud operator
+      type: string
+    InternalCreateAccessRuleRequest:
+      example:
+        scope:
+          name: my-scope
+          id: d290f1ee-6c54-4b01-90e6-d701748f0851
+          type: system
+        roleName: System administrator
+        subjectType: user
+        subjectId: user@run.ai
+      properties:
+        subjectId:
+          example: user@run.ai
+          type: string
+        subjectType:
+          $ref: '#/components/schemas/SubjectType'
+        roleName:
+          $ref: '#/components/schemas/AllowedInternalCreateRoles'
+        scope:
+          $ref: '#/components/schemas/InternalCreateAccessRuleRequest_scope'
+      required:
+      - roleName
+      - subjectId
+      - subjectType
+      type: object
+    BatchId:
+      description: The ID of the batch operation.
+      format: uuid
+      type: string
+    ErrorMessage:
+      description: The error message.
+      type: string
+    BatchResponseFailureItem:
+      properties:
+        id:
+          format: uuid
+          type: string
+        code:
+          description: A numeric code representing the error type.
+          format: int32
+          type: integer
+        message:
+          description: The error message.
+          type: string
+      required:
+      - code
+      - id
+      - message
+      type: object
+    BatchResponse:
+      properties:
+        id:
+          description: The ID of the batch operation.
+          format: uuid
+          type: string
+        succeeded:
+          description: List of ids to perform the action on.
+          items:
+            description: Id to perform the action on.
+            format: uuid
+            type: string
+          minLength: 1
+          type: array
+        failed:
+          description: The IDs that failed to update.
+          items:
+            $ref: '#/components/schemas/BatchResponseFailureItem'
+          type: array
+      required:
+      - id
+      type: object
+    AccessRulesFilterFields:
+      $ref: '#/components/schemas/AccessRulesSortFilterFields'
+    ComplianceIssues:
+      nullable: true
+      properties:
+        complianceIssues:
+          items:
+            $ref: '#/components/schemas/ComplianceIssues_complianceIssues_inner'
+          type: array
+      type: object
+    SubmissionError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - $ref: '#/components/schemas/ComplianceIssues'
+    get_roles_200_response:
+      example:
+        next: 1
+        roles:
+        - scopeId: scopeId
+          custom: true
+          description: can manage all resources
+          enabled: true
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: tenant
+          kubernetesPermissions:
+            predefinedRole: "12"
+          createdBy: user@run.ai
+          permissions:
+          - displayName: Projects
+            groupId: organization
+            actions:
+            - create
+            - create
+            resourceType: department
+          - displayName: Projects
+            groupId: organization
+            actions:
+            - create
+            - create
+            resourceType: department
+          name: admin
+          id: 32
+          effectiveEnabled: true
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - scopeId: scopeId
+          custom: true
+          description: can manage all resources
+          enabled: true
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: tenant
+          kubernetesPermissions:
+            predefinedRole: "12"
+          createdBy: user@run.ai
+          permissions:
+          - displayName: Projects
+            groupId: organization
+            actions:
+            - create
+            - create
+            resourceType: department
+          - displayName: Projects
+            groupId: organization
+            actions:
+            - create
+            - create
+            resourceType: department
+          name: admin
+          id: 32
+          effectiveEnabled: true
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        roles:
+          items:
+            $ref: '#/components/schemas/Role'
+          type: array
+          x-schema-name: Roles
+        next:
+          example: 1
+          type: integer
+      required:
+      - roles
+      type: object
+    get_access_rules_200_response:
+      example:
+        totalRecords: 1
+        displayRecords: 1
+        accessRules:
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          status:
+            phase: Ready
+            details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+            message: Failed to enforce department 'department-a'
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+          status:
+            phase: Ready
+            details: "NotReady: [cluster1-uuid]; Ready: [cluster2-uuid, cluster3-uuid]"
+            message: Failed to enforce department 'department-a'
+      properties:
+        totalRecords:
+          example: 1
+          type: integer
+        displayRecords:
+          example: 1
+          type: integer
+        accessRules:
+          items:
+            $ref: '#/components/schemas/AccessRule'
+          type: array
+          x-schema-name: AccessRules
+      required:
+      - accessRules
+      - displayRecords
+      - totalRecords
+      type: object
+    get_access_rules_sync_200_response:
+      example:
+        next: 1
+        accessRules:
+        - isDeleting: false
+          scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          predefinedRole:
+            name: admin
+            id: "12"
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+        - isDeleting: false
+          scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          roleId: 53142648
+          scopeName: tenant-x
+          predefinedRole:
+            name: admin
+            id: "12"
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+          createdAt: 2000-01-23T04:56:07.000+00:00
+          deletedAt: 2000-01-23T04:56:07.000+00:00
+          scopeType: ""
+          createdBy: user@run.ai
+          roleName: admin
+          tenantId: 1001
+          id: 32
+          updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        next:
+          example: 1
+          type: integer
+        accessRules:
+          items:
+            $ref: '#/components/schemas/AccessRuleSync'
+          type: array
+      required:
+      - accessRules
+      type: object
+    count_access_rules_200_response:
+      example:
+        count: 1
+      properties:
+        count:
+          example: 1
+          format: int64
+          type: integer
+      required:
+      - count
+      type: object
+    get_permitted_scopes_request:
+      properties:
+        resourceType:
+          $ref: '#/components/schemas/ResourceType'
+        action:
+          enum:
+          - create
+          - read
+          - update
+          - delete
+          nullable: true
+          type: string
+      required:
+      - resourceType
+      type: object
+    update_scope_access_rules_request:
+      properties:
+        scopeName:
+          example: team-a
+          type: string
+      required:
+      - scopeName
+      type: object
+    get_groups_200_response:
+      example:
+        names:
+        - group-1
+        - group-1
+      properties:
+        names:
+          items:
+            example: group-1
+            type: string
+          type: array
+      required:
+      - names
+      type: object
+    AccessRuleSync_allOf_predefinedRole:
+      example:
+        name: admin
+        id: "12"
+      nullable: true
+      properties:
+        id:
+          description: Id of the predefined role for cluster permissions
+          example: "12"
+          type: string
+        name:
+          description: Name of the predefined role for cluster permissions
+          example: admin
+          type: string
+      type: object
+    AccessRuleSubjects_inner:
+      example:
+        subjectType: ""
+        subjectId: user@run.ai
+      properties:
+        subjectId:
+          description: "The unique identifier of the subject e.g., user, group, or\
+            \ app)."
+          example: user@run.ai
+          type: string
+        subjectType:
+          allOf:
+          - $ref: '#/components/schemas/SubjectType'
+          - description: "The subject assigned to the access rule. Valid values: user,\
+              \ group, app."
+      required:
+      - subjectId
+      - subjectType
+      type: object
+    AccessRuleScopes_inner:
+      example:
+        scopeId: scopeId
+        scopeType: ""
+      properties:
+        scopeId:
+          description: "The id of the cluster, department or project, depending on\
+            \ the scope type."
+          type: string
+        scopeType:
+          allOf:
+          - $ref: '#/components/schemas/ScopeType'
+          - description: "The scope to apply the access rule to. Valid values: system,\
+              \ tenant, cluster, department, project."
+      required:
+      - scopeId
+      - scopeType
+      type: object
+    AccessRulesBatchCreateFields_payload:
+      description: "An array of access rule objects, each containing the role, subject,\
+        \ cluster, and scope to apply."
+      example:
+        roleId: 53142648
+        subjects:
+        - subjectType: ""
+          subjectId: user@run.ai
+        - subjectType: ""
+          subjectId: user@run.ai
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        scopes:
+        - scopeId: scopeId
+          scopeType: ""
+        - scopeId: scopeId
+          scopeType: ""
+      properties:
+        roleId:
+          description: "The numeric ID of the role to assign (e.g., admin, viewer)."
+          example: 53142648
+          format: int32
+          type: integer
+        clusterId:
+          description: The id of the cluster.
+          example: 71f69d83-ba66-4822-adf5-55ce55efd210
+          format: uuid
+          type: string
+        subjects:
+          description: subjects for the access rules. must have at least one value
+          items:
+            $ref: '#/components/schemas/AccessRuleSubjects_inner'
+          type: array
+        scopes:
+          description: scopes for the access rules. must have at least one value
+          items:
+            $ref: '#/components/schemas/AccessRuleScopes_inner'
+          type: array
+      required:
+      - roleId
+      - scopes
+      - subjects
+      type: object
+    AccessRulesBatchCreateResponse_failed_inner:
+      example:
+        code: 0
+        payload:
+          scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          scopeType: ""
+          roleId: 53142648
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          subjectType: ""
+          subjectId: user@run.ai
+        message: message
+      properties:
+        payload:
+          $ref: '#/components/schemas/AccessRuleCreationFields'
+        code:
+          description: A numeric code representing the error type.
+          format: int32
+          type: integer
+        message:
+          description: A human-readable message describing the access rule IDs that
+            failed to create.
+          type: string
+    MeAccessRulesResponse_accessRules:
+      example:
+        totalRecords: 1
+        displayRecords: 1
+        accessRules:
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          scopeType: ""
+          roleId: 53142648
+          scopeName: tenant-x
+          roleName: admin
+          tenantId: 1001
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          id: 32
+          subjectType: ""
+          subjectId: user@run.ai
+        - scopeId: a418ed33-9399-48c0-a890-122cadd13bfd
+          scopeType: ""
+          roleId: 53142648
+          scopeName: tenant-x
+          roleName: admin
+          tenantId: 1001
+          clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+          id: 32
+          subjectType: ""
+          subjectId: user@run.ai
+      properties:
+        totalRecords:
+          example: 1
+          type: integer
+        displayRecords:
+          example: 1
+          type: integer
+        accessRules:
+          items:
+            $ref: '#/components/schemas/MeAccessRule'
+          type: array
+          x-schema-name: MeAccessRules
+      required:
+      - accessRules
+      - displayRecords
+      - totalRecords
+      type: object
+    InternalCreateAccessRuleRequest_scope:
+      example:
+        name: my-scope
+        id: d290f1ee-6c54-4b01-90e6-d701748f0851
+        type: system
+      nullable: true
+      properties:
+        id:
+          example: d290f1ee-6c54-4b01-90e6-d701748f0851
+          type: string
+        type:
+          $ref: '#/components/schemas/ScopeType'
+        name:
+          example: my-scope
+          type: string
+      required:
+      - id
+      - type
+      type: object
+    ComplianceIssues_complianceIssues_inner:
+      properties:
+        field:
+          example: compute.gpuDevicesRequest
+          type: string
+        details:
+          example: value must be no less than 3
+          type: string
+      required:
+      - details
+      - field
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      description: Bearer authentication
+      scheme: bearer
+      type: http
