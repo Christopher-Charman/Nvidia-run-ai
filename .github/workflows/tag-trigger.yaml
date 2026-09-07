@@ -19,7 +19,42 @@ concurrency:
 jobs:
   reject-master-tags:
     name: Reject tags from master
-    uses: run-ai/runai-actions/.github/workflows/reject-master-tags.yml@db428839d86e76ca9e8e7ebe41f2654262ec5fb8
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.check.outputs.target }}
+    steps:
+      - name: Fail if release target_commitish is master or main
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          echo "Tag: ${TAG}"
+
+          target=""
+          for attempt in 1 2 3 4 5; do
+            target="$(gh api "/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq '.target_commitish' 2>/dev/null || true)"
+            [ -n "${target}" ] && [ "${target}" != "null" ] && break
+            target=""
+            echo "Release for tag '${TAG}' not yet visible (attempt ${attempt}); retrying in 3s..."
+            sleep 3
+          done
+
+          if [ -z "${target}" ]; then
+            echo "::error title=No GitHub Release found::Tag '${TAG}' has no associated GitHub Release. Tags must be created via a GitHub Release."
+            exit 1
+          fi
+
+          echo "Release target_commitish: ${target}"
+          case "${target}" in
+            master|main|refs/heads/master|refs/heads/main)
+              echo "::error title=Release from ${target} is not allowed::Tag '${TAG}' was released from '${target}'. Releases must be created from a release branch."
+              exit 1
+              ;;
+          esac
+          echo "OK: release target is '${target}', not master or main."
+          echo "target=${target}" >> "$GITHUB_OUTPUT"
 
   dispatch:
     name: Dispatch to saas-configuration
