@@ -19,7 +19,7 @@ concurrency:
 jobs:
   reject-master-tags:
     name: Reject tags from master
-    uses: run-ai/runai-actions/.github/workflows/reject-master-tags.yml@68480c9f692b91b3c5a3f0a9552b56534f757911
+    uses: run-ai/runai-actions/.github/workflows/reject-master-tags.yml@db428839d86e76ca9e8e7ebe41f2654262ec5fb8
 
   dispatch:
     name: Dispatch to saas-configuration
