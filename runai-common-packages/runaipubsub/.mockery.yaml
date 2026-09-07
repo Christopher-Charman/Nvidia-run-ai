@@ -1,0 +1,54 @@
+dir: "{{.InterfaceDir}}/mocks"
+inpackage: true
+with-expecter: false
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"
+filename: "{{.InterfaceName}}.go"
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaipubsub:
+    interfaces:
+      PubSuber:
+      Subscriber:
+      PubsubConnectorer:
+      PubSubFactoryer:
+        config:
+          dir: "{{.InterfaceDir}}"
+          filename: "mock_PubSubFactoryer.go"
+          mockname: "Mock{{.InterfaceName}}"
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaipubsub/logger:
+    interfaces:
+      Loggerer:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/runaipubsub/kafka:
+    interfaces:
+      kafkaWriter:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      kafkaReader:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      topicManagerer:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      subscriberer:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+      publisherer:
+        config:
+          mockname: "Mock{{.InterfaceName}}"
+  github.com/nats-io/nats.go/jetstream:
+    config:
+      dir: nats/mocks
+      outpkg: mocks
+      inpackage: false
+      recursive: true
+    interfaces:
+      JetStream:
+      Stream:
+      Consumer:
+  github.com/ThreeDotsLabs/watermill/message:
+    config:
+      dir: redis/mocks
+      inpackage: false
+      recursive: true
+    interfaces:
+      Publisher:

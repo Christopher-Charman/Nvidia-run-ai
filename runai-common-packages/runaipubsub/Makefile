@@ -1,0 +1,53 @@
+include ../../build/makefile/index.mk
+
+SERVICE_NAME=runaipubsub
+TAG_FORMAT=runai-common-packages/$(SERVICE_NAME)
+
+DOCKER_WORK_DIR=/local/runai-common-packages/${SERVICE_NAME}
+DOCKER_COMMAND=${DOCKER_COMMAND_WORK_DIR}
+
+MOCKERY_VERSION = v2.53.3
+BIN_DIR := $(shell pwd)/bin
+MOCKERY := ${BIN_DIR}/mockery
+
+test: test-go integration-tests
+.PHONY: test
+
+lint: 
+	# no op
+.PHONY: lint
+
+validate:
+	# no op
+.PHONY: validate
+
+build:
+	# no op
+.PHONY: build
+
+# Local/dev only — not part of CI test/build; requires Docker and git access to private modules.
+build-integration-tests:
+	docker image rm nats-tests --force 2>/dev/null || true
+	docker image rm kafka-tests --force 2>/dev/null || true
+	${DOCKER_GO_COMMAND_LINUX} go test -c -v -timeout=120s -tags integration ./integration-tests/tests/ -o ./integration-tests/bin/integ-tests
+	docker compose -f ./integration-tests/docker-compose.yaml build
+.PHONY: build-integration-tests
+
+integration-tests: build-integration-tests
+	docker compose -f ./integration-tests/docker-compose.yaml --profile redis-setup --profile kafka-setup --profile kafka-tests up --remove-orphans --force-recreate --abort-on-container-exit
+	docker compose -f ./integration-tests/docker-compose.yaml down --remove-orphans --volumes
+	docker compose -f ./integration-tests/docker-compose.yaml --profile redis-setup --profile nats-setup --profile nats-tests up --remove-orphans --force-recreate --abort-on-container-exit
+	docker compose -f ./integration-tests/docker-compose.yaml down --remove-orphans --volumes
+.PHONY: integration-tests
+
+validate_mockery:
+	@mkdir -p ${BIN_DIR}
+	@if [ -e ${MOCKERY} ] && [ "$$(${MOCKERY} --version | awk '{print $$NF}')" != "${MOCKERY_VERSION}" ]; then \
+		echo "existing mockery binary is not of required version ${MOCKERY_VERSION}. Reinstalling it"; \
+		rm -f ${MOCKERY}; \
+	fi
+	GOBIN=${BIN_DIR} go install github.com/vektra/mockery/v2/...@${MOCKERY_VERSION}
+
+mockery: validate_mockery
+	${MOCKERY}
+.PHONY: mockery
