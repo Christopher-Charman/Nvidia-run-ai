@@ -1,0 +1,23 @@
+with-expecter: false
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/toggles:
+    interfaces:
+      Toggler:
+        configs:
+          - dir: "{{.InterfaceDir}}/testing"
+            filename: "mock_Toggler.go"
+            mockname: "MockToggler"
+            outpkg: "testing"
+            inpackage: false
+          - dir: "{{.InterfaceDir}}/mocks"
+            filename: "Toggler.go"
+            mockname: "Toggler"
+            outpkg: "mocks"
+            inpackage: false
+      unleashClienter:
+        configs:
+          - dir: "{{.InterfaceDir}}/mocks"
+            filename: "UnleashClienter.go"
+            mockname: "UnleashClienter"
+            outpkg: "mocks"
+            inpackage: false
