@@ -1,0 +1,14 @@
+dir: "{{.InterfaceDir}}/mocks"
+inpackage: true
+outpkg: "mocks"
+mockname: "{{.InterfaceName}}"
+filename: "{{.InterfaceName}}.go"
+with-expecter: False
+packages:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/setting:
+    interfaces:
+      SettingsManager:
+      BackendClient:
+  github.com/dsx-ai-factory/run-ai/runai-common-packages/setting/manager:
+    interfaces:
+      SettingsDal:
