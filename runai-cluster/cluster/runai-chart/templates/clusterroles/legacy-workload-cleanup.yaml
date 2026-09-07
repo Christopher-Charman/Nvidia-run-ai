@@ -84,6 +84,10 @@ rules:
       - runai-inference-workload-mutation
       - runai-distributed-inference-workload-mutation
     verbs: ["delete"]
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: ["mutatingwebhookconfigurations"]
+    resourceNames: ["runai-pod-controller-mutation"]
+    verbs: ["get", "update"]
   - apiGroups: ["run.ai"]
     resources: ["trainingworkloads", "interactiveworkloads", "distributedworkloads"]
     verbs: ["get", "list", "patch"]
