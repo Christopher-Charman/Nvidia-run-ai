@@ -89,5 +89,6 @@ jobs:
             {
               "ref":         ${{ toJSON(needs.gate.outputs.ref) }},
               "caller_repo": ${{ toJSON(github.repository) }},
-              "repository":  ${{ toJSON(github.repository) }}
+              "repository":  ${{ toJSON(github.repository) }},
+              "project_key": "runai-oss"
             }
