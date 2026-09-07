@@ -1,0 +1,372 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: support@run.ai
+    name: Run.AI
+    url: https://www.run.ai/
+  description: Email Service API
+  title: Email Service
+  version: "1.0"
+servers:
+- url: https://app.run.ai
+- url: https://staging.run.ai
+- url: https://test.run.ai
+- url: http://localhost:8080
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Executed successfully.
+      summary: health check
+      tags:
+      - Health
+      x-no-authorization: true
+      x-runai-team: Phoenix
+    x-internal: true
+    x-runai-team: Phoenix
+  /api/v1/export/email:
+    post:
+      description: |
+        Export email.
+      operationId: export_email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportEmailRequest'
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: export email
+      tags:
+      - Export
+      x-no-authorization: true
+      x-runai-team: Phoenix
+    x-internal: true
+  /api/v1/support/contact:
+    post:
+      description: |
+        Contact Run:ai support.
+      operationId: contact_support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactSupportRequest'
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              example:
+                code: 400
+                message: Required parameter is missing
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request.
+        "500":
+          content:
+            application/json:
+              example:
+                code: 500
+                message: Something went wrong.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+        "503":
+          content:
+            application/json:
+              example:
+                code: 503
+                message: Please try again in few minutes.
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error
+      summary: contact Run:ai support
+      tags:
+      - Support
+      x-no-authorization: true
+      x-runai-team: Phoenix
+components:
+  responses:
+    "400BadRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: Required parameter is missing
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Bad request.
+    "500InternalServerError":
+      content:
+        application/json:
+          example:
+            code: 500
+            message: Something went wrong.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "503ServiceUnavailable":
+      content:
+        application/json:
+          example:
+            code: 503
+            message: Please try again in few minutes.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+    "204NoContent":
+      description: No Content.
+    "400BadSubmissionRequest":
+      content:
+        application/json:
+          example:
+            code: 400
+            message: The workload request does not comply with the policy set by the
+              administrator
+          schema:
+            $ref: '#/components/schemas/SubmissionError'
+      description: Bad submission request.
+    "401Unauthorized":
+      content:
+        application/json:
+          example:
+            code: 401
+            message: Issuer is not familiar.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unauthorized
+    "403Forbidden":
+      content:
+        application/json:
+          example:
+            code: 403
+            message: You do not have sufficient permissions.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Forbidden
+    "404NotFound":
+      content:
+        application/json:
+          example:
+            code: 404
+            message: Resource id not found.
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found
+    "406NotAcceptable":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Not acceptable request
+    "409Conflict":
+      content:
+        application/json:
+          example:
+            code: 409
+            message: Resource with this name already exists
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource already exists
+    "412PreconditionFailed":
+      content:
+        application/json:
+          example:
+            code: 412
+            message: Precondition failed
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: The specified resource was not found.
+    "413RequestEntityTooLarge":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Request entity too large
+    "415UnsupportedMediaType":
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: Unsupported media type
+    "501NotImplemented":
+      content:
+        application/json:
+          example:
+            code: 501
+            message: Not implemented
+          schema:
+            $ref: '#/components/schemas/Error'
+      description: unexpected error
+  schemas:
+    TemplateData:
+      example:
+        email: test@run.ai
+        password: mypasword
+      nullable: true
+      type: object
+    Template:
+      example:
+        id: welcome
+        data:
+          email: test@run.ai
+          password: mypasword
+      properties:
+        id:
+          type: string
+        data:
+          example:
+            email: test@run.ai
+            password: mypasword
+          nullable: true
+          type: object
+      required:
+      - id
+      type: object
+    EmailAttachment:
+      example:
+        content: base64 encoded
+        filename: painting.png
+      properties:
+        content:
+          format: byte
+          type: string
+        filename:
+          type: string
+        contentType:
+          type: string
+      required:
+      - content
+      - filename
+      type: object
+    ExportEmailRequest:
+      example:
+        to:
+        - mona.lisa@louvre.mus
+        cc:
+        - other@louvre.mus
+        bcc:
+        - other@louvre.mus
+        fromDisplayName: RunAI Support
+        template:
+          id: welcome
+          data:
+            username: test@run.ai
+            logingLink: app.run.ai
+        attachments:
+        - content: base64 encoded
+          filename: painting.png
+      properties:
+        to:
+          items:
+            type: string
+          type: array
+        cc:
+          items:
+            type: string
+          type: array
+        bcc:
+          items:
+            type: string
+          type: array
+        fromDisplayName:
+          type: string
+        template:
+          $ref: '#/components/schemas/Template'
+        attachments:
+          items:
+            $ref: '#/components/schemas/EmailAttachment'
+          type: array
+      required:
+      - template
+      - to
+      type: object
+    Error:
+      example:
+        code: 400
+        message: Bad request - Resource should have a name
+      properties:
+        code:
+          maximum: 599
+          minimum: 100
+          type: integer
+        message:
+          type: string
+        details:
+          type: string
+      required:
+      - code
+      - message
+    ContactSupportRequest:
+      example:
+        message: Could you please guide me on the next steps to take or provide...
+      properties:
+        message:
+          type: string
+      required:
+      - message
+      type: object
+    ComplianceIssues:
+      nullable: true
+      properties:
+        complianceIssues:
+          items:
+            $ref: '#/components/schemas/ComplianceIssues_complianceIssues_inner'
+          type: array
+      type: object
+    SubmissionError:
+      allOf:
+      - $ref: '#/components/schemas/Error'
+      - $ref: '#/components/schemas/ComplianceIssues'
+    ComplianceIssues_complianceIssues_inner:
+      properties:
+        field:
+          example: compute.gpuDevicesRequest
+          type: string
+        details:
+          example: value must be no less than 3
+          type: string
+      required:
+      - details
+      - field
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      description: Bearer authentication
+      scheme: bearer
+      type: http
