@@ -1054,7 +1054,7 @@ build_cli_exposer() {
         -e GOFIPS140=v1.0.0 \
         -e GOOS=linux \
         -e GOARCH=amd64 \
-        -e GOPRIVATE="github.com/run-ai/*" \
+        -e GOPRIVATE="github.com/dsx-ai-factory/run-ai/*" \
         `# Unlike the per-service builds, this one compiles a PACKAGE ("." below)` \
         `# rather than a file list, so Go runs buildvcs and shells out to git.` \
         `# Podman presents the bind-mounted repo as root-owned while the build runs` \
