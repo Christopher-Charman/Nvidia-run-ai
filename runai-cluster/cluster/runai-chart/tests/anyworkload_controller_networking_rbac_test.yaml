@@ -1,0 +1,62 @@
+suite: Test anyworkload-controller networking cleanup RBAC
+
+templates:
+  - templates/clusterroles/anyworkload-controller.yaml
+
+tests:
+  - it: grants networking cleanup only through the project-scoped role
+    documentSelector:
+      path: metadata.name
+      value: runai-anyworkload-controller-project
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: [""]
+            resources: ["services"]
+            verbs: ["delete"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apps"]
+            resources: ["deployments"]
+            verbs: ["delete"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["networking.k8s.io"]
+            resources: ["ingresses"]
+            verbs: ["delete"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["route.openshift.io"]
+            resources: ["routes"]
+            verbs: ["delete"]
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["gateway.networking.k8s.io"]
+            resources: ["httproutes"]
+            verbs: ["delete"]
+
+  - it: does not grant cluster-wide networking cleanup
+    documentSelector:
+      path: rules[0].resources[0]
+      value: namespaces
+    asserts:
+      - equal:
+          path: rules[?(@.resources[0]=="services")].verbs
+          value: ["get", "list", "watch", "create", "update", "patch"]
+      - equal:
+          path: rules[?(@.resources[0]=="deployments")].verbs
+          value: ["get", "list", "watch", "create", "update", "patch"]
+      - equal:
+          path: rules[?(@.resources[0]=="ingresses")].verbs
+          value: ["get", "list", "watch", "create", "update", "patch"]
+      - equal:
+          path: rules[?(@.resources[0]=="routes")].verbs
+          value: ["get", "list", "watch", "create", "update", "patch"]
+      - equal:
+          path: rules[?(@.resources[0]=="httproutes")].verbs
+          value: ["get", "list", "watch", "create", "update", "patch"]

@@ -1,0 +1,9 @@
+{{! SPDX-FileCopyrightText: Copyright OpenAPI-Generator Contributors (https://openapi-generator.tech) }}
+{{! SPDX-FileCopyrightText: Copyright SmartBear Software }}
+{{! SPDX-License-Identifier: Apache-2.0 }}
+/**
+ * @type {{classname}}{{#description}}
+ * {{{.}}}{{/description}}
+ * @export
+ */
+export type {{classname}} = {{#allOf}}{{{.}}}{{^-last}} & {{/-last}}{{/allOf}};

@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+FROM golang:1.18
+WORKDIR /
+
+COPY bin/assets-service.amd64 ./assets-service
+COPY NOTICE .
+
+USER 65532:65532
+
+ENTRYPOINT ["/assets-service"]
+

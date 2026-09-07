@@ -1,0 +1,3 @@
+type: string
+description: Select a telemetry type for internal projects telemetry. Includes PROJECTS_COUNT, which is not available on the public API.
+enum: [GPU_QUOTA, CPU_QUOTA, MEMORY_QUOTA, GPU_ALLOCATION, CPU_ALLOCATION, MEMORY_ALLOCATION, GPU_ALLOCATION_NON_PREEMPTIBLE, CPU_ALLOCATION_NON_PREEMPTIBLE, MEMORY_ALLOCATION_NON_PREEMPTIBLE, PROJECTS_COUNT]

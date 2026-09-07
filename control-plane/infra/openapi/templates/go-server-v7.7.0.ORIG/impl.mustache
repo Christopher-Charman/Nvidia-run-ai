@@ -1,0 +1,14 @@
+{{! SPDX-FileCopyrightText: Copyright OpenAPI-Generator Contributors (https://openapi-generator.tech) }}
+{{! SPDX-FileCopyrightText: Copyright SmartBear Software }}
+{{! SPDX-License-Identifier: Apache-2.0 }}
+{{>partial_header}}
+package {{packageName}}
+
+// ImplResponse defines an implementation response with error code and the associated body
+type ImplResponse struct {
+	Code int
+	{{#addResponseHeaders}}
+	Headers map[string][]string
+	{{/addResponseHeaders}}
+	Body interface{}
+}

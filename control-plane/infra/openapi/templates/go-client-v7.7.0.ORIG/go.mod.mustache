@@ -1,0 +1,15 @@
+{{! SPDX-FileCopyrightText: Copyright OpenAPI-Generator Contributors (https://openapi-generator.tech) }}
+{{! SPDX-FileCopyrightText: Copyright SmartBear Software }}
+{{! SPDX-License-Identifier: Apache-2.0 }}
+module {{gitHost}}/{{gitUserId}}/{{gitRepoId}}{{#isGoSubmodule}}/{{packageName}}{{/isGoSubmodule}}
+
+go 1.18
+
+require (
+	{{#hasOAuthMethods}}
+	golang.org/x/oauth2 v0.0.0-20210323180902-22b0adad7558
+	{{/hasOAuthMethods}}
+	{{#withAWSV4Signature}}
+	github.com/aws/aws-sdk-go v1.34.14
+	{{/withAWSV4Signature}}
+)

@@ -1,0 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+$workspace-card-width: 216px;
+$workspace-card-height: 176px;
+
+.workload-card-content {
+  width: $workspace-card-width;
+  height: $workspace-card-height;
+}

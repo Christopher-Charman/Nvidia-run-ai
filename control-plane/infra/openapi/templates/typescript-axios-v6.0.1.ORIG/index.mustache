@@ -1,0 +1,10 @@
+{{! SPDX-FileCopyrightText: Copyright OpenAPI-Generator Contributors (https://openapi-generator.tech) }}
+{{! SPDX-FileCopyrightText: Copyright SmartBear Software }}
+{{! SPDX-License-Identifier: Apache-2.0 }}
+/* tslint:disable */
+/* eslint-disable */
+{{>licenseInfo}}
+
+export * from "./api";
+export * from "./configuration";
+{{#withSeparateModelsAndApi}}export * from "./{{tsModelPackage}}";{{/withSeparateModelsAndApi}}

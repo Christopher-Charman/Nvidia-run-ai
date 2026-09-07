@@ -1,0 +1,4 @@
+{{- $supportEntitled := eq (include "control-plane.supportEntitled" .) "true" -}}
+{{- if and .Values.telemetryService.enabled (not $supportEntitled) }}
+{{- fail "telemetryService (call-home) is available only on a support-entitled release; set supportEntitled=true to enable it" }}
+{{- end }}

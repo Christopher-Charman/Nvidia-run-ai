@@ -1,0 +1,57 @@
+================================================================================
+THIRD-PARTY NOTICES — OpenAPI Generator templates
+================================================================================
+
+Component:  OpenAPI Generator (code-generation mustache templates)
+Upstream:   https://github.com/OpenAPITools/openapi-generator
+Homepage:   https://openapi-generator.tech
+License:    Apache-2.0
+Copyright:  Copyright OpenAPI-Generator Contributors (https://openapi-generator.tech)
+            Copyright SmartBear Software
+
+--------------------------------------------------------------------------------
+Scope
+--------------------------------------------------------------------------------
+
+This directory vendors mustache templates from the OpenAPI Generator project,
+used to generate Run:ai's Go server/client and TypeScript API code. They live
+under:
+
+    control-plane/infra/openapi/templates/go-server-v7.7.0/
+    control-plane/infra/openapi/templates/go-server-v7.12.0/
+    control-plane/infra/openapi/templates/go-client-v7.7.0/
+    control-plane/infra/openapi/templates/go-client-v7.12.0/
+    control-plane/infra/openapi/templates/typescript-axios-v6.0.1/
+
+--------------------------------------------------------------------------------
+Modifications
+--------------------------------------------------------------------------------
+
+These templates have been MODIFIED by NVIDIA CORPORATION & AFFILIATES from the
+OpenAPI Generator originals. Each modified template set has a sibling directory
+suffixed ".ORIG" (e.g. go-client-v7.12.0.ORIG/) that preserves the pristine,
+unmodified upstream copy for diff/reference. The working directories contain
+only the templates Run:ai overrides; every file in them differs from its .ORIG
+counterpart.
+
+    Modifications Copyright (c) NVIDIA CORPORATION & AFFILIATES.
+
+This statement satisfies the Apache License, Version 2.0 §4(b) requirement to
+carry prominent notices stating that files were changed. Upstream OpenAPI
+Generator ships no NOTICE file, so §4(d) imposes no additional propagation
+obligation.
+
+--------------------------------------------------------------------------------
+License
+--------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+these files except in compliance with the License. You may obtain a copy of the
+License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
