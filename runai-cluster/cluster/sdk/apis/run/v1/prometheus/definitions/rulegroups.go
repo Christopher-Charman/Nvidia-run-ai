@@ -62,7 +62,7 @@ var runaiJobCpuUsageLabels = "workload_name, workload_id, pod_namespace, project
 var workloadNameUidLabels = "workload_name, workload_id"
 var metricsPerMigPodRuleLabels = "pod_name, pod_namespace, workload_name, workload_type, workload_id, pod_uuid, project, department, queue_name"
 var metricsPerWholePodRuleLabels = "workload_name, workload_type, workload_id, pod_uuid, project, department, queue_name"
-var allocatedMemoryBytesPerPodMetric = "runai_scheduler_allocated_memory_bytes_per_pod_unique"
+var allocatedMemoryBytesPerPodMetric = "runai_scheduler_allocated_memo_bytes_per_pod_unique"
 
 var workloadIdLabel = "workload_id"
 var podEnrichmentWithWorkloadLabels = "workload_name, workload_type, user"
