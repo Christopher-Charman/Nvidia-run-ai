@@ -118,29 +118,6 @@ func TestAllRulesSurviveDuplicateThirdPartySeries(t *testing.T) {
 	})
 }
 
-func TestAccountingResourcesPerNodepoolWithDuplicateSeries(t *testing.T) {
-	newAccountingTester(t).Test(TestCase{
-		Interval: "1m",
-		Inputs: inputs(
-			twice(`kube_node_status_capacity{node="n1", resource="cpu", unit="core"}`, "16x5"),
-			twice(`kube_node_status_capacity{node="n1", resource="memory", unit="byte"}`, "68719476736x5"),
-			twice(`kube_node_status_capacity{node="n1", resource="nvidia_com_gpu", unit="integer"}`, "4x5"),
-			twice(`runai_node_nodepool{node="n1", nodepool="np1"}`, "1x5"),
-		),
-		Tests: []Test{
-			{
-				Expr:     `resources_per_nodepool`,
-				EvalTime: "3m",
-				Samples: []Sample{
-					{Labels: `resources_per_nodepool{nodepool="np1", resource="cpu"}`, Value: 16},
-					{Labels: `resources_per_nodepool{nodepool="np1", resource="memory"}`, Value: 68719476736},
-					{Labels: `resources_per_nodepool{nodepool="np1", resource="nvidia_com_gpu"}`, Value: 4},
-				},
-			},
-		},
-	})
-}
-
 func TestContainerMemoryUsageAlertsWithDuplicateSeries(t *testing.T) {
 	newTester(t).Test(TestCase{
 		Interval: "1m",
