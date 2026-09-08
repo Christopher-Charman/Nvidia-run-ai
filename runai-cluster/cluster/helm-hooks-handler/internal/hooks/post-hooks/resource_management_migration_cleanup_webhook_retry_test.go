@@ -152,3 +152,43 @@ func TestDepartmentCleanupGivesUpWhenWebhookStaysUnreachable(t *testing.T) {
 	require.Greater(t, attempts, 1, "the delete is retried until the timeout")
 	require.True(t, oldDepartmentCRDExists(t, k8sClient), "the legacy CRD is kept when a department could not be deleted")
 }
+
+// blockingDeletes returns interceptor funcs whose Delete, for objects matching
+// isTarget, blocks until the request context is done and returns its error, the way
+// a real API server call that never answers behaves.
+func blockingDeletes(isTarget func(client.Object) bool) interceptor.Funcs {
+	return interceptor.Funcs{
+		Delete: func(ctx context.Context, cl client.WithWatch, obj client.Object, opts ...client.DeleteOption) error {
+			if !isTarget(obj) {
+				return cl.Delete(ctx, obj, opts...)
+			}
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	}
+}
+
+func TestDepartmentCleanupCancelsABlockedDeleteAtTheRetryTimeout(t *testing.T) {
+	shortenWebhookRetry(t, 50*time.Millisecond)
+	hook := cleanupHook(true)
+	k8sClient := fake.NewClientBuilder().WithScheme(kaiDepartmentScheme(t)).WithObjects(
+		departmentCRD(hooks.OldDepartmentCRDName),
+		departmentCRD(newDepartmentCRDName),
+		legacyDepartment("default"),
+		&kaiv1alpha1.Department{ObjectMeta: metav1.ObjectMeta{Name: "default"}},
+	).WithInterceptorFuncs(blockingDeletes(isLegacyDepartment)).Build()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- hook.cleanupLegacyDepartments(context.Background(), k8sClient, log.FromContext(context.Background()))
+	}()
+
+	select {
+	case err := <-done:
+		require.ErrorContains(t, err, `failed to delete legacy department "default"`)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	case <-time.After(2 * time.Second):
+		t.Fatal("cleanup did not return after the retry timeout: the delete is not bounded by it")
+	}
+	require.True(t, oldDepartmentCRDExists(t, k8sClient), "the legacy CRD is kept when a department could not be deleted")
+}
