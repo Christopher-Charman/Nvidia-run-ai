@@ -1584,12 +1584,33 @@ postgresql:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: false
       runAsGroup: 0
-      runAsNonRoot: true
+      # This container's entire job is a privileged chown of the PVC before
+      # the main container runs — it needs to be able to take ownership of
+      # files it doesn't yet own, which requires root or CAP_CHOWN. Left as
+      # `runAsNonRoot: true` with no matching runAsUser, it silently inherits
+      # the subchart's own default of runAsUser: 0 (root) — a
+      # runAsUser:0 + runAsNonRoot:true contradiction that Kubernetes rejects
+      # outright: "container's runAsUser breaks non-root policy". This has
+      # been dormant because `enabled: false` above means the container never
+      # actually runs; it fires the moment anyone flips that to true.
+      runAsNonRoot: false
       seccompProfile:
         type: RuntimeDefault
       capabilities:
         drop:
           - ALL
+        # Same reasoning as above: on modern Linux, chown/chmod are gated by
+        # capability, not uid — dropping ALL means even uid 0 can't chown.
+        # Without these, the container fails at runtime:
+        # `chown: changing ownership of '...': Operation not permitted`,
+        # then `chmod: ... Operation not permitted`, then (for a directory it
+        # doesn't yet have any access to at all)
+        # `chown: cannot read directory '...': Permission denied`. Add back
+        # only what this one-shot privileged init container actually needs.
+        add:
+          - CHOWN
+          - FOWNER
+          - DAC_OVERRIDE
 
   securityContextConstraints:
     allowHostDirVolumePlugin: false
