@@ -320,6 +320,7 @@ Updated as work progresses. Newest entry first.
 
 | When | Step | Status | Notes |
 |---|---|---|---|
+| 2026-09-08 | Docs published as PR | ✅ done | https://github.com/dsx-ai-factory/run-ai/pull/59 on branch `nael/inference-networking-lab` against `main`. New repo has re-imported history and blocks `RUN-####` branch names, so the docs commit was cherry-picked onto `dsx/main` |
 | 2026-09-07 11:30 | Envs A + B woken | ✅ done | Both auto-hibernated overnight (label `hibernating`, auto-delete after 1 week ≈ 13 Sep). Woke via `env-in-a-click/status: wake-up`. Stacks intact on both: routes Accepted/ResolvedRefs, pods restarted and passing probes |
 | 2026-09-06 17:10 | B.2′ · our GIE EPP + pool over Dynamo Frontend pods | ✅ passed | agentgateway 1.0.0 → our HTTPRoute (host `mocker.test`) → our InferencePool (selector `nvidia.com/dynamo-component-type: frontend`) → GIE EPP v1.2.1 → Dynamo Frontend pod → mocker. Completion returned. Proves Dynamo as a **pod owner** under ManagedEPP. Two rename bugs fixed on the way (SA name, `--pool-name`). Not the same as B.2, which needs Dynamo's own gated EPP image |
 | 2026-09-06 16:58 | B.1 · mocker on Dynamo Frontend, CPU | ✅ passed | DGD `mocker-agg` Ready. `POST /v1/chat/completions` via `svc/mocker-agg-frontend` returned a completion for `Qwen/Qwen3-0.6B`. Mocker log: KV events published over NATS, `block_size 64`, discovery via Kubernetes. Images: `dynamo-frontend:1.0.1` + `vllm-runtime:1.0.1` |
@@ -342,4 +343,4 @@ Updated as work progresses. Newest entry first.
 | 2026-09-06 15:20 | Plan written, decisions taken | ✅ done | Manual stack first · new fake-GPU env |
 
 **Done:** Track A complete. Track B: B.1 passed, B.2′ passed, B.2 proper blocked on an NGC pull secret. Envs A and B both still running.
-**Next up:** waiting on the user for (a) NGC pull secret `ngc-pull` in `dynamo-lab` on env B → "b2", (b) controller source from Camiel → "a6", (c) "commit" for the docs. Envs auto-delete ≈ 13 Sep.
+**Next up:** continue in a new chat under the new repo using the PR as the handoff. Open: (a) NGC pull secret → "b2", (b) controller source from Camiel → "a6". Envs auto-delete ≈ 13 Sep.
