@@ -1,0 +1,92 @@
+# Track B step 3 · B.2 · 🔜 EXPERIMENT, not documented upstream.
+# Same mocker DGD as 01, plus:
+#   - a `type: epp` component using Dynamo v1.4.2's legacy Go EPP contract (eppConfig + epp-image), copied from
+#     examples/backends/vllm/deploy/gaie/agg.yaml at tag v1.4.2
+#   - a Frontend sidecar in --router-mode direct on the mocker worker, as the GAIE docs require
+# The operator is expected to generate:  InferencePool mocker-agg-pool  and  Service/Deployment mocker-agg-epp.
+#
+# Assumptions to verify on the cluster (see README "open questions"):
+#   1. mocker publishes KV events the dyn-decode-scorer needs.          → check EPP logs for endpoints
+#   2. DYN_KV_CACHE_BLOCK_SIZE matches the mocker's block size.          → `python3 -m dynamo.mocker --help`
+#   3. the planner image can run `python3 -m dynamo.frontend` as sidecar → otherwise use vllm-runtime:${DYNAMO_VERSION}
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: mocker-agg
+  namespace: dynamo-lab
+spec:
+  components:
+  - name: Frontend
+    type: frontend
+    replicas: 1
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/dynamo-planner:${DYNAMO_VERSION}
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {memory: 2Gi}
+
+  - name: Epp                                   # ✅ Dynamo's EPP, operator turns this into mocker-agg-epp + mocker-agg-pool
+    type: epp
+    replicas: 1
+    eppConfig:
+      config:
+        plugins:
+        - type: disagg-profile-handler
+        - name: decode-filter
+          type: label-filter
+          parameters:
+            allowsNoLabel: true
+            label: nvidia.com/dynamo-component-type
+            validValues: [decode]
+        - name: picker
+          type: max-score-picker
+        - name: dyn-decode
+          type: dyn-decode-scorer
+        schedulingProfiles:
+        - name: decode
+          plugins:
+          - {pluginRef: decode-filter, weight: 1}
+          - {pluginRef: dyn-decode,    weight: 1}
+          - {pluginRef: picker,        weight: 1}
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/epp-image:${EPP_IMAGE_TAG}
+          env:
+          - name: DYN_MODEL_NAME
+            value: Qwen/Qwen3-0.6B
+          - name: DYN_KV_CACHE_BLOCK_SIZE
+            value: "16"                          # assumption 2
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 1Gi}
+
+  - name: decode
+    type: decode
+    replicas: 2                                  # two workers so the EPP has something to choose between
+    frontendSidecar: sidecar-frontend
+    podTemplate:
+      spec:
+        containers:
+        - name: main
+          image: nvcr.io/nvidia/ai-dynamo/dynamo-planner:${DYNAMO_VERSION}
+          workingDir: /workspace
+          command: [python3, -m, dynamo.mocker]
+          args:
+          - --model-path
+          - Qwen/Qwen3-0.6B
+          - --speedup-ratio
+          - "1.0"
+          resources:
+            requests: {cpu: 200m, memory: 1Gi}
+            limits: {memory: 4Gi}
+        - name: sidecar-frontend                 # assumption 3
+          image: nvcr.io/nvidia/ai-dynamo/dynamo-planner:${DYNAMO_VERSION}
+          args: [-m, dynamo.frontend, --router-mode, direct]
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {memory: 1Gi}

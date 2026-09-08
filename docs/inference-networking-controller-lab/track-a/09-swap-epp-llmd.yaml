@@ -1,0 +1,141 @@
+# Track A step 9 · 🔜 the page's "pluggable EPP" claim, tested with the report's recommended EPP.
+# Replaces ONLY the EPP image and its config with llm-d Router v0.10.0. Pool, route, pods unchanged.
+#
+# Apply on top of 04-epp.yaml:   kubectl apply -f 09-swap-epp-llmd.yaml
+# Revert:                        kubectl apply -f 04-epp.yaml
+#
+# Expected outcomes, both useful:
+#   ✓ routing keeps working                → image swap holds for GIE-EPP → llm-d
+#   ✗ 06-phase1-objectives.yaml is ignored → llm-d reads llm-d.ai/v1alpha2, not x-k8s.io. Report §12 confirmed live.
+#     Fix for that: install llm-d CRDs and re-apply the objectives under apiVersion: llm-d.ai/v1alpha2,
+#     and use header x-llm-d-inference-objective.
+#
+# ✅ VERIFIED 2026-09-06 on env nasbi-run-42428:
+#   - rollout clean, same flags accepted, HTTPRoute stayed Accepted/ResolvedRefs, e2e completion returned.
+#   - llm-d v0.10.0 started a controller for InferenceObjective in group inference.networking.x-k8s.io and
+#     HONORED the x-k8s.io objectives (objectiveKey=batch-jobs priority=-1) and the x-k8s.io rewrite (llama3-v2 seen).
+#     Both header names worked: x-gateway-inference-objective and x-llm-d-inference-objective.
+#   - No llm-d.ai CRDs were installed. So the report's "stale API group" gap is real for the *future*, but v0.10.0
+#     is still backward compatible with the GIE v1.5.0 groups. Re-test when llm-d drops x-k8s.io support.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama3-epp
+  namespace: model-serving
+data:
+  default-plugins.yaml: |
+    apiVersion: llm-d.ai/v1alpha1
+    kind: EndpointPickerConfig
+    plugins:
+    - type: queue-scorer
+    - type: kv-cache-utilization-scorer
+    - type: prefix-cache-scorer
+    - type: metrics-data-source
+      parameters:
+        scheme: "http"
+        path: "/metrics"
+        insecureSkipVerify: true
+    - type: core-metrics-extractor
+    schedulingProfiles:
+    - name: default
+      plugins:
+      - pluginRef: queue-scorer
+        weight: 30
+      - pluginRef: kv-cache-utilization-scorer
+        weight: 20
+      - pluginRef: prefix-cache-scorer
+        weight: 10
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: llama3-epp-non-sa
+  namespace: model-serving
+rules:
+- apiGroups: ["inference.networking.x-k8s.io", "llm-d.ai"]
+  resources: ["inferenceobjectives", "inferencemodelrewrites"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["inference.networking.k8s.io"]
+  resources: ["inferencepools"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama3-epp
+  namespace: model-serving
+  labels:
+    inference.networking.k8s.io/igw-mode: inferencepool
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      inferencepool: llama3-epp
+  template:
+    metadata:
+      labels:
+        inferencepool: llama3-epp
+        inference.networking.k8s.io/igw-mode: inferencepool
+    spec:
+      serviceAccountName: llama3-epp
+      terminationGracePeriodSeconds: 130
+      containers:
+      - name: epp
+        image: ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.10.0   # <- the only intended change
+        imagePullPolicy: IfNotPresent
+        args:
+        - --pool-name
+        - llama3-pool
+        - --pool-namespace
+        - model-serving
+        - --pool-group
+        - inference.networking.k8s.io
+        - --zap-encoder
+        - json
+        - --config-file
+        - /config/default-plugins.yaml
+        - --v
+        - "3"
+        - --tracing=false
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 1Gi
+        ports:
+        - name: grpc
+          containerPort: 9002
+        - name: grpc-health
+          containerPort: 9003
+        - name: metrics
+          containerPort: 9090
+        livenessProbe:
+          grpc:
+            port: 9003
+            service: inference-extension
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          grpc:
+            port: 9003
+            service: inference-extension
+          periodSeconds: 2
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: plugins-config-volume
+          mountPath: /config
+      volumes:
+      - name: plugins-config-volume
+        configMap:
+          name: llama3-epp

@@ -1,0 +1,25 @@
+# Track B step 7 · B.2′ · 🆕 our HTTPRoute → our pool (mocker-frontend-pool) → our EPP → Dynamo Frontend pod → mocker.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mocker-frontend
+  namespace: dynamo-lab
+  labels:
+    lab.track: b2prime
+spec:
+  parentRefs:
+  - name: inference-gateway
+    namespace: agentgateway-system
+  hostnames:
+  - mocker.test
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /v1
+    backendRefs:
+    - group: inference.networking.k8s.io
+      kind: InferencePool
+      name: mocker-frontend-pool
+    timeouts:
+      request: 300s

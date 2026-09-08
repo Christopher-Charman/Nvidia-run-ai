@@ -1,0 +1,58 @@
+%%{init: {"theme":"base","themeVariables":{"fontSize":"13px","fontFamily":"Inter, Helvetica, Arial"},"flowchart":{"nodeSpacing":40,"rankSpacing":55,"curve":"basis"}}}%%
+flowchart TB
+  classDef exists  fill:#6b7280,stroke:#9ca3af,color:#fff
+  classDef new     fill:#1f6f2b,stroke:#76b900,color:#fff,stroke-width:2px
+  classDef planned fill:#5a4a1a,stroke:#f0a030,color:#fff,stroke-dasharray:5 4
+  classDef process fill:#0f3460,stroke:#7b61ff,color:#fff
+  classDef file    fill:transparent,stroke:#374151,color:#111,stroke-width:1px
+
+  subgraph F00["00-prereqs.sh  ✅ admin"]
+    GC(["📦 GatewayClass<br/><b>name: agentgateway</b>"]):::exists
+  end
+
+  subgraph F01["01-namespace-gateway.yaml  ✅ admin"]
+    GW(["📦 Gateway<br/><b>name: inference-agw</b><br/>gatewayClassName: agentgateway<br/>listener :80"]):::exists
+  end
+
+  subgraph F05["05-httproute.yaml  🆕"]
+    RT(["📦 HTTPRoute llama3-route<br/>parentRefs[0].name: <b>inference-agw</b><br/>hostnames: llama3.test · path /v1<br/>backendRefs[0]: kind InferencePool<br/>name: <b>llama3-pool</b>"]):::new
+  end
+
+  subgraph F03["03-inferencepool.yaml  🆕"]
+    POOL(["📦 InferencePool<br/><b>name: llama3-pool</b><br/>selector app: <b>vllm-llama3</b><br/>targetPorts: <b>8000</b><br/>endpointPickerRef: <b>llama3-epp</b> :9002"]):::new
+  end
+
+  subgraph F02["02-sim-deployment.yaml  ✅ pod owner"]
+    PODS["🚀 Deployment vllm-llama3<br/>template.labels app: <b>vllm-llama3</b><br/>containerPort: <b>8000</b><br/>args: --model llama3<br/>--lora-modules <b>llama3-v2</b>"]:::exists
+  end
+
+  subgraph F04["04-epp.yaml  🆕  one file, six objects"]
+    SVC["⚙ Service <b>llama3-epp</b><br/>selector inferencepool: llama3-epp<br/>ports 9002 · 9090"]:::process
+    DEP["⚙ Deployment llama3-epp<br/>labels inferencepool: llama3-epp<br/>image epp:v1.5.0<br/>args --pool-name <b>llama3-pool</b><br/>serviceAccountName: llama3-epp"]:::process
+    CM(["📦 ConfigMap llama3-epp<br/>EndpointPickerConfig<br/>queue 30 · kv-cache 20 · prefix 10"]):::new
+    SA["👤 ServiceAccount llama3-epp<br/>+ Roles, RoleBindings<br/>+ system:auth-delegator"]:::process
+  end
+
+  subgraph F06["06-phase1-objectives.yaml  🔜"]
+    OBJ(["📦 InferenceObjective ×3<br/>prod-gold 100 · internal 10 · batch −1<br/>poolRef.name: <b>llama3-pool</b>"]):::planned
+  end
+
+  subgraph F07["07-phase1-modelrewrite.yaml  🔜"]
+    RW(["📦 InferenceModelRewrite<br/>match model: llama3<br/>targets llama3 90 · <b>llama3-v2</b> 10<br/>poolRef.name: <b>llama3-pool</b>"]):::planned
+  end
+
+  GW  -- "(a) gatewayClassName → name" --> GC
+  RT  -- "(a) parentRefs.name → Gateway.name" --> GW
+  RT  -- "(b) backendRefs.name → Pool.name" --> POOL
+  POOL -- "(c) selector.matchLabels → pod labels" --> PODS
+  POOL -. "(d) targetPorts 8000 = containerPort" .-> PODS
+  POOL -- "(e) endpointPickerRef → Service.name :9002" --> SVC
+  SVC -- "(f) selector → pod labels" --> DEP
+  DEP -- "(g) serviceAccountName" --> SA
+  DEP -- "(h) --pool-name → Pool.name" --> POOL
+  DEP -- "(i) volume mount" --> CM
+  OBJ -- "(b) poolRef.name" --> POOL
+  RW  -- "(b) poolRef.name" --> POOL
+  RW  -. "(k) llama3-v2 must be served" .-> PODS
+
+  class F00,F01,F02,F03,F04,F05,F06,F07 file

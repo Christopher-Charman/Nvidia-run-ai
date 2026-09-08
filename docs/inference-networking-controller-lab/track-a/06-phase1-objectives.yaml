@@ -1,0 +1,38 @@
+# Track A step 6 · 🔜 Phase 1. The page's three tiers.
+# API group is the GIE v1.5.0 one (inference.networking.x-k8s.io/v1alpha2). The report says llm-d.ai/v1alpha2 is current.
+# Both facts are true at once: the GIE v1.5.0 EPP reads THIS group; llm-d Router v0.10 reads the other. Check 12 uses that.
+#
+# Client selects a tier with header:  x-gateway-inference-objective: <name>
+# Without featureGates: ["flowControl"] in the EPP config, priority is recorded but nothing is queued or shed.
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceObjective
+metadata:
+  name: prod-gold
+  namespace: model-serving
+spec:
+  priority: 100
+  poolRef:
+    group: inference.networking.k8s.io
+    name: llama3-pool
+---
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceObjective
+metadata:
+  name: internal
+  namespace: model-serving
+spec:
+  priority: 10
+  poolRef:
+    group: inference.networking.k8s.io
+    name: llama3-pool
+---
+apiVersion: inference.networking.x-k8s.io/v1alpha2
+kind: InferenceObjective
+metadata:
+  name: batch-jobs
+  namespace: model-serving
+spec:
+  priority: -1
+  poolRef:
+    group: inference.networking.k8s.io
+    name: llama3-pool

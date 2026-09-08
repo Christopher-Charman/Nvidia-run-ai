@@ -1,0 +1,31 @@
+# Track B step 4 · 🆕 the ONLY object we own in ExistingPool mode.
+# Copied from Dynamo docs kv-aware-routing/gateway-api.mdx, names adapted.
+# Backend is the InferencePool the Dynamo operator generated from the DGD: ${DGD_NAME}-pool.
+# Dynamo matches on the model header, not on hostname.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mocker-agg
+  namespace: dynamo-lab
+  labels:
+    lab.track: b
+spec:
+  parentRefs:
+  - name: inference-gateway
+    namespace: agentgateway-system        # Dynamo's script puts the Gateway here with allowedRoutes from All
+  rules:
+  - matches:
+    - headers:
+      - name: X-Gateway-Model-Name
+        type: Exact
+        value: Qwen/Qwen3-0.6B
+      path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - group: inference.networking.k8s.io
+      kind: InferencePool
+      name: mocker-agg-pool                # ✅ created by the operator, not by us
+      port: 8000
+    timeouts:
+      request: 300s

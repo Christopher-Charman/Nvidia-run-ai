@@ -1,0 +1,49 @@
+# Track B step 1 · B.1 · ✅ Dynamo-native topology, documented, CPU only.
+# Schema: Dynamo operator 1.0.1 (what env-in-a-click shipped), apiVersion nvidia.com/v1alpha1, spec.services map.
+# Source: examples/backends/mocker/deploy/agg.yaml at tag v1.0.1, model swapped to the small public Qwen/Qwen3-0.6B.
+# Frontend receives requests, its built-in router picks the mocker worker. No Gateway API involved.
+#
+# Images (public on NGC, verified 2026-09-06): Frontend → dynamo-frontend:${DYNAMO_VERSION}; mocker worker → vllm-runtime:${DYNAMO_VERSION},
+# which ships the full ai-dynamo wheel including dynamo.mocker. Gated repos we cannot pull anonymously: mocker-runtime, epp-image.
+# dynamo-planner has no 1.0.x tag.
+# hf-token-secret from the upstream example is omitted: the Qwen tokenizer is public.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dynamo-lab
+---
+apiVersion: nvidia.com/v1alpha1
+kind: DynamoGraphDeployment
+metadata:
+  name: mocker-agg
+  namespace: dynamo-lab
+spec:
+  services:
+    Frontend:
+      componentType: frontend
+      replicas: 1
+      extraPodSpec:
+        mainContainer:
+          image: nvcr.io/nvidia/ai-dynamo/dynamo-frontend:${DYNAMO_VERSION}
+          resources:
+            requests: {cpu: 200m, memory: 512Mi}
+            limits: {memory: 2Gi}
+    decode:
+      componentType: worker
+      subComponentType: decode
+      replicas: 1
+      extraPodSpec:
+        mainContainer:
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:${DYNAMO_VERSION}
+          workingDir: /workspace
+          command: [python3, -m, dynamo.mocker]
+          args:
+          - --model-path
+          - Qwen/Qwen3-0.6B
+          - --model-name
+          - Qwen/Qwen3-0.6B
+          - --speedup-ratio
+          - "1.0"
+          resources:
+            requests: {cpu: 200m, memory: 1Gi}
+            limits: {memory: 6Gi}

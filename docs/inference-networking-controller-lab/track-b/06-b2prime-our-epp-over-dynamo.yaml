@@ -1,0 +1,206 @@
+# Track B step 6 · B.2′ · 🆕 OUR EPP + pool in front of Dynamo-owned Frontend pods.
+# This is NOT the original B.2 (Dynamo's own EPP, blocked: nvcr epp-image is gated). It is ManagedEPP mode with
+# Dynamo as the pod owner: the pool selects the Dynamo Frontend pods by their operator-set label.
+# Rendered from: helm template oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool --version v1.2.1
+# (the GIE version Dynamo pins), names and resources adapted. Markers: 🆕 everything below is ours.
+---
+# Source: inferencepool/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+  labels:
+    app.kubernetes.io/name: mocker-frontend-epp
+    app.kubernetes.io/version: "v1.2.1"
+
+---
+# Source: inferencepool/templates/epp-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+data:
+  default-plugins.yaml: |
+    apiVersion: inference.networking.x-k8s.io/v1alpha1
+    kind: EndpointPickerConfig
+    plugins:
+    - type: queue-scorer
+    - type: kv-cache-utilization-scorer
+    - type: prefix-cache-scorer
+    schedulingProfiles:
+    - name: default
+      plugins:
+      - pluginRef: queue-scorer
+        weight: 2
+      - pluginRef: kv-cache-utilization-scorer
+        weight: 2
+      - pluginRef: prefix-cache-scorer
+        weight: 3
+---
+# Source: inferencepool/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+  labels:
+    app.kubernetes.io/name: mocker-frontend-epp
+    app.kubernetes.io/version: "v1.2.1"
+rules:
+- apiGroups: ["inference.networking.x-k8s.io"]
+  resources: ["inferenceobjectives"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["inference.networking.k8s.io"]
+  resources: ["inferencepools"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+# Source: inferencepool/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+subjects:
+- kind: ServiceAccount
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mocker-frontend-epp
+---
+# Source: inferencepool/templates/epp-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+  labels:
+    app.kubernetes.io/name: mocker-frontend-epp
+    app.kubernetes.io/version: "v1.2.1"
+spec:
+  selector:
+    inferencepool: mocker-frontend-epp
+  ports:
+    - name: grpc-ext-proc
+      protocol: TCP
+      port: 9002
+    - name: http-metrics
+      protocol: TCP
+      port: 9090
+  type: ClusterIP
+
+---
+# Source: inferencepool/templates/epp-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mocker-frontend-epp
+  namespace: dynamo-lab
+  labels:
+    app.kubernetes.io/name: mocker-frontend-epp
+    app.kubernetes.io/version: "v1.2.1"
+spec:
+  replicas: 1
+  strategy:
+    # The current recommended EPP deployment pattern is to have a single active replica. This ensures 
+    # optimal performance of the stateful operations such prefix cache aware scorer.
+    # The Recreate strategy the old replica is killed immediately, and allow the new replica(s) to 
+    # quickly take over. This is particularly important in the high availability set up with leader
+    # election, as the rolling update strategy would prevent the old leader being killed because 
+    # otherwise the maxUnavailable would be 100%.
+    type: Recreate
+  selector:
+    matchLabels:
+      inferencepool: mocker-frontend-epp
+  template:
+    metadata:
+      labels:
+        inferencepool: mocker-frontend-epp
+    spec:
+      serviceAccountName: mocker-frontend-epp
+      # Conservatively, this timeout should mirror the longest grace period of the pods within the pool
+      terminationGracePeriodSeconds: 130
+      containers:
+      - name: epp
+        image: registry.k8s.io/gateway-api-inference-extension/epp:v1.2.1
+        imagePullPolicy: IfNotPresent
+        args:
+        - --pool-name
+        - mocker-frontend-pool
+        # The pool namespace is optional because EPP can default to the NAMESPACE env var.
+        # We still keep this here so that the template works with older versions of EPP, or other
+        # distros of EPP which may not have implemented the NAMESPACE env var defaulting behavior.
+        - --pool-namespace
+        - dynamo-lab
+        - --pool-group
+        - "inference.networking.k8s.io"
+        - --zap-encoder
+        - "json"
+        - --config-file
+        - "/config/default-plugins.yaml"
+        # Pass additional flags via the inferenceExtension.flags field in values.yaml.
+        - --v
+        - "1"
+        - --tracing=false
+        - --metrics-endpoint-auth=false
+        ports:
+        - name: grpc
+          containerPort: 9002
+        - name: grpc-health
+          containerPort: 9003
+        - name: metrics
+          containerPort: 9090
+        livenessProbe:
+          grpc:
+            port: 9003
+            service: inference-extension
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          grpc:
+            port: 9003
+            service: inference-extension
+          periodSeconds: 2
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: plugins-config-volume
+          mountPath: "/config"
+      volumes:
+      - name: plugins-config-volume
+        configMap:
+          name: mocker-frontend-epp
+
+---
+# Source: inferencepool/templates/inferencepool.yaml
+apiVersion: "inference.networking.k8s.io/v1"
+kind: InferencePool
+metadata:
+  name: mocker-frontend-pool
+  namespace: dynamo-lab
+  labels:
+    app.kubernetes.io/name: mocker-frontend-epp
+    app.kubernetes.io/version: "v1.2.1"
+spec:
+  targetPorts:
+      - number: 8000
+  selector:
+    matchLabels:
+      nvidia.com/dynamo-component-type: "frontend"
+  endpointPickerRef:
+    name: mocker-frontend-epp
+    port:
+      number: 9002
