@@ -7,6 +7,7 @@ package post_hooks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -37,30 +38,51 @@ var (
 // runai-project-validation) can still point at a Service port the new operator no
 // longer serves; init-ca re-points it asynchronously. Until then every delete fails
 // with an InternalError "failed calling webhook ...". The delete is idempotent, so
-// it is retried every webhookRetryInterval for up to webhookRetryTimeout. Any other
-// error is returned immediately. NotFound and NoMatch mean the object is already
-// gone and count as success.
+// it is retried every webhookRetryInterval for up to webhookRetryTimeout in total.
+// The deadline also bounds each delete call, so a request that never answers
+// cannot hold the hook past it. Any other error is returned immediately. NotFound
+// and NoMatch mean the object is already gone and count as success.
 func deleteLegacyObject(ctx context.Context, k8sClient client.Client, obj client.Object, kind string, logger logr.Logger) error {
 	logger.Info("Deleting legacy "+kind, "name", obj.GetName())
-	deadline := time.Now().Add(webhookRetryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, webhookRetryTimeout)
+	defer cancel()
+
+	var lastWebhookErr error
 	for {
 		err := k8sClient.Delete(ctx, obj)
-		if err == nil || apierrors.IsNotFound(err) || meta.IsNoMatchError(err) {
+		switch {
+		case err == nil || apierrors.IsNotFound(err) || meta.IsNoMatchError(err):
 			return nil
-		}
-		if !isWebhookCallFailure(err) {
+		case isWebhookCallFailure(err):
+			lastWebhookErr = err
+		case ctx.Err() != nil:
+			// The delete itself was cut off, by the retry deadline or by the caller.
+			return retryStopped(ctx, kind, obj, lastWebhookErr)
+		default:
 			return fmt.Errorf("failed to delete legacy %s %q: %w", kind, obj.GetName(), err)
 		}
-		if time.Now().After(deadline) {
-			return fmt.Errorf("failed to delete legacy %s %q: admission webhook still unreachable after %s: %w", kind, obj.GetName(), webhookRetryTimeout, err)
-		}
-		logger.Info("Admission webhook not reachable yet, retrying legacy delete", "kind", kind, "name", obj.GetName(), "error", err.Error())
+
+		logger.Info("Admission webhook not reachable yet, retrying legacy delete", "kind", kind, "name", obj.GetName(), "error", lastWebhookErr.Error())
+		// Waits for the retry interval or the remaining deadline, whichever ends first.
 		select {
 		case <-ctx.Done():
-			return fmt.Errorf("failed to delete legacy %s %q: %w", kind, obj.GetName(), ctx.Err())
+			return retryStopped(ctx, kind, obj, lastWebhookErr)
 		case <-time.After(webhookRetryInterval):
 		}
 	}
+}
+
+// retryStopped builds the error for a delete that ran out of time. On the retry
+// deadline it carries the last webhook failure seen, if any, so the log explains
+// what the hook was waiting for; on caller cancellation it carries the context error.
+func retryStopped(ctx context.Context, kind string, obj client.Object, lastWebhookErr error) error {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		if lastWebhookErr != nil {
+			return fmt.Errorf("failed to delete legacy %s %q: admission webhook still unreachable after %s: %w", kind, obj.GetName(), webhookRetryTimeout, lastWebhookErr)
+		}
+		return fmt.Errorf("failed to delete legacy %s %q: no answer from the API server within %s: %w", kind, obj.GetName(), webhookRetryTimeout, ctx.Err())
+	}
+	return fmt.Errorf("failed to delete legacy %s %q: %w", kind, obj.GetName(), ctx.Err())
 }
 
 // isWebhookCallFailure reports whether err is the API server failing to call an
