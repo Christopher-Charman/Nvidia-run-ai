@@ -25,8 +25,17 @@ func newTester(t *testing.T) *Tester {
 	return NewTester(t, DefaultRuleGroups(testRuleGroupsConfig()))
 }
 
+func newAccountingTester(t *testing.T) *Tester {
+	t.Helper()
+	return NewTester(t, AccountingRuleGroups())
+}
+
 func TestAllRulesSyntax(t *testing.T) {
 	newTester(t).CheckSyntax()
+}
+
+func TestAccountingRulesSyntax(t *testing.T) {
+	newAccountingTester(t).CheckSyntax()
 }
 
 func TestVLLMRulesHaveDedicatedGroup(t *testing.T) {

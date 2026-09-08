@@ -14,11 +14,11 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator/pkg/operands"
 	runv1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1"
+	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/prometheus/definitions"
 )
 
 const prometheusRuleName = "runai-accounting"
@@ -50,13 +50,7 @@ func desiredPrometheusRule(runaiConfig *runv1.RunaiConfig) *monitoringv1.Prometh
 	rule.Labels = map[string]string{
 		kai_consts.DefaultAccountingLabelKey: kai_consts.DefaultAccountingLabelValue,
 	}
-	rule.Spec.Groups = []monitoringv1.RuleGroup{{
-		Name: "default",
-		Rules: []monitoringv1.Rule{{
-			Record: "resources_per_nodepool",
-			Expr:   intstr.FromString("sum(kube_node_status_capacity * on(node) group_left(nodepool) (max by (node, nodepool) (runai_node_nodepool == 1))) by (nodepool, resource)"),
-		}},
-	}}
+	rule.Spec.Groups = definitions.AccountingRuleGroups()
 	return rule
 }
 

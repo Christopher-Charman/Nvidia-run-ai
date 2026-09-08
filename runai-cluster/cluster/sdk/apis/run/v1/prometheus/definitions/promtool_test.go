@@ -96,9 +96,10 @@ type testFile struct {
 }
 
 type TestCase struct {
-	Interval string  `yaml:"interval"`
-	Inputs   []Input `yaml:"input_series"`
-	Tests    []Test  `yaml:"promql_expr_test"`
+	Interval string      `yaml:"interval"`
+	Inputs   []Input     `yaml:"input_series"`
+	Tests    []Test      `yaml:"promql_expr_test,omitempty"`
+	Alerts   []AlertTest `yaml:"alert_rule_test,omitempty"`
 }
 
 type Input struct {
@@ -115,6 +116,17 @@ type Test struct {
 type Sample struct {
 	Labels string  `yaml:"labels,omitempty"`
 	Value  float64 `yaml:"value"`
+}
+
+type AlertTest struct {
+	EvalTime  string        `yaml:"eval_time"`
+	AlertName string        `yaml:"alertname"`
+	Expected  []ExpectAlert `yaml:"exp_alerts"`
+}
+
+type ExpectAlert struct {
+	Labels      map[string]string `yaml:"exp_labels,omitempty"`
+	Annotations map[string]string `yaml:"exp_annotations,omitempty"`
 }
 
 // --- rule group conversion ---

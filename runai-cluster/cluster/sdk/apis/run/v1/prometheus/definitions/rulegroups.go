@@ -71,6 +71,20 @@ const migPodFilter = `gpu!="", gpu_instance_id!=""`
 const wholePodFilter = `gpu="", gpu_instance_id=""`
 const fractionalPodFilter = `gpu!="", gpu_instance_id=""`
 
+// Metrics scraped from third-party exporters (kube-state-metrics, cAdvisor via the
+// kubelet, node-exporter) can describe the same object twice: a cluster may run more
+// Prometheus stacks than ours in the namespace our Prometheus monitors, and we then
+// adopt their ServiceMonitors alongside our own. The extra series are identical apart
+// from the scrape labels (job/service/instance/pod), which is invisible to a matcher
+// but fatal to vector matching - a duplicate in the "one" side of a match group aborts
+// the whole rule evaluation ("many-to-one matching must be explicit"), and a duplicate
+// swept into a sum() silently doubles the result.
+//
+// So: never let a third-party selector take part in vector matching as-is. Collapse it
+// first with max/group/topk over exactly the labels the match and the enclosing
+// aggregation need. That is a no-op when the metric is scraped once, which is why the
+// guards are unconditional rather than opt-in.
+
 type RuleGroupsConfig struct {
 	AgentPullPushRateMinForAlert             float32
 	ClusterSyncQueueDepthIncreaseMaxForAlert float32
@@ -147,7 +161,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 		},
 		{
 			Record: "runai_pod_completion_time",
-			Expr:   intstr.FromString(`runai_pod_info_enriched_nodepool_unique  * on(pod_uuid) group_left() label_replace(kube_pod_completion_time, "pod_uuid", "$1", "uid", "(.*)")`),
+			Expr:   intstr.FromString(`runai_pod_info_enriched_nodepool_unique  * on(pod_uuid) group_left() label_replace(max by(uid) (kube_pod_completion_time), "pod_uuid", "$1", "uid", "(.*)")`),
 		},
 		{
 			Record: "runai_pod_info_enriched_nodepool_unique_with_gpu_for_core_pods",
@@ -185,7 +199,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Record: "runai_node_info_enriched",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (kube_node_info * on(node) group_left(nodepool) runai_node_nodepool_excluded) * on(node) group_left(modelName) (group(runai_gpu_memory_total_mebibytes_per_gpu) by(node, modelName) or on(node) kube_node_info) * on(node) group_left(ready) (group(label_replace(kube_node_status_condition{condition="Ready"}, "ready", "$1", "status", "(.*)")==1) by(node, ready)) * on(node) group_left(schedulable) (group(label_replace(kube_node_spec_unschedulable == 0, "schedulable", "true", "schedulable", "(.*)") or on(node) label_replace(kube_node_spec_unschedulable == 1, "schedulable", "false", "schedulable", "(.*)")) by(node,schedulable))`, nodeLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (group(kube_node_info) by(node) * on(node) group_left(nodepool) runai_node_nodepool_excluded) * on(node) group_left(modelName) (group(runai_gpu_memory_total_mebibytes_per_gpu) by(node, modelName) or on(node) group(kube_node_info) by(node)) * on(node) group_left(ready) (group(label_replace(kube_node_status_condition{condition="Ready"}, "ready", "$1", "status", "(.*)")==1) by(node, ready)) * on(node) group_left(schedulable) (group(label_replace(kube_node_spec_unschedulable == 0, "schedulable", "true", "schedulable", "(.*)") or on(node) label_replace(kube_node_spec_unschedulable == 1, "schedulable", "false", "schedulable", "(.*)")) by(node,schedulable))`, nodeLabels)),
 			},
 			{
 				Record: "runai_requested_mig_devices_per_workload",
@@ -196,7 +210,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ==================================== Total GPUs =====================================
 			{
 				Record: "runai_gpu_count_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) ((count by (node) (runai_gpu_memory_total_mebibytes_per_gpu) or on(node) kube_node_info*0) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) ((count by (node) (runai_gpu_memory_total_mebibytes_per_gpu) or on(node) group(kube_node_info) by(node)*0) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
 			},
 			// TODO: remove this, use the next one instead
 			{
@@ -619,7 +633,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ================================ Requested CPU Cores ================================
 			{
 				Record: "runai_pending_requested_cpu_cores_per_workload",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(sum(kube_pod_container_resource_requests{resource='cpu'}) by(uid), "pod_uuid" , "$1", "uid", "(.*)") * on(pod_uuid) group_right() runai_pod_info_enriched_nodepool_unique or on(pod_uuid) runai_pod_info_enriched_nodepool_unique*0) by(%s) * on(%s) group_right() runai_workload_info_enriched{detailed_status="Pending"})`, workloadLabels, workloadIdLabel, workloadIdLabel)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(sum(max by (uid, container) (kube_pod_container_resource_requests{resource='cpu'})) by(uid), "pod_uuid" , "$1", "uid", "(.*)") * on(pod_uuid) group_right() runai_pod_info_enriched_nodepool_unique or on(pod_uuid) runai_pod_info_enriched_nodepool_unique*0) by(%s) * on(%s) group_right() runai_workload_info_enriched{detailed_status="Pending"})`, workloadLabels, workloadIdLabel, workloadIdLabel)),
 			},
 			{
 				Record: "runai_pending_requested_cpu_cores_per_queue",
@@ -671,7 +685,8 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Record: "runai_allocated_cpu_cores_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum by (node) (kube_pod_container_resource_requests{resource="cpu",unit="core",node!=""} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1)) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum by (node) (%s) * on(node) group_right() runai_node_info_enriched)`,
+					nodeLabels, activePodContainerResourcesPerNode(`kube_pod_container_resource_requests{resource="cpu",unit="core",node!=""}`))),
 			},
 			{
 				Record: "runai_allocated_cpu_cores_per_nodepool",
@@ -686,7 +701,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ================================== Used CPU Cores ===================================
 			{
 				Record: "runai_used_cpu_cores_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (label_replace(label_replace((sum(rate(container_cpu_usage_seconds_total{container!=""}[2m])) by (pod, namespace) or max(rate(container_cpu_usage_seconds_total{container=""}[2m])) by (pod, namespace)),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)") * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (label_replace(label_replace((sum(max by (pod, namespace, container) (rate(container_cpu_usage_seconds_total{container!=""}[2m]))) by (pod, namespace) or max(rate(container_cpu_usage_seconds_total{container=""}[2m])) by (pod, namespace)),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)") * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
 			},
 			{
 				Record: "runai_used_cpu_cores_per_workload",
@@ -706,7 +721,14 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Record: "runai_used_cpu_cores_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) ((runai_cpu_cores_count_per_node - on(node) sum(rate(node_cpu_seconds_total{job="node-exporter",mode=~"idle|iowait|steal"}[1m])) by(pod, namespace) * on(pod, namespace) group_left(node) kube_pod_info) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				// The inner collapse is per cpu and mode, because the sum below it would
+				// otherwise add a second scrape of one exporter to the node's idle time
+				// and report the node as using more cores than it has.
+				//
+				// min, not max, on the outer collapse: two node-exporter DaemonSets give
+				// a node two readings, and subtracting the smallest idle reports the
+				// largest usage - the direction runai_used_memory_bytes_per_node takes.
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) ((runai_cpu_cores_count_per_node - on(node) min by(node) (sum(max by(pod, namespace, cpu, mode) (rate(node_cpu_seconds_total{job="node-exporter",mode=~"idle|iowait|steal"}[1m]))) by(pod, namespace) * on(pod, namespace) group_left(node) max by(pod, namespace, node) (kube_pod_info))) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
 			},
 			{
 				Record: "runai_used_cpu_cores_per_nodepool",
@@ -736,7 +758,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ================================== Total CPU Cores ==================================
 			{
 				Record: "runai_cpu_cores_count_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) (kube_node_status_capacity{resource='cpu'} * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) (max by(node) (kube_node_status_capacity{resource='cpu'}) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
 			},
 			{
 				Record: "runai_cpu_cores_count_per_nodepool",
@@ -809,7 +831,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// =============================== Requested Memory Bytes ==============================
 			{
 				Record: "runai_pending_requested_memory_bytes_per_workload",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(sum(kube_pod_container_resource_requests{resource='memory'}) by(uid), "pod_uuid" , "$1", "uid", "(.*)") * on(pod_uuid) group_right() runai_pod_info_enriched_nodepool_unique or on(pod_uuid) runai_pod_info_enriched_nodepool_unique*0) by(%s) * on(%s) group_right() runai_workload_info_enriched{detailed_status="Pending"})`, workloadLabels, workloadIdLabel, workloadIdLabel)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(sum(max by (uid, container) (kube_pod_container_resource_requests{resource='memory'})) by(uid), "pod_uuid" , "$1", "uid", "(.*)") * on(pod_uuid) group_right() runai_pod_info_enriched_nodepool_unique or on(pod_uuid) runai_pod_info_enriched_nodepool_unique*0) by(%s) * on(%s) group_right() runai_workload_info_enriched{detailed_status="Pending"})`, workloadLabels, workloadIdLabel, workloadIdLabel)),
 			},
 			{
 				Record: "runai_pending_requested_memory_bytes_per_queue",
@@ -861,7 +883,8 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// },
 			{
 				Record: "runai_allocated_memory_bytes_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum by (node) (kube_pod_container_resource_requests{resource="memory",unit="byte",node!=""} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1)) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum by (node) (%s) * on(node) group_right() runai_node_info_enriched)`,
+					nodeLabels, activePodContainerResourcesPerNode(`kube_pod_container_resource_requests{resource="memory",unit="byte",node!=""}`))),
 			},
 			{
 				Record: "runai_allocated_memory_bytes_per_nodepool",
@@ -877,7 +900,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ================================= Used Memory Bytes =================================
 			{
 				Record: "runai_used_memory_bytes_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (label_replace(label_replace((sum(container_memory_usage_bytes{ container!=""}) by (pod, namespace) or max(container_memory_usage_bytes{container=""}) by (pod, namespace)),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)") * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (label_replace(label_replace((sum(max by (pod, namespace, container) (container_memory_usage_bytes{container!=""})) by (pod, namespace) or max(container_memory_usage_bytes{container=""}) by (pod, namespace)),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)") * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
 			},
 			{
 				Record: "runai_used_memory_bytes_per_workload",
@@ -897,7 +920,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// },
 			{
 				Record: "runai_used_memory_bytes_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) ((node_memory_MemTotal_bytes{job="node-exporter"} - (node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Cached_bytes{job="node-exporter"} + node_memory_Buffers_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on(pod, namespace) group_left(node) kube_pod_info * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (max by(node) ((node_memory_MemTotal_bytes{job="node-exporter"} - (node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Cached_bytes{job="node-exporter"} + node_memory_Buffers_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on(pod, namespace) group_left(node) max by(pod, namespace, node) (kube_pod_info)) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
 			},
 			{
 				Record: "runai_used_memory_bytes_per_nodepool",
@@ -927,7 +950,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ================================ Total Memory Bytes =================================
 			{
 				Record: "runai_total_memory_bytes_per_node",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) (kube_node_status_capacity{resource='memory'} * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
+				Expr:   intstr.FromString(fmt.Sprintf(`sum by (%s) (max by(node) (kube_node_status_capacity{resource='memory'}) * on(node) group_right() runai_node_info_enriched)`, nodeLabels)),
 			},
 			{
 				Record: "runai_total_memory_bytes_per_nodepool",
@@ -1071,15 +1094,15 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			// ==================================== Deprecated =====================================
 			{
 				Record: "runai_node_cpu_seconds_total",
-				Expr:   intstr.FromString(`(node_cpu_seconds_total * on(pod, namespace) group_left(node) kube_pod_info) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
+				Expr:   intstr.FromString(`(node_cpu_seconds_total * on(pod, namespace) group_left(node) max by(pod, namespace, node) (kube_pod_info)) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
 			},
 			{
 				Record: "runai_node_memory_mem_available_bytes",
-				Expr:   intstr.FromString(`(node_memory_MemAvailable_bytes * on(pod, namespace) group_left(node) kube_pod_info) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
+				Expr:   intstr.FromString(`(node_memory_MemAvailable_bytes * on(pod, namespace) group_left(node) max by(pod, namespace, node) (kube_pod_info)) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
 			},
 			{
 				Record: "runai_node_memory_mem_total_bytes",
-				Expr:   intstr.FromString(`(node_memory_MemTotal_bytes * on(pod, namespace) group_left(node) kube_pod_info) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
+				Expr:   intstr.FromString(`(node_memory_MemTotal_bytes * on(pod, namespace) group_left(node) max by(pod, namespace, node) (kube_pod_info)) * on(node) group_left(nodepool) runai_node_nodepool_excluded`),
 			},
 			// =====================================================================================
 		},
@@ -1145,35 +1168,43 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 		Rules: []monitoringv1.Rule{
 			{
 				Record: "runai_active_job_memory_requested_bytes",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(kube_pod_container_resource_requests{resource="memory",unit="byte"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1), "pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`, workloadNameUidLabels, workloadNameUidLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(%s, "pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`,
+					activePodContainerResources(`kube_pod_container_resource_requests{resource="memory",unit="byte"}`), workloadNameUidLabels, workloadNameUidLabels)),
 			},
 			{
 				Record: "runai_active_job_cpu_requested_cores",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(kube_pod_container_resource_requests{resource="cpu",unit="core"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`, workloadNameUidLabels, workloadNameUidLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`,
+					activePodContainerResources(`kube_pod_container_resource_requests{resource="cpu",unit="core"}`), workloadNameUidLabels, workloadNameUidLabels)),
 			},
 			{
 				Record: "runai_cpu_requested_cores_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(kube_pod_container_resource_requests{resource="cpu",unit="core"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`,
+					podLabels, activePodContainerResources(`kube_pod_container_resource_requests{resource="cpu",unit="core"}`))),
 			},
 			{
 				Record: "runai_cpu_limits_per_active_workload",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(kube_pod_container_resource_limits{resource="cpu"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`, workloadNameUidLabels, workloadNameUidLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`,
+					activePodContainerResources(`kube_pod_container_resource_limits{resource="cpu"}`), workloadNameUidLabels, workloadNameUidLabels)),
 			},
 			{
 				Record: "runai_cpu_limit_cores_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(kube_pod_container_resource_limits{resource="cpu"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`,
+					podLabels, activePodContainerResources(`kube_pod_container_resource_limits{resource="cpu"}`))),
 			},
 			{
 				Record: "runai_memory_limits_per_active_workload",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(kube_pod_container_resource_limits{resource="memory"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`, workloadNameUidLabels, workloadNameUidLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum(sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_left(%s) (runai_pod_info_enriched_nodepool_unique * 0 + 1) ) by (%s)`,
+					activePodContainerResources(`kube_pod_container_resource_limits{resource="memory"}`), workloadNameUidLabels, workloadNameUidLabels)),
 			},
 			{
 				Record: "runai_memory_requested_bytes_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(kube_pod_container_resource_requests{resource="memory",unit="byte"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`,
+					podLabels, activePodContainerResources(`kube_pod_container_resource_requests{resource="memory",unit="byte"}`))),
 			},
 			{
 				Record: "runai_memory_limit_bytes_per_pod",
-				Expr:   intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(kube_pod_container_resource_limits{resource="memory"} * on(pod, namespace) group_left() (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}==1),"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`, podLabels)),
+				Expr: intstr.FromString(fmt.Sprintf(`sum by(%s) (sum(label_replace(label_replace(%s,"pod_name" , "$1", "pod", "(.*)"), "pod_namespace" , "$1", "namespace", "(.*)")) by (pod_name, pod_namespace) * on(pod_name, pod_namespace) group_right() runai_pod_info_enriched_nodepool_unique)`,
+					podLabels, activePodContainerResources(`kube_pod_container_resource_limits{resource="memory"}`))),
 			},
 			{
 				Record: "runai_project_info",
@@ -1518,7 +1549,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Alert:  "RunaiContainerMemoryUsageWarning",
-				Expr:   intstr.FromString("((container_memory_working_set_bytes{namespace=~\"runai|runai-backend\"}>0) / on(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit='byte'}>0)) > 0.8"),
+				Expr:   intstr.FromString("((max by(container, pod, namespace) (container_memory_working_set_bytes{namespace=~\"runai|runai-backend\"})>0) / on(container, pod, namespace) (max by(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit=\"byte\"})>0)) > 0.8"),
 				For:    ptr.To(monitoringv1.Duration("2m")),
 				Labels: mergeLabels(ruleGroupsConfig.AdditionalAlertLabels, map[string]string{"severity": "warning"}),
 				Annotations: map[string]string{
@@ -1528,7 +1559,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Alert:  "RunaiContainerMemoryUsageCritical",
-				Expr:   intstr.FromString("((container_memory_working_set_bytes{namespace=~\"runai|runai-backend\"}>0) / on(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit=\"byte\"}>0)) > 0.9"),
+				Expr:   intstr.FromString("((max by(container, pod, namespace) (container_memory_working_set_bytes{namespace=~\"runai|runai-backend\"})>0) / on(container, pod, namespace) (max by(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit=\"byte\"})>0)) > 0.9"),
 				For:    ptr.To(monitoringv1.Duration("30s")),
 				Labels: mergeLabels(ruleGroupsConfig.AdditionalAlertLabels, map[string]string{"severity": "critical"}),
 				Annotations: map[string]string{
@@ -1538,7 +1569,7 @@ func DefaultRuleGroups(ruleGroupsConfig *RuleGroupsConfig) []monitoringv1.RuleGr
 			},
 			{
 				Alert:  "RunaiCpuUsageWarning",
-				Expr:   intstr.FromString("((rate(container_cpu_usage_seconds_total{namespace=~\"runai|runai-backend\"}[2m])>0) / on(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit=\"core\"}>0)) > 0.8"),
+				Expr:   intstr.FromString("((max by(container, pod, namespace) (rate(container_cpu_usage_seconds_total{namespace=~\"runai|runai-backend\"}[2m]))>0) / on(container, pod, namespace) (max by(container, pod, namespace) (kube_pod_container_resource_limits{namespace=~\"runai|runai-backend\", unit=\"core\"})>0)) > 0.8"),
 				For:    ptr.To(monitoringv1.Duration("2m")),
 				Labels: mergeLabels(ruleGroupsConfig.AdditionalAlertLabels, map[string]string{"severity": "warning"}),
 				Annotations: map[string]string{
@@ -2174,13 +2205,58 @@ func AdvancedRuleGroup() monitoringv1.RuleGroup {
 	}
 }
 
+// AccountingRuleGroups are evaluated by the KAI accounting Prometheus rather than the
+// runai one, and the scheduler reads the result as nodepool capacity. They are defined
+// here, not next to the operand that ships them, so that the promtool suite covers them
+// alongside every other shipped rule.
+func AccountingRuleGroups() []monitoringv1.RuleGroup {
+	return []monitoringv1.RuleGroup{{
+		Name: "default",
+		Rules: []monitoringv1.Rule{{
+			Record: "resources_per_nodepool",
+			Expr:   intstr.FromString(`sum(max by (node, resource) (kube_node_status_capacity) * on(node) group_left(nodepool) (max by (node, nodepool) (runai_node_nodepool == 1))) by (nodepool, resource)`),
+		}},
+	}}
+}
+
 func amdMetricsRule(amdMetric string) string {
 	return fmt.Sprintf(`label_join(label_replace(label_replace(label_replace(label_replace(%s, "node", "$1", "node_id", "(.*)"), "modelName", "$1", "productname", "(.*)"), "gpu", "$1", "gpu_id", "(.*)"), "pod_uuid", "$1", "pod", "(.*)"), "UUID", "-", "node", "gpu") * on(node) group_left(nodepool) runai_node_nodepool_excluded`, amdMetric)
 }
 
+// activePodContainerResources selects a kube-state-metrics container resource series -
+// kube_pod_container_resource_requests or kube_pod_container_resource_limits, with the
+// resource/unit matchers supplied by the caller - restricted to pods in a phase that
+// still consumes quota. Both operands are collapsed to a single series per match group
+// first, so the join holds when kube-state-metrics is scraped more than once.
+//
+// The collapse deliberately drops node: for about a scrape interval after a pod is
+// scheduled the two exporters disagree on it, one still reporting node="", so keeping
+// it would leave two series for the pod and count it twice.
+func activePodContainerResources(selector string) string {
+	return activePodContainerResourcesBy("namespace, pod, container", selector)
+}
+
+// activePodContainerResourcesPerNode is activePodContainerResources for callers that
+// aggregate by node. The disagreement above cannot reach them: they select node!="",
+// and a bound pod never moves to another node.
+func activePodContainerResourcesPerNode(selector string) string {
+	return activePodContainerResourcesBy("namespace, pod, container, node", selector)
+}
+
+func activePodContainerResourcesBy(groupBy, selector string) string {
+	return fmt.Sprintf(`max by (%s) (%s) * on(pod, namespace) group_left() (max by (pod, namespace) (kube_pod_status_phase{phase=~"Pending|Running|Unknown"}) == 1)`, groupBy, selector)
+}
+
+// dcgmMetricsRule attributes a DCGM series to a node and nodepool. The DCGM operand is
+// collapsed too, not just the kube_pod_info it joins against: a second ServiceMonitor on
+// the exporter does not abort this rule - DCGM is the "many" side - but it would double
+// every sum over these series, and GPU memory would read twice its real size. Dropping
+// the scrape labels is what makes the copies collapse, so pod_ip is derived from
+// instance before the aggregation rather than after. Two separate dcgm-exporter
+// deployments still double, since they differ by pod as well.
 func dcgmMetricsRule(dcgmMetric string) string {
-	return fmt.Sprintf(`label_replace(label_replace(label_replace(label_replace(%s, "pod_ip", "$1", "instance", "(.*):(.*)"), "pod_name", "$1", "exported_pod", "(.+)"), "pod_namespace", "$1", "exported_namespace", "(.+)"), "gpu_instance_id",
-	"$1", "GPU_I_ID", "(.+)") * on (pod_ip) group_left(node) kube_pod_info{created_by_name=~".*dcgm-exporter", pod_ip!=""} * on(node) group_left(nodepool) runai_node_nodepool_excluded`, dcgmMetric)
+	return fmt.Sprintf(`max without (job, instance, endpoint, service, container) (label_replace(label_replace(label_replace(label_replace(%s, "pod_ip", "$1", "instance", "(.*):(.*)"), "pod_name", "$1", "exported_pod", "(.+)"), "pod_namespace", "$1", "exported_namespace", "(.+)"), "gpu_instance_id",
+	"$1", "GPU_I_ID", "(.+)")) * on (pod_ip) group_left(node) max by(pod_ip, node) (kube_pod_info{created_by_name=~".*dcgm-exporter", pod_ip!=""}) * on(node) group_left(nodepool) runai_node_nodepool_excluded`, dcgmMetric)
 }
 
 func gpuMetricsPerWholePodRule(runaiDcgmMetric string) string {
