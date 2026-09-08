@@ -15,7 +15,7 @@ dependencies:
     # validate the karta FIPS 140-3 chart flag before it ships as a real
     # karta release. Revert to oci://ghcr.io/run-ai/karta before merging.
     repository: oci://ghcr.io/nshidlansik/karta
-    version: 0.0.0-fips-b11dd02
+    version: 0.0.0-fips-619e251
   - name: crds
     condition: development.includeCRDsInReleaseManifest
     repository: file://charts/crds

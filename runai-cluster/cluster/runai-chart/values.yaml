@@ -204,7 +204,7 @@ karta:
   # Revert alongside the Chart.yaml karta dependency override before merging.
   image:
     repository: ghcr.io/nshidlansik/karta/karta-operator
-    tag: 0.0.0-fips-b11dd02
+    tag: 0.0.0-fips-619e251
   fipsMode: only
 # Karta migration job: runs as Helm pre/post-upgrade hooks to copy
 # legacy ResourceInterface CRs into Karta CRs and (post-upgrade) clean up RIs.
