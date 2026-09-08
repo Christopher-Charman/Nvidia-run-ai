@@ -174,9 +174,15 @@ properties:
   preemptible:
     type: boolean
     nullable: true
+  controlPlaneManaged:
+    x-internal: true
+    type: boolean
+    description: Indicates whether the workload is managed by the Run:ai control plane.
   fullySaasWorkload:
     x-internal: true
     type: boolean
+    deprecated: true
+    description: Deprecated. Use controlPlaneManaged instead.
   environmentVariables:
     type: object
     additionalProperties:

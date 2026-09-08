@@ -51114,9 +51114,17 @@ components:
           items:
             type: string
             example: 'ubi-minimal:latest'
+        controlPlaneManaged:
+          type: boolean
+          example: false
+          description: >-
+            Indicates whether the workload is managed by the Run:ai control
+            plane.
         fullySaasWorkload:
           type: boolean
           example: false
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
         category:
           type: string
           example: Train
@@ -51546,9 +51554,17 @@ components:
         preemptible:
           type: boolean
           nullable: true
+        controlPlaneManaged:
+          x-internal: true
+          type: boolean
+          description: >-
+            Indicates whether the workload is managed by the Run:ai control
+            plane.
         fullySaasWorkload:
           x-internal: true
           type: boolean
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
         environmentVariables:
           type: object
           additionalProperties:
@@ -52050,9 +52066,17 @@ components:
           format: int32
           example: 100
           nullable: true
+        controlPlaneManaged:
+          type: boolean
+          example: true
+          description: >-
+            Indicates whether the workload is managed by the Run:ai control
+            plane.
         fullySaasWorkload:
           type: boolean
           example: true
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
         environmentVariables:
           type: object
           additionalProperties:

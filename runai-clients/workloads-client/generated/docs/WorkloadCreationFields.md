@@ -24,7 +24,8 @@ Name | Type | Description | Notes
 **ExternalConnections** | Pointer to [**[]Connection**](Connection.md) |  | [optional] 
 **DistributedFramework** | Pointer to **string** |  | [optional] 
 **Images** | Pointer to **[]string** |  | [optional] 
-**FullySaasWorkload** | Pointer to **bool** |  | [optional] 
+**ControlPlaneManaged** | Pointer to **bool** | Indicates whether the workload is managed by the Run:ai control plane. | [optional]
+**FullySaasWorkload** | Pointer to **bool** | Deprecated. Use controlPlaneManaged instead. | [optional]
 **Category** | Pointer to **string** |  | [optional] 
 **SourceApi** | Pointer to [**NullableSourceApi**](SourceApi.md) |  | [optional] 
 **Preemptibility** | Pointer to **NullableString** |  | [optional] 
@@ -528,6 +529,31 @@ SetImages sets Images field to given value.
 
 HasImages returns a boolean if a field has been set.
 
+### GetControlPlaneManaged
+
+`func (o *WorkloadCreationFields) GetControlPlaneManaged() bool`
+
+GetControlPlaneManaged returns the ControlPlaneManaged field if non-nil, zero value otherwise.
+
+### GetControlPlaneManagedOk
+
+`func (o *WorkloadCreationFields) GetControlPlaneManagedOk() (*bool, bool)`
+
+GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetControlPlaneManaged
+
+`func (o *WorkloadCreationFields) SetControlPlaneManaged(v bool)`
+
+SetControlPlaneManaged sets ControlPlaneManaged field to given value.
+
+### HasControlPlaneManaged
+
+`func (o *WorkloadCreationFields) HasControlPlaneManaged() bool`
+
+HasControlPlaneManaged returns a boolean if a field has been set.
+
 ### GetFullySaasWorkload
 
 `func (o *WorkloadCreationFields) GetFullySaasWorkload() bool`
@@ -650,5 +676,4 @@ HasPreemptibility returns a boolean if a field has been set.
 UnsetPreemptibility ensures that no value is present for Preemptibility, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
 

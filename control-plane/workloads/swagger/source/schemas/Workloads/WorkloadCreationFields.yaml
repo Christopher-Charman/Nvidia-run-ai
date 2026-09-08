@@ -74,9 +74,15 @@ properties:
     items:
       type: string
       example: "ubi-minimal:latest"
+  controlPlaneManaged:
+    type: boolean
+    example: false
+    description: Indicates whether the workload is managed by the Run:ai control plane.
   fullySaasWorkload:
     type: boolean
     example: false
+    deprecated: true
+    description: Deprecated. Use controlPlaneManaged instead.
   category:
     type: string
     example: Train

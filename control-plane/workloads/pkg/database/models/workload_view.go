@@ -86,7 +86,7 @@ type WorkloadView struct {
 	DistributedFramework          string
 	AdditionalFields              AdditionalFields `gorm:"type:jsonb"`
 	Preemptible                   *bool
-	FullySaasWorkload             bool
+	ControlPlaneManaged           bool `gorm:"column:fully_saas_workload"`
 	Command                       string
 	Arguments                     string
 	EnvironmentVariables          EnvironmentVariables     `gorm:"type:jsonb"`

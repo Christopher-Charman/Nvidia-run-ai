@@ -34,6 +34,8 @@ type WorkloadCreationFields struct {
 	ExternalConnections []Connection1 `json:"externalConnections,omitempty"`
 	DistributedFramework *string `json:"distributedFramework,omitempty"`
 	Images []string `json:"images,omitempty"`
+	// Indicates whether the workload is managed by the Run:ai control plane.
+	ControlPlaneManaged *bool `json:"controlPlaneManaged,omitempty"`
 	FullySaasWorkload *bool `json:"fullySaasWorkload,omitempty"`
 }
 
@@ -534,6 +536,38 @@ func (o *WorkloadCreationFields) SetImages(v []string) {
 	o.Images = v
 }
 
+// GetControlPlaneManaged returns the ControlPlaneManaged field value if set, zero value otherwise.
+func (o *WorkloadCreationFields) GetControlPlaneManaged() bool {
+	if o == nil || o.ControlPlaneManaged == nil {
+		var ret bool
+		return ret
+	}
+	return *o.ControlPlaneManaged
+}
+
+// GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *WorkloadCreationFields) GetControlPlaneManagedOk() (*bool, bool) {
+	if o == nil || o.ControlPlaneManaged == nil {
+		return nil, false
+	}
+	return o.ControlPlaneManaged, true
+}
+
+// HasControlPlaneManaged returns a boolean if a field has been set.
+func (o *WorkloadCreationFields) HasControlPlaneManaged() bool {
+	if o != nil && o.ControlPlaneManaged != nil {
+		return true
+	}
+
+	return false
+}
+
+// SetControlPlaneManaged gets a reference to the given bool and assigns it to the ControlPlaneManaged field.
+func (o *WorkloadCreationFields) SetControlPlaneManaged(v bool) {
+	o.ControlPlaneManaged = &v
+}
+
 // GetFullySaasWorkload returns the FullySaasWorkload field value if set, zero value otherwise.
 func (o *WorkloadCreationFields) GetFullySaasWorkload() bool {
 	if o == nil || o.FullySaasWorkload == nil {
@@ -616,6 +650,9 @@ func (o WorkloadCreationFields) MarshalJSON() ([]byte, error) {
 	if o.Images != nil {
 		toSerialize["images"] = o.Images
 	}
+	if o.ControlPlaneManaged != nil {
+		toSerialize["controlPlaneManaged"] = o.ControlPlaneManaged
+	}
 	if o.FullySaasWorkload != nil {
 		toSerialize["fullySaasWorkload"] = o.FullySaasWorkload
 	}
@@ -657,5 +694,4 @@ func (v *NullableWorkloadCreationFields) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
 

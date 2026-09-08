@@ -204,6 +204,7 @@ func (sm *SimpleMock) CreateWorkload(ctx context.Context, workload workloadsApi.
 		Environments:         workload.Environments,
 		ExternalConnections:  workload.ExternalConnections,
 		DistributedFramework: workload.DistributedFramework,
+		ControlPlaneManaged:  workload.ControlPlaneManaged,
 		FullySaasWorkload:    workload.FullySaasWorkload,
 		Category:             convutils.Deref(workload.Category, "default"),
 	}

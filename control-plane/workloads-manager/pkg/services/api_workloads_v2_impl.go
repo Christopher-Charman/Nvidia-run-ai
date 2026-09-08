@@ -1123,6 +1123,7 @@ func workloadCreationNotificationFromQueueRecord(qRecord *models.WorkloadsQueueR
 		DepartmentName: convutils.Ref(qRecord.DepartmentName),
 
 		CreatedAt:            qRecord.CreatedAt,
+		ControlPlaneManaged:  convutils.Ref(true),
 		FullySaasWorkload:    convutils.Ref(true),
 		Category:             qRecord.Category,
 		DistributedFramework: distributedFramework,

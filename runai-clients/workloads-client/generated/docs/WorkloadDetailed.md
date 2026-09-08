@@ -46,7 +46,8 @@ Name | Type | Description | Notes
 **DistributedFramework** | Pointer to **string** |  | [optional] 
 **AdditionalFields** | Pointer to **map[string]interface{}** |  | [optional] 
 **Preemptible** | Pointer to **NullableBool** |  | [optional] 
-**FullySaasWorkload** | Pointer to **bool** |  | [optional] 
+**ControlPlaneManaged** | Pointer to **bool** | Indicates whether the workload is managed by the Run:ai control plane. | [optional]
+**FullySaasWorkload** | Pointer to **bool** | Deprecated. Use controlPlaneManaged instead. | [optional]
 **EnvironmentVariables** | Pointer to **map[string]string** |  | [optional] 
 **Command** | Pointer to **string** |  | [optional] 
 **Arguments** | Pointer to **string** |  | [optional] 
@@ -1095,6 +1096,31 @@ HasPreemptible returns a boolean if a field has been set.
 `func (o *WorkloadDetailed) UnsetPreemptible()`
 
 UnsetPreemptible ensures that no value is present for Preemptible, not even an explicit nil
+### GetControlPlaneManaged
+
+`func (o *WorkloadDetailed) GetControlPlaneManaged() bool`
+
+GetControlPlaneManaged returns the ControlPlaneManaged field if non-nil, zero value otherwise.
+
+### GetControlPlaneManagedOk
+
+`func (o *WorkloadDetailed) GetControlPlaneManagedOk() (*bool, bool)`
+
+GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetControlPlaneManaged
+
+`func (o *WorkloadDetailed) SetControlPlaneManaged(v bool)`
+
+SetControlPlaneManaged sets ControlPlaneManaged field to given value.
+
+### HasControlPlaneManaged
+
+`func (o *WorkloadDetailed) HasControlPlaneManaged() bool`
+
+HasControlPlaneManaged returns a boolean if a field has been set.
+
 ### GetFullySaasWorkload
 
 `func (o *WorkloadDetailed) GetFullySaasWorkload() bool`
@@ -1667,5 +1693,4 @@ HasPendingSchedulingMessages returns a boolean if a field has been set.
 UnsetPendingSchedulingMessages ensures that no value is present for PendingSchedulingMessages, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
 

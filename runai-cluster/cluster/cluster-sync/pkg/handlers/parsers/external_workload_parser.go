@@ -187,6 +187,7 @@ func (p *WorkloadParser) ParseExternalWorkloadToServerScheme(
 		Urls:                 externalWorkload.Spec.Urls,
 		AdditionalFields:     getExternalWorkloadAdditionalFields(externalWorkload.Spec, externalWorkload.Labels, externalWorkload.Annotations),
 		DistributedFramework: strPointerIfNotEmpty(p.distributedFrameworkForExternalWorkload(externalWorkload, workloadType)),
+		ControlPlaneManaged:  cu.Ref(isControlPlaneManagedLabeled(externalWorkload.Labels)),
 		FullySaasWorkload:    cu.Ref(isControlPlaneManagedLabeled(externalWorkload.Labels)),
 		SchedulingConditions: schedulingConditions,
 	}

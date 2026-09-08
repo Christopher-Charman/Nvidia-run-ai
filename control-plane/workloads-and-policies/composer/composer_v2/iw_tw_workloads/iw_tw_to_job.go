@@ -148,7 +148,7 @@ func (itc *InterTrainToJobComposer) Compose(ctx context.Context, src *workloadsA
 
 		runner.Batch(
 			// mark the workload as managed by runai control plane
-			itc.fc.ComposeFullySaasInd(&jobMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
+			itc.fc.ComposeControlPlaneManaged(&jobMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
 
 			// mark the workload as converted-from-native. some plugins may need to know this
 			itc.fc.CopyBoolean(convutils.Ref(true), &jobMeta.Labels, composer.BoolToMapString, composer.ConvertedFromNativeLabel),

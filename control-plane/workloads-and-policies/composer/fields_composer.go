@@ -477,12 +477,18 @@ func (fc *FieldsComposer) ComposeAnnotations(src []workloadsApi.Annotation,
 	}
 }
 
-func (fc *FieldsComposer) ComposeFullySaasInd(target any, setter FnBooleanSetter, cookie any) func() *workloadsApi.Error {
+func (fc *FieldsComposer) ComposeControlPlaneManaged(target any, setter FnBooleanSetter, cookie any) func() *workloadsApi.Error {
 	return func() *workloadsApi.Error {
-		saasInd := convutils.Ref(!fc.Options.ClusterOriginatedWorkload)
+		controlPlaneManaged := convutils.Ref(!fc.Options.ClusterOriginatedWorkload)
 
-		return setter(saasInd, target, cookie)
+		return setter(controlPlaneManaged, target, cookie)
 	}
+}
+
+// ComposeFullySaasInd is retained for composer_v1 compatibility.
+// Deprecated: use ComposeControlPlaneManaged instead.
+func (fc *FieldsComposer) ComposeFullySaasInd(target any, setter FnBooleanSetter, cookie any) func() *workloadsApi.Error {
+	return fc.ComposeControlPlaneManaged(target, setter, cookie)
 }
 
 func (fc *FieldsComposer) ComposePriorityClass(ctx context.Context, src *string,

@@ -122,6 +122,7 @@ func workloadsServiceCreationFieldsForConnectionMetadata(
 	creationFields.Version = workloadMetadata.Gvk.Version
 	creationFields.Environments = metadata.Environments
 	creationFields.ExternalConnections = metadata.ExternalConnections
+	creationFields.ControlPlaneManaged = true
 	creationFields.FullySaasWorkload = true
 
 	if category := workloadMetadata.Category.Get(); category != nil {

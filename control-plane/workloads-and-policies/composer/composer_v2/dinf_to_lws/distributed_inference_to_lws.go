@@ -131,7 +131,7 @@ func (dinfComposer *DistributedInferenceToLWSComposer) Compose(
 			dinfComposer.composeStartupPolicy(src.StartupPolicy.Get(), &lws.Spec.StartupPolicy),
 			dinfComposer.composeRestartPolicy(src.RestartPolicy.Get(), &lws.Spec.LeaderWorkerTemplate.RestartPolicy),
 			dinfComposer.fc.CopyString(convutils.Ref(string(lwsv1.RollingUpdateStrategyType)), &lws.Spec.RolloutStrategy.Type, rolloutStrategyToLWS, nil),
-			dinfComposer.fc.ComposeFullySaasInd(&lws.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
+			dinfComposer.fc.ComposeControlPlaneManaged(&lws.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
 			dinfComposer.fc.CopyBoolean(convutils.Ref(true), &lws.Labels, composer.BoolToMapString, composer.ConvertedFromNativeLabel),
 			dinfComposer.fc.CopyString(convutils.Ref(dinfComposer.fc.SubmittedBy), &lws.Annotations, composer.StringToMapString, composer.SubmittedByAnnotation),
 			dinfComposer.fc.ComposeNameAndTypeLabels(dinfComposer.fc.WorkloadName, dinfComposer.fc.WorkloadType, LeaderWorkerSetKind, dinfComposer.fc.ProjectName, &lws.Labels, composer.MapToMapString, nil),

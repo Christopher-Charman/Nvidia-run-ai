@@ -299,7 +299,8 @@ func WorkloadModelToApi(ctx context.Context, workload models.WorkloadView) api.W
 		Images:                  workload.Images,
 		Urls:                    workload.Urls,
 		AdditionalFields:        workload.AdditionalFields,
-		FullySaasWorkload:       workload.FullySaasWorkload,
+		ControlPlaneManaged:     workload.ControlPlaneManaged,
+		FullySaasWorkload:       workload.ControlPlaneManaged,
 		TenantId:                int32(workload.TenantID),
 		RunningPods:             workload.NumberOfRunningPods,
 		PhaseUpdatedAt:          workload.PhaseUpdatedAt,
@@ -443,6 +444,7 @@ func WorkloadModelToWorkloadDetailedApi(ctx context.Context, workload models.Wor
 		DistributedFramework:       apiWorkload.DistributedFramework,
 		AdditionalFields:           apiWorkload.AdditionalFields,
 		Preemptible:                apiWorkload.Preemptible,
+		ControlPlaneManaged:        apiWorkload.ControlPlaneManaged,
 		FullySaasWorkload:          apiWorkload.FullySaasWorkload,
 		EnvironmentVariables:       apiWorkload.EnvironmentVariables,
 		Command:                    apiWorkload.Command,
@@ -739,6 +741,7 @@ func SyncRequestToWorkloadsModel(ctx context.Context, tenantId uint, projectId s
 
 	schedulingConditions, phaseReason := getSchedulingConditionsFromRequest(workload.SchedulingConditions)
 	workloadType := common.NewWorkloadType(workload.Type)
+	controlPlaneManaged := resolveControlPlaneManaged(workload.ControlPlaneManaged, workload.FullySaasWorkload)
 
 	model := models.Workload{
 		ID:                       id,
@@ -775,7 +778,7 @@ func SyncRequestToWorkloadsModel(ctx context.Context, tenantId uint, projectId s
 		NetworkStatus:            networkStatus,
 		Conditions:               convutils.ConvertSliceTypes(workload.Conditions, conditionApiToModel),
 		AdditionalFields:         *additionalFields,
-		FullySaasWorkload:        workload.FullySaasWorkload,
+		ControlPlaneManaged:      controlPlaneManaged,
 		Command:                  workload.Command,
 		Arguments:                workload.Arguments,
 		EnvironmentVariables:     workload.EnvironmentVariables,
@@ -799,6 +802,10 @@ func SyncRequestToWorkloadsModel(ctx context.Context, tenantId uint, projectId s
 	}
 
 	return updateOptionalParams(ctx, tenantId, workload, model, workloadType, workloadChildren, workloadElements, id, clusterId)
+}
+
+func resolveControlPlaneManaged(controlPlaneManaged, fullySaasWorkload bool) bool {
+	return controlPlaneManaged || fullySaasWorkload
 }
 
 func updateOptionalParams(ctx context.Context, tenantId uint, workload api.WorkloadSyncFields, model models.Workload,

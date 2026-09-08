@@ -358,7 +358,7 @@ func (dkc *DistributedToKubeflowComposer) Compose(ctx context.Context, src *work
 		runner := &composer.StepRunner{}
 
 		runner.Batch(
-			dkc.fc.ComposeFullySaasInd(&target.ObjectMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
+			dkc.fc.ComposeControlPlaneManaged(&target.ObjectMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
 
 			// mark the workload as converted-from-native. some plugins may need to know this
 			dkc.fc.CopyBoolean(convutils.Ref(true), &target.ObjectMeta.Labels, composer.BoolToMapString, composer.ConvertedFromNativeLabel),

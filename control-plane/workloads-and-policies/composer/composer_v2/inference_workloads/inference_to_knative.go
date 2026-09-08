@@ -139,7 +139,7 @@ func (itc *InferenceToKnativeComposer) Compose(
 		runner := &composer.StepRunner{}
 
 		runner.Batch(
-			itc.fc.ComposeFullySaasInd(&svcMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
+			itc.fc.ComposeControlPlaneManaged(&svcMeta.Labels, composer.BoolToMapString, composer.ControlPlaneManagedLabel),
 			itc.fc.CopyBoolean(convutils.Ref(true), &svcMeta.Labels, composer.BoolToMapString, composer.ConvertedFromNativeLabel),
 			itc.fc.CopyString(convutils.Ref(itc.fc.SubmittedBy), &svcMeta.Annotations, composer.StringToMapString, composer.SubmittedByAnnotation),
 			itc.fc.ComposeNameAndTypeLabels(itc.fc.WorkloadName, itc.fc.WorkloadType, KnativeServiceKind, itc.fc.ProjectName, &svcMeta.Labels, composer.MapToMapString, nil),

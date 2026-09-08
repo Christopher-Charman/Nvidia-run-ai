@@ -75,7 +75,7 @@ type Workload struct {
 	Conditions                  ConditionArray             `gorm:"type:jsonb"`
 	Priority                    *int32
 	AdditionalFields            AdditionalFields `gorm:"type:jsonb"`
-	FullySaasWorkload           bool
+	ControlPlaneManaged         bool             `gorm:"column:fully_saas_workload"`
 	Command                     string
 	Arguments                   string
 	EnvironmentVariables        EnvironmentVariables     `gorm:"type:jsonb"`

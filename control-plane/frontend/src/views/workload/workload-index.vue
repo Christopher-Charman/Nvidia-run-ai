@@ -1157,7 +1157,7 @@ const WorkloadIndex = defineComponent({
       const isFlatWorkload = !workload?.environments?.[0]?.id;
       const supportsHybridCLI =
         [EWorkloadType.Inference].includes(workload?.type as EWorkloadType) &&
-        !!workload?.fullySaasWorkload &&
+        !!(workload?.controlPlaneManaged ?? workload?.fullySaasWorkload) &&
         isFlatWorkload &&
         this.settingStore.isHybridSubmissionEnabled;
 
@@ -1176,7 +1176,7 @@ const WorkloadIndex = defineComponent({
       //   [EWorkloadType.Workspace, EWorkloadType.Training, EWorkloadType.Distributed, EWorkloadType.Inference].includes(
       //     workload?.type as EWorkloadType,
       //   ) &&
-      //   !!workload?.fullySaasWorkload &&
+      //   !!(workload?.controlPlaneManaged ?? workload?.fullySaasWorkload) &&
       //   isFlatWorkload &&
       //   this.settingStore.isHybridSubmissionEnabled;
 

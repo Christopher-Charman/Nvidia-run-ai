@@ -69,11 +69,15 @@ type WorkloadDetailed struct {
 	DistributedFramework *string                `json:"distributedFramework,omitempty"`
 	AdditionalFields     map[string]interface{} `json:"additionalFields,omitempty"`
 	Preemptible          NullableBool           `json:"preemptible,omitempty"`
-	FullySaasWorkload    *bool                  `json:"fullySaasWorkload,omitempty"`
-	EnvironmentVariables *map[string]string     `json:"environmentVariables,omitempty"`
-	Command              *string                `json:"command,omitempty"`
-	Arguments            *string                `json:"arguments,omitempty"`
-	PhaseReason          NullablePhaseReason    `json:"phaseReason,omitempty"`
+	// Indicates whether the workload is managed by the Run:ai control plane.
+	ControlPlaneManaged *bool `json:"controlPlaneManaged,omitempty"`
+	// Deprecated. Use controlPlaneManaged instead.
+	// Deprecated
+	FullySaasWorkload    *bool               `json:"fullySaasWorkload,omitempty"`
+	EnvironmentVariables *map[string]string  `json:"environmentVariables,omitempty"`
+	Command              *string             `json:"command,omitempty"`
+	Arguments            *string             `json:"arguments,omitempty"`
+	PhaseReason          NullablePhaseReason `json:"phaseReason,omitempty"`
 	// sum of idle allocated gpus in the workload
 	IdleAllocatedGpus NullableFloat32 `json:"idleAllocatedGpus,omitempty"`
 	// The timestamp when the workload became idle. Null if the workload is not currently idle.
@@ -1367,7 +1371,40 @@ func (o *WorkloadDetailed) UnsetPreemptible() {
 	o.Preemptible.Unset()
 }
 
+// GetControlPlaneManaged returns the ControlPlaneManaged field value if set, zero value otherwise.
+func (o *WorkloadDetailed) GetControlPlaneManaged() bool {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		var ret bool
+		return ret
+	}
+	return *o.ControlPlaneManaged
+}
+
+// GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *WorkloadDetailed) GetControlPlaneManagedOk() (*bool, bool) {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		return nil, false
+	}
+	return o.ControlPlaneManaged, true
+}
+
+// HasControlPlaneManaged returns a boolean if a field has been set.
+func (o *WorkloadDetailed) HasControlPlaneManaged() bool {
+	if o != nil && !IsNil(o.ControlPlaneManaged) {
+		return true
+	}
+
+	return false
+}
+
+// SetControlPlaneManaged gets a reference to the given bool and assigns it to the ControlPlaneManaged field.
+func (o *WorkloadDetailed) SetControlPlaneManaged(v bool) {
+	o.ControlPlaneManaged = &v
+}
+
 // GetFullySaasWorkload returns the FullySaasWorkload field value if set, zero value otherwise.
+// Deprecated
 func (o *WorkloadDetailed) GetFullySaasWorkload() bool {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		var ret bool
@@ -1378,6 +1415,7 @@ func (o *WorkloadDetailed) GetFullySaasWorkload() bool {
 
 // GetFullySaasWorkloadOk returns a tuple with the FullySaasWorkload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// Deprecated
 func (o *WorkloadDetailed) GetFullySaasWorkloadOk() (*bool, bool) {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		return nil, false
@@ -1395,6 +1433,7 @@ func (o *WorkloadDetailed) HasFullySaasWorkload() bool {
 }
 
 // SetFullySaasWorkload gets a reference to the given bool and assigns it to the FullySaasWorkload field.
+// Deprecated
 func (o *WorkloadDetailed) SetFullySaasWorkload(v bool) {
 	o.FullySaasWorkload = &v
 }
@@ -2158,6 +2197,9 @@ func (o WorkloadDetailed) ToMap() (map[string]interface{}, error) {
 	}
 	if o.Preemptible.IsSet() {
 		toSerialize["preemptible"] = o.Preemptible.Get()
+	}
+	if !IsNil(o.ControlPlaneManaged) {
+		toSerialize["controlPlaneManaged"] = o.ControlPlaneManaged
 	}
 	if !IsNil(o.FullySaasWorkload) {
 		toSerialize["fullySaasWorkload"] = o.FullySaasWorkload

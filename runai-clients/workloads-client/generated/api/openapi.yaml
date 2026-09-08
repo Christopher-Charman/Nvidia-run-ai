@@ -14528,11 +14528,6 @@ components:
       type: string
     WorkloadCreationFields:
       example:
-        submittedBy: researcher@run.ai
-        departmentName: department1
-        images:
-        - ubi-minimal:latest
-        - ubi-minimal:latest
         environments:
         - name: pytorch
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
@@ -14611,6 +14606,19 @@ components:
             correlationName: correlationName
           replicaType: Master
         departmentId: "1"
+        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
+        type: runai-job
+        preemptibility: non-preemptible
+        createdAt: 2022-01-01T03:49:52.531Z
+        controlPlaneManaged: false
+        distributedFramework: Pytorch
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        group: batch
+        submittedBy: researcher@run.ai
+        departmentName: department1
+        images:
+        - ubi-minimal:latest
+        - ubi-minimal:latest
         externalConnections:
         - serviceResourceName: serviceResourceName
           authorizedGroups:
@@ -14646,14 +14654,10 @@ components:
           containerPort: 8080
           exposedUrlSubDomain: exposedUrlSubDomain
           correlationName: correlationName
-        clusterId: 71f69d83-ba66-4822-adf5-55ce55efd210
         requestedNodePools:
         - default
         - default
-        type: runai-job
         version: v1
-        preemptibility: non-preemptible
-        createdAt: 2022-01-01T03:49:52.531Z
         requestedPods:
           number: 1
           min: 2
@@ -14669,8 +14673,6 @@ components:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           type: pvc
         name: very-important-job
-        distributedFramework: Pytorch
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         projectName: project1
         category: Train
         sourceApi: WorkloadsV2
@@ -14696,7 +14698,6 @@ components:
           gpu:
             request: 1
             limit: 1.5
-        group: batch
       properties:
         type:
           example: runai-job
@@ -14768,7 +14769,14 @@ components:
             example: ubi-minimal:latest
             type: string
           type: array
+        controlPlaneManaged:
+          description: Indicates whether the workload is managed by the Run:ai control
+            plane.
+          example: false
+          type: boolean
         fullySaasWorkload:
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
           example: false
           type: boolean
         category:
@@ -16087,6 +16095,7 @@ components:
         urls:
         - urls
         - urls
+        controlPlaneManaged: true
         k8sPhaseUpdatedAt: 2022-06-08T11:28:24.131Z
         distributedFramework: Pytorch
         aiApplicationName: aiApplicationName
@@ -16309,7 +16318,14 @@ components:
         preemptible:
           nullable: true
           type: boolean
+        controlPlaneManaged:
+          description: Indicates whether the workload is managed by the Run:ai control
+            plane.
+          type: boolean
+          x-internal: true
         fullySaasWorkload:
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
           type: boolean
           x-internal: true
         environmentVariables:
@@ -16735,6 +16751,7 @@ components:
         urls:
         - urls
         - urls
+        controlPlaneManaged: true
         nodeAffinities:
         - specName: worker
           nodeAffinity:
@@ -17392,7 +17409,14 @@ components:
           format: int32
           nullable: true
           type: integer
+        controlPlaneManaged:
+          description: Indicates whether the workload is managed by the Run:ai control
+            plane.
+          example: true
+          type: boolean
         fullySaasWorkload:
+          deprecated: true
+          description: Deprecated. Use controlPlaneManaged instead.
           example: true
           type: boolean
         environmentVariables:
@@ -17552,6 +17576,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           nodeAffinities:
           - specName: worker
             nodeAffinity:
@@ -18171,6 +18196,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           nodeAffinities:
           - specName: worker
             nodeAffinity:
@@ -20002,6 +20028,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           nodeAffinities:
           - specName: worker
             nodeAffinity:
@@ -20621,6 +20648,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           nodeAffinities:
           - specName: worker
             nodeAffinity:
@@ -21858,6 +21886,7 @@ components:
         urls:
         - urls
         - urls
+        controlPlaneManaged: true
         k8sPhaseUpdatedAt: 2022-06-08T11:28:24.131Z
         distributedFramework: Pytorch
         aiApplicationName: aiApplicationName
@@ -127906,6 +127935,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           k8sPhaseUpdatedAt: 2022-06-08T11:28:24.131Z
           distributedFramework: Pytorch
           aiApplicationName: aiApplicationName
@@ -128532,6 +128562,7 @@ components:
           urls:
           - urls
           - urls
+          controlPlaneManaged: true
           k8sPhaseUpdatedAt: 2022-06-08T11:28:24.131Z
           distributedFramework: Pytorch
           aiApplicationName: aiApplicationName

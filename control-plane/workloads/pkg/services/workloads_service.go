@@ -599,6 +599,7 @@ func (s *WorkloadsService) InternalCreateWorkloadHelper(ctx context.Context, wor
 	}
 	logging.WithCtx(runaictx.LoggerHook(ctx)).Debugf("Starting workload <%s> internal creation request in tenant <%d>", workloadCreationFields.Id, tenantId)
 
+	controlPlaneManaged := resolveControlPlaneManaged(workloadCreationFields.ControlPlaneManaged, workloadCreationFields.FullySaasWorkload)
 	workloadSyncFields := api.WorkloadSyncFields{
 		Type:                 workloadCreationFields.Type,
 		Group:                workloadCreationFields.Group,
@@ -628,7 +629,8 @@ func (s *WorkloadsService) InternalCreateWorkloadHelper(ctx context.Context, wor
 		ChildrenIds:          nil,
 		Urls:                 make([]string, 0),
 		AdditionalFields:     "",
-		FullySaasWorkload:    workloadCreationFields.FullySaasWorkload,
+		ControlPlaneManaged:  controlPlaneManaged,
+		FullySaasWorkload:    controlPlaneManaged,
 		Category:             workloadCreationFields.Category,
 	}
 

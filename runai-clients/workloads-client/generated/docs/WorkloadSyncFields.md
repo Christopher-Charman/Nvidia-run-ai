@@ -35,7 +35,8 @@ Name | Type | Description | Notes
 **NetworkStatus** | Pointer to [**WorkloadNetworkStatus**](WorkloadNetworkStatus.md) |  | [optional] 
 **AdditionalFields** | Pointer to **string** |  | [optional] 
 **Priority** | Pointer to **NullableInt32** |  | [optional] 
-**FullySaasWorkload** | Pointer to **bool** |  | [optional] 
+**ControlPlaneManaged** | Pointer to **bool** | Indicates whether the workload is managed by the Run:ai control plane. | [optional]
+**FullySaasWorkload** | Pointer to **bool** | Deprecated. Use controlPlaneManaged instead. | [optional]
 **EnvironmentVariables** | Pointer to **map[string]string** |  | [optional] 
 **Command** | Pointer to **string** |  | [optional] 
 **Arguments** | Pointer to **string** |  | [optional] 
@@ -796,6 +797,31 @@ HasPriority returns a boolean if a field has been set.
 `func (o *WorkloadSyncFields) UnsetPriority()`
 
 UnsetPriority ensures that no value is present for Priority, not even an explicit nil
+### GetControlPlaneManaged
+
+`func (o *WorkloadSyncFields) GetControlPlaneManaged() bool`
+
+GetControlPlaneManaged returns the ControlPlaneManaged field if non-nil, zero value otherwise.
+
+### GetControlPlaneManagedOk
+
+`func (o *WorkloadSyncFields) GetControlPlaneManagedOk() (*bool, bool)`
+
+GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetControlPlaneManaged
+
+`func (o *WorkloadSyncFields) SetControlPlaneManaged(v bool)`
+
+SetControlPlaneManaged sets ControlPlaneManaged field to given value.
+
+### HasControlPlaneManaged
+
+`func (o *WorkloadSyncFields) HasControlPlaneManaged() bool`
+
+HasControlPlaneManaged returns a boolean if a field has been set.
+
 ### GetFullySaasWorkload
 
 `func (o *WorkloadSyncFields) GetFullySaasWorkload() bool`
@@ -1278,5 +1304,4 @@ HasResourceRefs returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
 

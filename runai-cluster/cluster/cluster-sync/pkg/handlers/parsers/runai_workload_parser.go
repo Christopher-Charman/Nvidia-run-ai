@@ -353,6 +353,7 @@ func (p *WorkloadParser) parseJobWorkloadToServerScheme(
 		ChildrenIds:          childrenIds,
 		ActionsSupport:       &openapi.ActionsSupport{Delete: ptr.To(true)},
 		AdditionalFields:     getRunaiWorkloadAdditionalFields(workload),
+		ControlPlaneManaged:  cu.Ref(isControlPlaneManagedLabeled(workload.Labels)),
 		FullySaasWorkload:    cu.Ref(isControlPlaneManagedLabeled(workload.Labels)),
 		EnvironmentVariables: getEnvironmentVariables(workload.WorkloadFields.Environment.Deref()),
 		Command:              strPointerIfNotEmpty(workload.WorkloadFields.Command.Deref()),

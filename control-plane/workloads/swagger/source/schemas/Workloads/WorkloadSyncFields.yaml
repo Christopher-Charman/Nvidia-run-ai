@@ -119,9 +119,15 @@ properties:
     format: int32
     example: 100
     nullable: true
+  controlPlaneManaged:
+    type: boolean
+    example: true
+    description: Indicates whether the workload is managed by the Run:ai control plane.
   fullySaasWorkload:
     type: boolean
     example: true
+    deprecated: true
+    description: Deprecated. Use controlPlaneManaged instead.
   environmentVariables:
     type: object
     additionalProperties:

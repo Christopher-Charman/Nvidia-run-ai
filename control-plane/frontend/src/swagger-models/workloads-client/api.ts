@@ -22306,9 +22306,16 @@ export interface Workload {
      */
     'preemptible'?: boolean | null;
     /**
-     * 
+     * Indicates whether the workload is managed by the Run:ai control plane.
      * @type {boolean}
      * @memberof Workload
+     */
+    'controlPlaneManaged'?: boolean;
+    /**
+     * Deprecated. Use controlPlaneManaged instead.
+     * @type {boolean}
+     * @memberof Workload
+     * @deprecated
      */
     'fullySaasWorkload'?: boolean;
     /**
@@ -22653,9 +22660,16 @@ export interface WorkloadCreationFields {
      */
     'images'?: Array<string>;
     /**
-     * 
+     * Indicates whether the workload is managed by the Run:ai control plane.
      * @type {boolean}
      * @memberof WorkloadCreationFields
+     */
+    'controlPlaneManaged'?: boolean;
+    /**
+     * Deprecated. Use controlPlaneManaged instead.
+     * @type {boolean}
+     * @memberof WorkloadCreationFields
+     * @deprecated
      */
     'fullySaasWorkload'?: boolean;
     /**
@@ -22982,9 +22996,16 @@ export interface WorkloadDetailed {
      */
     'preemptible'?: boolean | null;
     /**
-     * 
+     * Indicates whether the workload is managed by the Run:ai control plane.
      * @type {boolean}
      * @memberof WorkloadDetailed
+     */
+    'controlPlaneManaged'?: boolean;
+    /**
+     * Deprecated. Use controlPlaneManaged instead.
+     * @type {boolean}
+     * @memberof WorkloadDetailed
+     * @deprecated
      */
     'fullySaasWorkload'?: boolean;
     /**
@@ -24095,9 +24116,16 @@ export interface WorkloadSyncFields {
      */
     'priority'?: number | null;
     /**
-     * 
+     * Indicates whether the workload is managed by the Run:ai control plane.
      * @type {boolean}
      * @memberof WorkloadSyncFields
+     */
+    'controlPlaneManaged'?: boolean;
+    /**
+     * Deprecated. Use controlPlaneManaged instead.
+     * @type {boolean}
+     * @memberof WorkloadSyncFields
+     * @deprecated
      */
     'fullySaasWorkload'?: boolean;
     /**

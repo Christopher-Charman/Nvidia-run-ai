@@ -48,3 +48,15 @@ var _ = Describe("ResourceRef Conversion Utilities", func() {
 		})
 	})
 })
+
+var _ = Describe("Control-plane-managed compatibility", func() {
+	DescribeTable("resolves the current and deprecated API fields",
+		func(controlPlaneManaged, fullySaasWorkload, expected bool) {
+			Expect(resolveControlPlaneManaged(controlPlaneManaged, fullySaasWorkload)).To(Equal(expected))
+		},
+		Entry("neither field is set", false, false, false),
+		Entry("the current field is set", true, false, true),
+		Entry("the deprecated field is set", false, true, true),
+		Entry("both fields are set", true, true, true),
+	)
+})

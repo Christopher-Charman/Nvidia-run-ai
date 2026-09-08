@@ -46,10 +46,14 @@ type WorkloadCreationFields struct {
 	ExternalConnections  []Connection                     `json:"externalConnections,omitempty"`
 	DistributedFramework *string                          `json:"distributedFramework,omitempty"`
 	Images               []string                         `json:"images,omitempty"`
-	FullySaasWorkload    *bool                            `json:"fullySaasWorkload,omitempty"`
-	Category             *string                          `json:"category,omitempty"`
-	SourceApi            NullableSourceApi                `json:"sourceApi,omitempty"`
-	Preemptibility       NullableString                   `json:"preemptibility,omitempty"`
+	// Indicates whether the workload is managed by the Run:ai control plane.
+	ControlPlaneManaged *bool `json:"controlPlaneManaged,omitempty"`
+	// Deprecated. Use controlPlaneManaged instead.
+	// Deprecated
+	FullySaasWorkload *bool             `json:"fullySaasWorkload,omitempty"`
+	Category          *string           `json:"category,omitempty"`
+	SourceApi         NullableSourceApi `json:"sourceApi,omitempty"`
+	Preemptibility    NullableString    `json:"preemptibility,omitempty"`
 }
 
 type _WorkloadCreationFields WorkloadCreationFields
@@ -680,7 +684,40 @@ func (o *WorkloadCreationFields) SetImages(v []string) {
 	o.Images = v
 }
 
+// GetControlPlaneManaged returns the ControlPlaneManaged field value if set, zero value otherwise.
+func (o *WorkloadCreationFields) GetControlPlaneManaged() bool {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		var ret bool
+		return ret
+	}
+	return *o.ControlPlaneManaged
+}
+
+// GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *WorkloadCreationFields) GetControlPlaneManagedOk() (*bool, bool) {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		return nil, false
+	}
+	return o.ControlPlaneManaged, true
+}
+
+// HasControlPlaneManaged returns a boolean if a field has been set.
+func (o *WorkloadCreationFields) HasControlPlaneManaged() bool {
+	if o != nil && !IsNil(o.ControlPlaneManaged) {
+		return true
+	}
+
+	return false
+}
+
+// SetControlPlaneManaged gets a reference to the given bool and assigns it to the ControlPlaneManaged field.
+func (o *WorkloadCreationFields) SetControlPlaneManaged(v bool) {
+	o.ControlPlaneManaged = &v
+}
+
 // GetFullySaasWorkload returns the FullySaasWorkload field value if set, zero value otherwise.
+// Deprecated
 func (o *WorkloadCreationFields) GetFullySaasWorkload() bool {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		var ret bool
@@ -691,6 +728,7 @@ func (o *WorkloadCreationFields) GetFullySaasWorkload() bool {
 
 // GetFullySaasWorkloadOk returns a tuple with the FullySaasWorkload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// Deprecated
 func (o *WorkloadCreationFields) GetFullySaasWorkloadOk() (*bool, bool) {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		return nil, false
@@ -708,6 +746,7 @@ func (o *WorkloadCreationFields) HasFullySaasWorkload() bool {
 }
 
 // SetFullySaasWorkload gets a reference to the given bool and assigns it to the FullySaasWorkload field.
+// Deprecated
 func (o *WorkloadCreationFields) SetFullySaasWorkload(v bool) {
 	o.FullySaasWorkload = &v
 }
@@ -887,6 +926,9 @@ func (o WorkloadCreationFields) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.Images) {
 		toSerialize["images"] = o.Images
+	}
+	if !IsNil(o.ControlPlaneManaged) {
+		toSerialize["controlPlaneManaged"] = o.ControlPlaneManaged
 	}
 	if !IsNil(o.FullySaasWorkload) {
 		toSerialize["fullySaasWorkload"] = o.FullySaasWorkload

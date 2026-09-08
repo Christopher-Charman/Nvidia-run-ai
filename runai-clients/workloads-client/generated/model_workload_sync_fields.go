@@ -55,12 +55,16 @@ type WorkloadSyncFields struct {
 	NetworkStatus        *WorkloadNetworkStatus           `json:"networkStatus,omitempty"`
 	AdditionalFields     *string                          `json:"additionalFields,omitempty"`
 	Priority             NullableInt32                    `json:"priority,omitempty"`
-	FullySaasWorkload    *bool                            `json:"fullySaasWorkload,omitempty"`
-	EnvironmentVariables *map[string]string               `json:"environmentVariables,omitempty"`
-	Command              *string                          `json:"command,omitempty"`
-	Arguments            *string                          `json:"arguments,omitempty"`
-	SchedulingConditions []SchedulingCondition            `json:"schedulingConditions,omitempty"`
-	Category             *string                          `json:"category,omitempty"`
+	// Indicates whether the workload is managed by the Run:ai control plane.
+	ControlPlaneManaged *bool `json:"controlPlaneManaged,omitempty"`
+	// Deprecated. Use controlPlaneManaged instead.
+	// Deprecated
+	FullySaasWorkload    *bool                 `json:"fullySaasWorkload,omitempty"`
+	EnvironmentVariables *map[string]string    `json:"environmentVariables,omitempty"`
+	Command              *string               `json:"command,omitempty"`
+	Arguments            *string               `json:"arguments,omitempty"`
+	SchedulingConditions []SchedulingCondition `json:"schedulingConditions,omitempty"`
+	Category             *string               `json:"category,omitempty"`
 	// A timestamp indicating when the workload will reach its minimum guaranteed runtime, as defined by minGuaranteedRuntime. Until this time, the workload is considered non-preemptible and cannot be interrupted by higher-priority workloads.
 	GuaranteedRuntimeEndsAt NullableTime                       `json:"guaranteedRuntimeEndsAt,omitempty"`
 	ApplicationId           NullableString                     `json:"applicationId,omitempty"`
@@ -1013,7 +1017,40 @@ func (o *WorkloadSyncFields) UnsetPriority() {
 	o.Priority.Unset()
 }
 
+// GetControlPlaneManaged returns the ControlPlaneManaged field value if set, zero value otherwise.
+func (o *WorkloadSyncFields) GetControlPlaneManaged() bool {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		var ret bool
+		return ret
+	}
+	return *o.ControlPlaneManaged
+}
+
+// GetControlPlaneManagedOk returns a tuple with the ControlPlaneManaged field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *WorkloadSyncFields) GetControlPlaneManagedOk() (*bool, bool) {
+	if o == nil || IsNil(o.ControlPlaneManaged) {
+		return nil, false
+	}
+	return o.ControlPlaneManaged, true
+}
+
+// HasControlPlaneManaged returns a boolean if a field has been set.
+func (o *WorkloadSyncFields) HasControlPlaneManaged() bool {
+	if o != nil && !IsNil(o.ControlPlaneManaged) {
+		return true
+	}
+
+	return false
+}
+
+// SetControlPlaneManaged gets a reference to the given bool and assigns it to the ControlPlaneManaged field.
+func (o *WorkloadSyncFields) SetControlPlaneManaged(v bool) {
+	o.ControlPlaneManaged = &v
+}
+
 // GetFullySaasWorkload returns the FullySaasWorkload field value if set, zero value otherwise.
+// Deprecated
 func (o *WorkloadSyncFields) GetFullySaasWorkload() bool {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		var ret bool
@@ -1024,6 +1061,7 @@ func (o *WorkloadSyncFields) GetFullySaasWorkload() bool {
 
 // GetFullySaasWorkloadOk returns a tuple with the FullySaasWorkload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// Deprecated
 func (o *WorkloadSyncFields) GetFullySaasWorkloadOk() (*bool, bool) {
 	if o == nil || IsNil(o.FullySaasWorkload) {
 		return nil, false
@@ -1041,6 +1079,7 @@ func (o *WorkloadSyncFields) HasFullySaasWorkload() bool {
 }
 
 // SetFullySaasWorkload gets a reference to the given bool and assigns it to the FullySaasWorkload field.
+// Deprecated
 func (o *WorkloadSyncFields) SetFullySaasWorkload(v bool) {
 	o.FullySaasWorkload = &v
 }
@@ -1667,6 +1706,9 @@ func (o WorkloadSyncFields) ToMap() (map[string]interface{}, error) {
 	}
 	if o.Priority.IsSet() {
 		toSerialize["priority"] = o.Priority.Get()
+	}
+	if !IsNil(o.ControlPlaneManaged) {
+		toSerialize["controlPlaneManaged"] = o.ControlPlaneManaged
 	}
 	if !IsNil(o.FullySaasWorkload) {
 		toSerialize["fullySaasWorkload"] = o.FullySaasWorkload
