@@ -22,7 +22,6 @@ the `LICENSE` file and/or per-file copyright header shipped alongside the code.
 | conjungo | MIT | InVision | https://github.com/InVisionApp/conjungo | `runai-application-packages/jsonutils/conjungo/` |
 | gojsonq | MIT | Saddam H. | https://github.com/thedevsaddam/gojsonq | `runai-application-packages/jsonutils/gojsonq/` |
 | go-acc | Apache-2.0 | ORY (Aeneas Rekkas) | https://github.com/ory/go-acc | `control-plane/assets-service/third_party/go_acc/` |
-| goofys | Apache-2.0 | Ka-Hing Cheung | https://github.com/kahing/goofys | `runai-cluster/cluster/goofys/` |
 | KServe | Apache-2.0 | The KServe Authors | https://github.com/kserve/kserve | `control-plane/workloads-and-policies/third_party/kserve/` |
 | Kubeflow MPI Operator (API types) | Apache-2.0 | The Kubeflow Authors | https://github.com/kubeflow/mpi-operator | `runai-cluster/cluster/workload-controller/pkg/api/mpijob/v2beta1/` |
 | Seldon Core (API types) | Apache-2.0 | The Seldon Authors | https://github.com/SeldonIO/seldon-core | `runai-cluster/cluster/external-workload-integrator/pkg/thirdpartyapi/seldon/` |
@@ -31,9 +30,6 @@ the `LICENSE` file and/or per-file copyright header shipped alongside the code.
 
 Notes:
 - **ozzo-validation** is present in two vendored copies; both are the same upstream project.
-- **goofys** additionally contains RunAI-authored extensions (e.g. a GCS backend under
-  `internal/backend_gcs.go`) that are derivative works within the Apache-2.0 tree; the
-  goofys `LICENSE.md` governs the tree.
 - **KServe** and **Seldon Core**: only a subset of upstream API type definitions are
   vendored (under `third_party/` / `thirdpartyapi/`). RunAI-authored type stubs in the
   same `thirdpartyapi/` area (e.g. `nim/`, `nvcf/`, `argo/`, `ray/`) are first-party and
@@ -79,7 +75,6 @@ SOFTWARE.
 The following components are licensed under the Apache License, Version 2.0:
 
 - go-acc — Copyright ORY (Aeneas Rekkas)
-- goofys — Copyright Ka-Hing Cheung
 - KServe — Copyright The KServe Authors
 - Kubeflow MPI Operator — Copyright The Kubeflow Authors
 - Seldon Core — Copyright The Seldon Authors
