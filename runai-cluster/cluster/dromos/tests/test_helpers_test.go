@@ -9,10 +9,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	dromosv1alpha1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/dromos/api/v1alpha1"
@@ -276,20 +280,22 @@ func deleteAllTestResources(ctx context.Context, k8sClient client.Client) {
 }
 
 // waitForWebhookToBeClosed blocks until the webhook server no longer accepts
-// connections, so the next container can rebind the shared port.
+// connections, so the next container can rebind the shared port. Each probe is
+// a bounded TCP dial, and only a refused connection proves the listener is
+// gone - an accepted connection or a dial timeout means it may still be up.
 func waitForWebhookToBeClosed(webhookUrl string) {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
+	parsed, err := url.Parse(webhookUrl)
+	Expect(err).NotTo(HaveOccurred())
 	Eventually(func() error {
-		resp, err := httpClient.Get(webhookUrl)
-		if err != nil {
+		conn, err := net.DialTimeout("tcp", parsed.Host, time.Second)
+		if err == nil {
+			_ = conn.Close()
+			return fmt.Errorf("webhook server still accepting connections on %s", parsed.Host)
+		}
+		if stderrors.Is(err, syscall.ECONNREFUSED) {
 			return nil
 		}
-		defer resp.Body.Close()
-		return fmt.Errorf("webhook server still listening (status %d)", resp.StatusCode)
+		return fmt.Errorf("webhook port %s not refusing connections yet: %w", parsed.Host, err)
 	}, shutdownTimeout, interval).Should(Succeed())
 }
 
