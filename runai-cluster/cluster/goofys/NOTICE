@@ -1,5 +1,32 @@
 # NOTICE FILE
 
+## Upstream project
+
+This directory contains a derived copy of goofys, redistributed under the
+Apache License, Version 2.0. The full license text is in `LICENSE.md`.
+
+    Upstream project: goofys
+    Upstream source:  https://github.com/kahing/goofys
+    Go module path:   github.com/kahing/goofys
+    License:          Apache License, Version 2.0
+
+Copyright holders of the upstream work, as stated in the source file headers:
+
+    Copyright 2015 - 2019 Ka-Hing Cheung
+    Copyright 2015 - 2017 Google Inc. All Rights Reserved.
+    Copyright 2019 - 2020 Databricks
+    Copyright (c) Microsoft and contributors, for generated code from
+      azure-sdk-for-go
+
+This copy has been modified by NVIDIA; modified files carry an NVIDIA
+`SPDX-FileCopyrightText` header alongside the original notices, as required by
+section 4(b) of the Apache License.
+
+The remainder of this file lists the licenses of goofys' own third-party
+dependencies.
+
+---
+
 This project includes software components licensed under various open-source licenses. The following licenses apply to the components used in this project, which is a part of **Run.ai**:
 
 ## MIT License

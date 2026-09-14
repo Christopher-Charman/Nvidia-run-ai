@@ -1,0 +1,25 @@
+KServe
+======
+
+This directory contains a vendored, locally patched subset of KServe,
+redistributed under the Apache License, Version 2.0. The full license text is
+in `LICENSE`.
+
+  Upstream project: KServe
+  Upstream source:  https://github.com/kserve/kserve
+  Version:          v0.19.0 (vendored and patched — see below)
+  License:          Apache License, Version 2.0
+
+  Copyright 2021-2025 The KServe Authors.
+
+Modifications
+-------------
+
+This is not an unmodified copy. Upstream KServe does not compile against
+k8s.io v0.35, where the PodSpec struct conversion adds `WorkloadRef`, so this
+copy is patched to build against that version. See the `replace` directive and
+accompanying comment in `control-plane/workloads-and-policies/go.mod`.
+
+As required by section 4(b) of the Apache License, the files carry their
+original copyright notices, and this notice records that the copy has been
+changed from upstream.

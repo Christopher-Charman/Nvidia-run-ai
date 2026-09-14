@@ -1,0 +1,26 @@
+go-acc
+======
+
+This directory contains a vendored copy of go-acc, a tool for reporting
+accurate code coverage in Go, redistributed under the Apache License,
+Version 2.0. The full license text is in `LICENSE`.
+
+  Upstream project: go-acc
+  Upstream source:  https://github.com/ory/go-acc
+  Go module path:   github.com/ory/go-acc
+  Maintainer:       Ory Corp (https://www.ory.sh)
+  License:          Apache License, Version 2.0
+
+Copyright holder
+----------------
+
+Upstream go-acc does not state a copyright holder: its `LICENSE` is the
+unmodified Apache-2.0 template, with the `Copyright [yyyy] [name of copyright
+owner]` appendix left unfilled, and its source files carry no copyright
+headers. That was verified against the upstream repository rather than
+inferred from this copy.
+
+No copyright line is asserted here, because doing so would attribute ownership
+upstream has not claimed. Attribution is therefore recorded as the project and
+its maintaining organisation above, which is the accurate statement of
+provenance for this vendored code.

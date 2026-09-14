@@ -151,19 +151,21 @@ Licensed under the Apache License, Version 2.0; see [`LICENSE`](LICENSE). Third-
 
 ### Nested and Third-Party Licenses
 
-Some subdirectories contain vendored third-party code or bundled assets under their own license. Each is listed below with its license and the path to that license file:
+Some subdirectories contain vendored third-party code or bundled assets under their own license. Each is listed below with its upstream project, copyright holder, license, and the path to that license file.
 
-| Subdirectory | License | License file |
-|--------------|---------|--------------|
-| `skills/` | Apache-2.0 AND CC-BY-4.0 | [`skills/LICENSE`](skills/LICENSE) |
-| `runai-cluster/cluster/goofys/` | Apache-2.0 | [`runai-cluster/cluster/goofys/LICENSE.md`](runai-cluster/cluster/goofys/LICENSE.md) (attributions in the adjacent `NOTICE`) |
-| `control-plane/assets-service/third_party/go_acc/` | Apache-2.0 | [`.../go_acc/LICENSE`](control-plane/assets-service/third_party/go_acc/LICENSE) |
-| `control-plane/workloads-and-policies/third_party/kserve/` | Apache-2.0 | [`.../kserve/LICENSE`](control-plane/workloads-and-policies/third_party/kserve/LICENSE) |
-| `runai-application-packages/jsonutils/conjungo/` | MIT | [`.../conjungo/LICENSE`](runai-application-packages/jsonutils/conjungo/LICENSE) |
-| `runai-application-packages/jsonutils/gojsonq/` | MIT | [`.../gojsonq/LICENSE.md`](runai-application-packages/jsonutils/gojsonq/LICENSE.md) |
-| `runai-application-packages/validation/` | MIT | [`.../validation/LICENSE`](runai-application-packages/validation/LICENSE) |
-| `runai-cluster/cluster/workload-controller/third_party/validation/` | MIT | [`.../third_party/validation/LICENSE`](runai-cluster/cluster/workload-controller/third_party/validation/LICENSE) |
-| `control-plane/frontend/public/static-cli/fonts/` | Apache-2.0 | [`.../fonts/LICENSE.txt`](control-plane/frontend/public/static-cli/fonts/LICENSE.txt) |
+The Apache License template carries no copyright line of its own, so where a nested `LICENSE` is the bare Apache-2.0 text, the upstream attribution is recorded in an adjacent `NOTICE` file rather than by editing the license text.
+
+| Subdirectory | Upstream project | Copyright holder | License | License file |
+|--------------|------------------|------------------|---------|--------------|
+| `skills/` | — (NVIDIA) | Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES | Apache-2.0 AND CC-BY-4.0 | [`skills/LICENSE`](skills/LICENSE) |
+| `runai-cluster/cluster/goofys/` | [goofys](https://github.com/kahing/goofys) | Ka-Hing Cheung; Google Inc.; Databricks; Microsoft — modified by NVIDIA | Apache-2.0 | [`LICENSE.md`](runai-cluster/cluster/goofys/LICENSE.md), attribution in [`NOTICE`](runai-cluster/cluster/goofys/NOTICE) |
+| `control-plane/assets-service/third_party/go_acc/` | [go-acc](https://github.com/ory/go-acc) | None asserted upstream; maintained by Ory Corp | Apache-2.0 | [`.../go_acc/LICENSE`](control-plane/assets-service/third_party/go_acc/LICENSE), attribution in [`NOTICE`](control-plane/assets-service/third_party/go_acc/NOTICE) |
+| `control-plane/workloads-and-policies/third_party/kserve/` | [KServe](https://github.com/kserve/kserve) | Copyright 2021-2025 The KServe Authors — patched by NVIDIA | Apache-2.0 | [`.../kserve/LICENSE`](control-plane/workloads-and-policies/third_party/kserve/LICENSE), attribution in [`NOTICE`](control-plane/workloads-and-policies/third_party/kserve/NOTICE) |
+| `runai-application-packages/jsonutils/conjungo/` | conjungo | Copyright (c) 2017 InVision | MIT | [`.../conjungo/LICENSE`](runai-application-packages/jsonutils/conjungo/LICENSE) |
+| `runai-application-packages/jsonutils/gojsonq/` | gojsonq | Copyright (c) 2018 Saddam H | MIT | [`.../gojsonq/LICENSE.md`](runai-application-packages/jsonutils/gojsonq/LICENSE.md) |
+| `runai-application-packages/validation/` | ozzo-validation | Copyright (c) 2016 Qiang Xue | MIT | [`.../validation/LICENSE`](runai-application-packages/validation/LICENSE) |
+| `runai-cluster/cluster/workload-controller/third_party/validation/` | ozzo-validation | Copyright (c) 2016 Qiang Xue | MIT | [`.../third_party/validation/LICENSE`](runai-cluster/cluster/workload-controller/third_party/validation/LICENSE) |
+| `control-plane/frontend/public/static-cli/fonts/` | [Roboto](https://github.com/googlefonts/roboto) | Copyright 2011 Google Inc. All Rights Reserved. | Apache-2.0 | [`.../fonts/LICENSE.txt`](control-plane/frontend/public/static-cli/fonts/LICENSE.txt), attribution in [`NOTICE`](control-plane/frontend/public/static-cli/fonts/NOTICE) |
 
 The following subdirectories ship an aggregated third-party **dependency** license report (not a license for their own code):
 

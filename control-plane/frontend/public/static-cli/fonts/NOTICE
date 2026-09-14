@@ -1,0 +1,25 @@
+Roboto
+======
+
+This directory contains the Roboto font family, redistributed unmodified under
+the Apache License, Version 2.0. The full license text is in `LICENSE.txt`.
+
+  Upstream project: Roboto
+  Upstream source:  https://github.com/googlefonts/roboto
+  Version:          2.137 (2017)
+  Designer:         Google
+  License:          Apache License, Version 2.0
+
+  Copyright 2011 Google Inc. All Rights Reserved.
+
+The copyright, version, and designer above are taken from the `name` table
+embedded in the shipped `.ttf` files, not from a third-party source.
+
+Files covered by this notice:
+
+  Roboto-Black.ttf         Roboto-BlackItalic.ttf
+  Roboto-Bold.ttf          Roboto-BoldItalic.ttf
+  Roboto-Light.ttf         Roboto-LightItalic.ttf
+  Roboto-Medium.ttf        Roboto-MediumItalic.ttf
+  Roboto-Regular.ttf       Roboto-Italic.ttf
+  Roboto-Thin.ttf          Roboto-ThinItalic.ttf
