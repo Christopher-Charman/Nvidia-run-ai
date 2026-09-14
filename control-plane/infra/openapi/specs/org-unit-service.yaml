@@ -3813,6 +3813,7 @@ components:
       properties:
         ids:
           type: array
+          uniqueItems: true
           minItems: 1
           maxItems: 100
           description: Array of report IDs to delete.

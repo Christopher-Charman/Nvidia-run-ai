@@ -370,10 +370,10 @@ export interface AssignedResourcesV1ResponseMemory {
 export interface BatchDeleteReportsRequest {
     /**
      * Array of report IDs to delete.
-     * @type {Array<string>}
+     * @type {Set<string>}
      * @memberof BatchDeleteReportsRequest
      */
-    'ids': Array<string>;
+    'ids': Set<string>;
 }
 /**
  * 
