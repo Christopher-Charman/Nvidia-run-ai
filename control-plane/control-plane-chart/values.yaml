@@ -945,7 +945,7 @@ tenantsManager:
     logLevel: info
     dbScheme: tenants_manager
     migrationFiles: file:///migrations
-    adminUsername: test@run.ai
+    adminUsername: test@example.com
     # Lands in runai-backend-gen-tenants-manager (key ADMIN_PASSWORD) via the
     # secret-generator hook's chartValue path, which takes precedence over
     # random generation. Flip to "" once CI/e2e/dev seed an existingSecret with
