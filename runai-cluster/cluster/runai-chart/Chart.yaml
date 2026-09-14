@@ -12,10 +12,11 @@ dependencies:
   - name: karta
     condition: karta.enabled
     # Dev test build, not for merge: points at a personal test artifact to
-    # validate the karta FIPS 140-3 chart flag before it ships as a real
-    # karta release. Revert to oci://ghcr.io/run-ai/karta before merging.
+    # validate karta reading global.fipsMode (run-ai/karta#360) before it
+    # ships as a real karta release. Revert to oci://ghcr.io/run-ai/karta
+    # before merging.
     repository: oci://ghcr.io/nshidlansik/karta
-    version: 0.0.0-fips-619e251
+    version: 0.0.0-v02globalfips-63d37d9
   - name: crds
     condition: development.includeCRDsInReleaseManifest
     repository: file://charts/crds
