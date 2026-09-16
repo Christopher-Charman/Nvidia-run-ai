@@ -1,12 +1,17 @@
 # Support, Lifecycle, and Deprecation Policy
 
-## Commercial Offering
+## Supported Product
 
-This page defines the support tiers, version lifecycle, and deprecation policy for the commercial NVIDIA Run:ai self-hosted offering.
+This page defines the support tiers, version lifecycle, and deprecation policy for the Support-entitled NVIDIA Run:ai self-hosted offering.
 
 Support periods and coverage are governed by the applicable NVIDIA licensing agreement. This page describes the standard policy.
 
-NVIDIA Run:ai support periods are governed by the terms of the [NVIDIA Cloud Agreement](https://www.nvidia.com/en-us/agreements/cloud-services/nvidia-cloud-agreement/) or [NVIDIA Software License Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/), as applicable, including the [Service Specific Terms for NVIDIA Run:ai Control Plane Service](https://www.nvidia.com/en-us/agreements/cloud-services/runai-control-plane/).
+NVIDIA Run:ai support periods are governed by the terms of your applicable deployment model and the [NVIDIA Enterprise Support Policy](https://www.nvidia.com/en-us/agreements/enterprise-services/nvidia-enterprise-support-policy/).
+
+The terms applicable to the different deployment models are listed below:
+
+- [NVIDIA Cloud Agreement](https://www.nvidia.com/en-us/agreements/cloud-services/nvidia-cloud-agreement/) and Service Specific Terms govern the SaaS Run:ai Control Plane Service.
+- [NVIDIA Software License Agreement](https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/) and [Product Specific Terms for NVIDIA AI Products](https://www.nvidia.com/en-us/agreements/cloud-services/runai-control-plane/) govern self-hosted Run:ai Control Plane Services.
 
 ## Overview
 
@@ -30,7 +35,7 @@ A critical bug is a severity-1 ticket under the NVIDIA Run:ai support agreement.
 
 Each version carries a 12-month total lifecycle - 9 months of full support followed by 3 months of extended support.
 
-This policy applies prospectively and does not reduce a support period or deprecation commitment previously announced for an already released version or during an existing paid service term.
+This policy applies as of October 5th, 2026 and does not reduce a support period or deprecation commitment previously announced for an already released version or during an existing Subscription.
 
 ## Component Version Compatibility
 
@@ -43,7 +48,7 @@ NVIDIA Run:ai ships three components: control plane, cluster, and CLI, released 
 
 | Version | Release date | End of full support | End of extended support |
 | --- | --- | --- | --- |
-| 3.0 (latest) | October 11, 2026 | July 11, 2027 | October 11, 2027 |
+| 3.0 (latest) | October 5, 2026 | July 5, 2027 | October 5, 2027 |
 | 2.26 | July 12, 2026 | April 12, 2027 | July 12, 2027 |
 | 2.25 | May 3, 2026 | February 3, 2027 | May 3, 2027 |
 | 2.24 | January 18, 2026 | October 18, 2026 | January 18, 2027 |
@@ -56,16 +61,18 @@ Deprecation is the formal, advance signal that a feature, API, CLI command, conf
 
 ### Deprecation Window
 
-A deprecated capability remains available for at least two subsequent releases from the date of the deprecation notice. It is removed no earlier than the end of that window, and removal is always announced in the [Deprecation Notifications](../getting-started/whats-new/deprecation-notifications.md) of the version that removes it.
+A deprecated capability remains available for at least two subsequent releases from the date of the deprecation notice. It is removed no earlier than the end of that window, and removal is always announced in the [Deprecation Notifications](whats-new/deprecation-notifications.md) of the version that removes it.
 
 ### What Is Announced, and Where
 
-- Deprecations are always announced in [Deprecation Notifications](../getting-started/whats-new/deprecation-notifications.md) for the release that introduces the deprecation.
+- Deprecations are always announced in [Deprecation Notifications](whats-new/deprecation-notifications.md) for the release that introduces the deprecation.
 - Each deprecation states what is deprecated, the reason, the earliest release in which it may be removed, and the recommended migration path or replacement.
 - Existing deployments continue to function throughout the deprecation window. Deprecation is a signal to migrate, not an immediate loss of function.
 
 ### Breaking Changes
 
-A breaking change is a change to a public API endpoint or parameter that requires customer action to preserve existing behavior after upgrade - that is, the removal or incompatible change of a public API endpoint or a request or response parameter. Breaking changes are introduced only at a major or minor (Ma.Mi) release, never in a patch (Pa) release, and are always called out in that release's [Deprecation Notifications](../getting-started/whats-new/deprecation-notifications.md).
+A breaking change is a change to a public API endpoint or parameter that requires customer action to preserve existing behavior after upgrade - that is, the removal or incompatible change of a public API endpoint or a request or response parameter. Breaking changes are introduced only at a major or minor (Ma.Mi) release, never in a patch (Pa) release, and are always called out in that release's [Deprecation Notifications](whats-new/deprecation-notifications.md).
 
-This policy page defines how deprecation works; it does not maintain a running inventory of deprecated items.
+## Contact Support
+
+Support is available through the [NVIDIA Enterprise Support portal](https://enterprise-support.nvidia.com) for organizations with an active NVIDIA Run:ai Support-entitled Release agreement. Open a ticket there for issues covered under your support agreement.
