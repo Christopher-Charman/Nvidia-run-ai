@@ -38,12 +38,11 @@ func releases() []harness.GitHubRelease {
 	}
 }
 
-func releaseFetcher(server *harness.GitHubReleaseServer, token string) *releaselock.Fetcher {
+func releaseFetcher(server *harness.GitHubReleaseServer) *releaselock.Fetcher {
 	return &releaselock.Fetcher{
 		APIBaseURL: server.URL,
 		Repository: server.Repository,
 		HTTPClient: server.Client(),
-		Token:      token,
 	}
 }
 
@@ -60,7 +59,7 @@ func TestPack_ReleaseLock_ProvidedLockFileSkipsTheLookup(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 	lockPath := harness.WriteLockFile(t, harness.TestLock())
 
-	res := runResolving(t, packConfig(t), lockPath, releaseFetcher(server, ""), true, newFakes())
+	res := runResolving(t, packConfig(t), lockPath, releaseFetcher(server), true, newFakes())
 	require.NoError(t, res.err)
 
 	assert.Equal(t, lockPath, res.source.Path)
@@ -71,7 +70,7 @@ func TestPack_ReleaseLock_ProvidedLockFileSkipsTheLookup(t *testing.T) {
 func TestPack_ReleaseLock_MajorMinorResolvesToNewestPublishedPatch(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 
-	res := runRelease(t, "settings:\n  runaiVersion: \"3.0\"\n", releaseFetcher(server, ""), true)
+	res := runRelease(t, "settings:\n  runaiVersion: \"3.0\"\n", releaseFetcher(server), true)
 	require.NoError(t, res.err)
 
 	assert.Equal(t, "3.0.5", res.source.Tag, "the prerelease 3.0.7 and the draft 3.0.6 must be skipped")
@@ -93,7 +92,7 @@ func TestPack_ReleaseLock_MajorMinorResolvesToNewestPublishedPatch(t *testing.T)
 func TestPack_ReleaseLock_ExactVersionSelectsThatRelease(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 
-	res := runRelease(t, releaseConfig(t, "3.0.4", ""), releaseFetcher(server, ""), true)
+	res := runRelease(t, releaseConfig(t, "3.0.4", ""), releaseFetcher(server), true)
 	require.NoError(t, res.err)
 
 	assert.Equal(t, "3.0.4", res.source.Tag)
@@ -103,7 +102,7 @@ func TestPack_ReleaseLock_ExactVersionSelectsThatRelease(t *testing.T) {
 func TestPack_ReleaseLock_ArchitectureSelectsTheMatchingAsset(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 
-	res := runRelease(t, releaseConfig(t, "3.0.5", "arm64"), releaseFetcher(server, ""), true)
+	res := runRelease(t, releaseConfig(t, "3.0.5", "arm64"), releaseFetcher(server), true)
 	require.NoError(t, res.err)
 
 	assert.Equal(t, "runai-3.0.5-standard-linux-arm64.yaml", res.source.Asset)
@@ -113,25 +112,12 @@ func TestPack_ReleaseLock_ArchitectureSelectsTheMatchingAsset(t *testing.T) {
 func TestPack_ReleaseLock_FetchedLockIsPacked(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 
-	res := runRelease(t, releaseConfig(t, "3.0.5", ""), releaseFetcher(server, ""), false)
+	res := runRelease(t, releaseConfig(t, "3.0.5", ""), releaseFetcher(server), false)
 	require.NoError(t, res.err)
 
 	assert.ElementsMatch(t, []string{"control-plane", "runai-cluster"}, res.fetcher.Fetches)
 	assert.Len(t, res.puller.Pulls, 2)
 	assert.FileExists(t, res.output)
-}
-
-func TestPack_ReleaseLock_TokenIsForwarded(t *testing.T) {
-	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
-
-	res := runRelease(t, releaseConfig(t, "3.0.5", ""), releaseFetcher(server, "secret"), true)
-	require.NoError(t, res.err)
-
-	requests := server.Requests()
-	require.NotEmpty(t, requests)
-	for _, r := range requests {
-		assert.Equal(t, "Bearer secret", r.Header.Get("Authorization"), "%s must carry the token", r.URL.Path)
-	}
 }
 
 func TestPack_ReleaseLock_WalksReleasePages(t *testing.T) {
@@ -142,7 +128,7 @@ func TestPack_ReleaseLock_WalksReleasePages(t *testing.T) {
 	many = append(many, harness.GitHubRelease{Tag: "3.0.5"}.WithLock("amd64", releaseLock("3.0.5", "amd64")))
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, many...)
 
-	res := runRelease(t, releaseConfig(t, "3.0", ""), releaseFetcher(server, ""), true)
+	res := runRelease(t, releaseConfig(t, "3.0", ""), releaseFetcher(server), true)
 	require.NoError(t, res.err)
 	assert.Equal(t, "3.0.5", res.source.Tag)
 
@@ -211,7 +197,7 @@ func TestPack_ReleaseLock_Failures(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
 
-			res := runRelease(t, tc.config, releaseFetcher(server, ""), true)
+			res := runRelease(t, tc.config, releaseFetcher(server), true)
 			require.Error(t, res.err)
 			for _, want := range tc.contains {
 				assert.Contains(t, res.err.Error(), want)
@@ -225,7 +211,7 @@ func TestPack_ReleaseLock_Failures(t *testing.T) {
 
 func TestPack_ReleaseLock_GitHubUnreachable(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository, releases()...)
-	fetcher := releaseFetcher(server, "")
+	fetcher := releaseFetcher(server)
 	server.Close()
 
 	res := runRelease(t, releaseConfig(t, "3.0", ""), fetcher, true)
@@ -241,7 +227,7 @@ func TestPack_ReleaseLock_ForeignAssetIsRejected(t *testing.T) {
 	server := harness.NewGitHubReleaseServer(t, releaselock.DefaultRepository,
 		harness.GitHubRelease{Tag: "3.0.5"}.WithLock("amd64", foreign))
 
-	res := runRelease(t, releaseConfig(t, "3.0.5", ""), releaseFetcher(server, ""), true)
+	res := runRelease(t, releaseConfig(t, "3.0.5", ""), releaseFetcher(server), true)
 	require.Error(t, res.err)
 	assert.Contains(t, res.err.Error(), `artifact lock "runai-3.0.5-standard-linux-amd64.yaml" is not a artifacts.run.ai/v1alpha1 ArtifactLock`)
 }

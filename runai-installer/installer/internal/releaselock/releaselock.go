@@ -14,7 +14,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -60,19 +59,13 @@ type Fetcher struct {
 	APIBaseURL string
 	Repository string
 	HTTPClient *http.Client
-	Token      string
 }
 
 func NewFetcher() *Fetcher {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		token = os.Getenv("GH_TOKEN")
-	}
 	return &Fetcher{
 		APIBaseURL: DefaultAPIBaseURL,
 		Repository: DefaultRepository,
 		HTTPClient: &http.Client{Timeout: requestTimeout},
-		Token:      token,
 	}
 }
 
@@ -203,9 +196,6 @@ func (f *Fetcher) get(ctx context.Context, endpoint, accept string) ([]byte, err
 	}
 	req.Header.Set("Accept", accept)
 	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
-	if f.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+f.Token)
-	}
 
 	client := f.HTTPClient
 	if client == nil {
