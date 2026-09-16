@@ -51,7 +51,7 @@ func (c *Config) ResolveLock(ctx context.Context, lockPath string, fetcher LockF
 
 	res, err := fetcher.Fetch(ctx, version, arch)
 	if err != nil {
-		return nil, LockSource{}, fmt.Errorf("could not fetch lock file for version %s: %s. Please provide a lock file using %s or contact NVIDIA Run:ai support", version, lookupFailure(err), LockFlag)
+		return nil, LockSource{}, fmt.Errorf("could not fetch lock file for version %s: %s. Please provide a lock file using %s", version, lookupFailure(err), LockFlag)
 	}
 
 	c.Settings.RunaiVersion = res.Lock.Metadata.Version

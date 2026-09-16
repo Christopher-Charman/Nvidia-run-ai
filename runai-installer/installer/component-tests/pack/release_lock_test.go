@@ -151,7 +151,7 @@ func TestPack_ReleaseLock_Failures(t *testing.T) {
 		{
 			name:     "release not found",
 			config:   "settings:\n  runaiVersion: \"2.9\"\n",
-			contains: []string{"could not fetch lock file for version 2.9: release not found", "--airgap-lock-file", "contact NVIDIA Run:ai support"},
+			contains: []string{"could not fetch lock file for version 2.9: release not found. Please provide a lock file using --airgap-lock-file"},
 		},
 		{
 			name:     "exact version not released",
