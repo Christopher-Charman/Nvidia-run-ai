@@ -71,6 +71,11 @@ func (s *GitHubReleaseServer) Requests() []*http.Request {
 	return append([]*http.Request(nil), s.requests...)
 }
 
+// DownloadURL is the browser download link GitHub would show for an asset.
+func (s *GitHubReleaseServer) DownloadURL(tag, name string) string {
+	return fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", s.Repository, tag, name)
+}
+
 // AssetName is the lock asset name for a tag and architecture.
 func (s *GitHubReleaseServer) AssetName(tag, arch string) string {
 	return fmt.Sprintf("runai-%s-standard-linux-%s.yaml", tag, arch)
@@ -104,9 +109,10 @@ func (s *GitHubReleaseServer) serveList(w http.ResponseWriter, r *http.Request) 
 	}
 
 	type asset struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-		URL  string `json:"url"`
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		URL         string `json:"url"`
+		DownloadURL string `json:"browser_download_url"`
 	}
 	type release struct {
 		TagName    string  `json:"tag_name"`
@@ -123,9 +129,10 @@ func (s *GitHubReleaseServer) serveList(w http.ResponseWriter, r *http.Request) 
 		for name := range rel.Assets {
 			id := i*1000 + len(item.Assets) + 1
 			item.Assets = append(item.Assets, asset{
-				ID:   id,
-				Name: name,
-				URL:  fmt.Sprintf("%s/repos/%s/releases/assets/%d/%s", s.URL, s.Repository, id, name),
+				ID:          id,
+				Name:        name,
+				URL:         fmt.Sprintf("%s/repos/%s/releases/assets/%d/%s", s.URL, s.Repository, id, name),
+				DownloadURL: s.DownloadURL(rel.Tag, name),
 			})
 		}
 		out = append(out, item)

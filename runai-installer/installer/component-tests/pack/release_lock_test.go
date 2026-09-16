@@ -81,6 +81,7 @@ func TestPack_ReleaseLock_MajorMinorResolvesToNewestPublishedPatch(t *testing.T)
 
 	assert.Equal(t, "3.0.5", res.source.Tag, "the prerelease 3.0.7 and the draft 3.0.6 must be skipped")
 	assert.Equal(t, "runai-3.0.5-standard-linux-amd64.yaml", res.source.Asset, "amd64 is the default architecture")
+	assert.Equal(t, server.DownloadURL("3.0.5", "runai-3.0.5-standard-linux-amd64.yaml"), res.source.URL, "the source carries the asset's download link")
 	assert.Equal(t, "runai-3.0.5-airgap.tar", res.output, "the fetched lock decides the exact version")
 	assert.Nil(t, findEventByKind(res.events, "input_validation_failed"), "3.0 resolving to 3.0.5 is not a version mismatch")
 	assert.Contains(t, res.stdout, "NVIDIA Run:ai air-gapped bundle completed (dry run)")

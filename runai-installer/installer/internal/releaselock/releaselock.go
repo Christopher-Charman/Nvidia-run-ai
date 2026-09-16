@@ -64,11 +64,13 @@ func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("release %s has no lock file %s", e.Tag, e.Asset)
 }
 
-// Result is a lock fetched from a release, with where it came from.
+// Result is a lock fetched from a release, with where it came from. URL is
+// the asset's browser download link, for a user to open or share.
 type Result struct {
 	Lock  *artifactlock.ArtifactLock
 	Tag   string
 	Asset string
+	URL   string
 }
 
 // Fetcher resolves a version to a GitHub release and downloads its lock.
@@ -115,8 +117,9 @@ type release struct {
 }
 
 type asset struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	DownloadURL string `json:"browser_download_url"`
 }
 
 // Fetch resolves version to a release and returns the lock for arch. An
@@ -154,7 +157,7 @@ func (f *Fetcher) Fetch(ctx context.Context, version, arch string) (*Result, err
 	if err != nil {
 		return nil, err
 	}
-	return &Result{Lock: lock, Tag: selected.TagName, Asset: name}, nil
+	return &Result{Lock: lock, Tag: selected.TagName, Asset: name, URL: found.DownloadURL}, nil
 }
 
 // selectRelease picks the release for the requested version. match is the

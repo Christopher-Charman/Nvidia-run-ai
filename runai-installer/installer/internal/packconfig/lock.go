@@ -28,9 +28,11 @@ type LockFetcher interface {
 type LockSource struct {
 	// Path is set when the lock was read from disk.
 	Path string
-	// Tag and Asset are set when the lock was fetched from a GitHub release.
+	// Tag, Asset and URL are set when the lock was fetched from a GitHub
+	// release; URL is the asset's browser download link.
 	Tag   string
 	Asset string
+	URL   string
 }
 
 // ResolveLock returns the lock to pack. A lock file, when given, is used as-is
@@ -66,7 +68,7 @@ func (c *Config) ResolveLock(ctx context.Context, lockPath string, fetcher LockF
 
 	c.Settings.RunaiVersion = res.Lock.Metadata.Version
 	c.Settings.Architecture = arch
-	return res.Lock, LockSource{Tag: res.Tag, Asset: res.Asset}, nil
+	return res.Lock, LockSource{Tag: res.Tag, Asset: res.Asset, URL: res.URL}, nil
 }
 
 // lookupFailure phrases why the release lookup failed for the error message.

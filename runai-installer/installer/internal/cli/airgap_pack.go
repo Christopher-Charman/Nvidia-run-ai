@@ -75,9 +75,9 @@ func newAirgapPackCmd() *cobra.Command {
 				return err
 			}
 			if source.Tag != "" {
-				logging.Infof("[Pack] Using artifact lock %s from release %s", source.Asset, source.Tag)
+				logging.Infof("[Pack] Using artifact lock %s from release %s (%s)", source.Asset, source.Tag, source.URL)
 				if textOutput(output, term) {
-					term.Info("Using artifact lock %s from release %s", source.Asset, source.Tag)
+					term.Info("Using artifact lock %s from release %s (%s)", source.Asset, source.Tag, source.URL)
 				}
 			}
 
