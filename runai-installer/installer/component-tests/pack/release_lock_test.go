@@ -17,8 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// releaseLock is the harness lock re-versioned for a release and architecture,
-// so a lock fetched from a fake release passes the version and platform checks.
 func releaseLock(version, arch string) *artifactlock.ArtifactLock {
 	lock := harness.TestLock()
 	lock.Metadata.Version = version
@@ -26,9 +24,6 @@ func releaseLock(version, arch string) *artifactlock.ArtifactLock {
 	return lock
 }
 
-// releases is the fake repository's release list, newest first as GitHub
-// returns it: a newer line, a prerelease and a draft on the requested line
-// that must be skipped, two published patches, and an older line.
 func releases() []harness.GitHubRelease {
 	return []harness.GitHubRelease{
 		harness.GitHubRelease{Tag: "3.1.0"}.WithLock("amd64", releaseLock("3.1.0", "amd64")),
@@ -140,7 +135,6 @@ func TestPack_ReleaseLock_TokenIsForwarded(t *testing.T) {
 }
 
 func TestPack_ReleaseLock_WalksReleasePages(t *testing.T) {
-	// A full first page of newer releases pushes the requested one onto page 2.
 	var many []harness.GitHubRelease
 	for i := 0; i < 100; i++ {
 		many = append(many, harness.GitHubRelease{Tag: fmt.Sprintf("4.%d.0", 100-i)})
@@ -166,7 +160,6 @@ func TestPack_ReleaseLock_Failures(t *testing.T) {
 		name     string
 		config   string
 		contains []string
-		// noLookup asserts the failure was decided before any request.
 		noLookup bool
 	}{
 		{

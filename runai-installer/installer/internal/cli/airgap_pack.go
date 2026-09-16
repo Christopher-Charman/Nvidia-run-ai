@@ -121,8 +121,6 @@ func newAirgapPackCmd() *cobra.Command {
 	return cmd
 }
 
-// textOutput mirrors specrun's format choice, so the lock source line is only
-// printed where human-readable output goes and never interleaves with JSON.
 func textOutput(output string, term *terminal.Terminal) bool {
 	switch spec.OutputFormat(output) {
 	case spec.OutputFormatText:

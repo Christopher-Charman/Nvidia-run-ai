@@ -13,7 +13,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ParseFile reads an artifact lock from disk. See Parse for the checks applied.
+// ParseFile reads an artifact lock, rejecting unknown fields and a lock that is
+// not of the expected apiVersion and kind.
 func ParseFile(path string) (*ArtifactLock, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -23,10 +24,6 @@ func ParseFile(path string) (*ArtifactLock, error) {
 	return Parse(f, path)
 }
 
-// Parse decodes an artifact lock, rejecting unknown fields and a lock that is
-// not of the expected apiVersion and kind. name labels the source in errors;
-// it is a file path for ParseFile and a release asset name for a lock fetched
-// from a GitHub release.
 func Parse(r io.Reader, name string) (*ArtifactLock, error) {
 	dec := yaml.NewDecoder(r)
 	dec.KnownFields(true)

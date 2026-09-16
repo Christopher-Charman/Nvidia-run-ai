@@ -18,9 +18,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// GitHubRelease is one release the fake GitHub API serves. Assets maps asset
-// name to content; LockFor is a shortcut that adds a marshalled lock under the
-// name the lock generator would give it.
 type GitHubRelease struct {
 	Tag        string
 	Draft      bool
@@ -28,8 +25,6 @@ type GitHubRelease struct {
 	Assets     map[string][]byte
 }
 
-// WithLock attaches lock as the release's asset for arch, named the way the
-// airgap lock workflow uploads it.
 func (r GitHubRelease) WithLock(arch string, lock *artifactlock.ArtifactLock) GitHubRelease {
 	out, err := yaml.Marshal(lock)
 	if err != nil {
@@ -42,9 +37,6 @@ func (r GitHubRelease) WithLock(arch string, lock *artifactlock.ArtifactLock) Gi
 	return r
 }
 
-// GitHubReleaseServer is a fake of the two GitHub REST endpoints the release
-// lock lookup uses: the paginated release list and the asset download. It
-// records every request so a test can assert the lookup was, or was not, made.
 type GitHubReleaseServer struct {
 	*httptest.Server
 	Repository string
@@ -54,8 +46,6 @@ type GitHubReleaseServer struct {
 	requests []*http.Request
 }
 
-// NewGitHubReleaseServer serves releases for repository ("owner/name"),
-// newest first as GitHub does.
 func NewGitHubReleaseServer(t *testing.T, repository string, releases ...GitHubRelease) *GitHubReleaseServer {
 	t.Helper()
 	s := &GitHubReleaseServer{Repository: repository, releases: releases}
@@ -64,19 +54,16 @@ func NewGitHubReleaseServer(t *testing.T, repository string, releases ...GitHubR
 	return s
 }
 
-// Requests returns every request received so far.
 func (s *GitHubReleaseServer) Requests() []*http.Request {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return append([]*http.Request(nil), s.requests...)
 }
 
-// DownloadURL is the browser download link GitHub would show for an asset.
 func (s *GitHubReleaseServer) DownloadURL(tag, name string) string {
 	return fmt.Sprintf("https://github.com/%s/releases/download/%s/%s", s.Repository, tag, name)
 }
 
-// AssetName is the lock asset name for a tag and architecture.
 func (s *GitHubReleaseServer) AssetName(tag, arch string) string {
 	return fmt.Sprintf("runai-%s-standard-linux-%s.yaml", tag, arch)
 }
@@ -145,7 +132,6 @@ func (s *GitHubReleaseServer) serveList(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *GitHubReleaseServer) serveAsset(w http.ResponseWriter, r *http.Request, rest string) {
-	// rest is "<id>/<name>"; the name is enough to find the content.
 	var name string
 	for i := len(rest) - 1; i >= 0; i-- {
 		if rest[i] == '/' {

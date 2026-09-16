@@ -110,8 +110,6 @@ func runWith(t *testing.T, configYAML, lockPath string, dryRun bool, f *fakes, a
 	return runResolving(t, configYAML, lockPath, nil, dryRun, f, adjust...)
 }
 
-// runRelease is run without a lock file, so the lock is fetched from the
-// release the config's runaiVersion names on the given GitHub API.
 func runRelease(t *testing.T, configYAML string, fetcher packconfig.LockFetcher, dryRun bool) result {
 	t.Helper()
 	return runResolving(t, configYAML, "", fetcher, dryRun, newFakes())

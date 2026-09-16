@@ -3,11 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Package releaselock fetches a release's artifact lock from the GitHub
-// release that published it. Run:ai attaches one lock per architecture to
-// every release of dsx-ai-factory/run-ai, named
-// runai-<tag>-standard-linux-<arch>.yaml, so a user who only knows the version
-// they want can pack it without locating the lock by hand.
 package releaselock
 
 import (
@@ -32,29 +27,19 @@ const (
 	DefaultRepository = "dsx-ai-factory/run-ai"
 	DefaultAPIBaseURL = "https://api.github.com"
 
-	// releasesPerPage is GitHub's maximum page size; maxPages bounds the walk
-	// so a repository with a long history cannot stall the command.
 	releasesPerPage = 100
 	maxPages        = 10
 	requestTimeout  = 2 * time.Minute
 )
 
-// releaseVersion accepts the release forms a user may ask for: an exact tag
-// (3.0.5) or a major.minor line (3.0) that resolves to its newest patch. A
-// development version such as 0.0.0-30002779.main-bef491b or a branch name has
-// no release, so it is rejected before any network call.
 var releaseVersion = regexp.MustCompile(`^v?(\d+)\.(\d+)(?:\.(\d+))?$`)
 
-// ErrNotReleaseVersion reports a version that cannot name a GitHub release.
 var ErrNotReleaseVersion = errors.New("not a release version")
 
-// NotFoundError reports that the lookup reached GitHub but found no release,
-// or a release without the expected lock, for the requested version.
 type NotFoundError struct {
 	Version string
-	// Tag is set when a release was found but lacked the lock asset.
-	Tag   string
-	Asset string
+	Tag     string
+	Asset   string
 }
 
 func (e *NotFoundError) Error() string {
@@ -64,8 +49,6 @@ func (e *NotFoundError) Error() string {
 	return fmt.Sprintf("release %s has no lock file %s", e.Tag, e.Asset)
 }
 
-// Result is a lock fetched from a release, with where it came from. URL is
-// the asset's browser download link, for a user to open or share.
 type Result struct {
 	Lock  *artifactlock.ArtifactLock
 	Tag   string
@@ -73,19 +56,13 @@ type Result struct {
 	URL   string
 }
 
-// Fetcher resolves a version to a GitHub release and downloads its lock.
 type Fetcher struct {
-	// APIBaseURL is the GitHub REST API root; tests point it at a local server.
 	APIBaseURL string
 	Repository string
 	HTTPClient *http.Client
-	// Token, when set, is sent as a bearer token. The repository is public so
-	// no token is needed, but one lifts the anonymous rate limit in CI.
-	Token string
+	Token      string
 }
 
-// NewFetcher returns a Fetcher for the public Run:ai repository, picking up
-// GITHUB_TOKEN or GH_TOKEN when either is set.
 func NewFetcher() *Fetcher {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -99,12 +76,10 @@ func NewFetcher() *Fetcher {
 	}
 }
 
-// AssetName is the file name the lock generator gives a release's lock.
 func AssetName(tag, arch string) string {
 	return fmt.Sprintf("runai-%s-standard-linux-%s.yaml", tag, arch)
 }
 
-// IsReleaseVersion reports whether version can name a GitHub release.
 func IsReleaseVersion(version string) bool {
 	return releaseVersion.MatchString(version)
 }
@@ -122,9 +97,6 @@ type asset struct {
 	DownloadURL string `json:"browser_download_url"`
 }
 
-// Fetch resolves version to a release and returns the lock for arch. An
-// exact version must match a release tag; a major.minor resolves to the
-// newest non-prerelease, non-draft patch on that line.
 func (f *Fetcher) Fetch(ctx context.Context, version, arch string) (*Result, error) {
 	match := releaseVersion.FindStringSubmatch(version)
 	if match == nil {
@@ -160,8 +132,6 @@ func (f *Fetcher) Fetch(ctx context.Context, version, arch string) (*Result, err
 	return &Result{Lock: lock, Tag: selected.TagName, Asset: name, URL: found.DownloadURL}, nil
 }
 
-// selectRelease picks the release for the requested version. match is the
-// releaseVersion submatch: major, minor and an optional patch.
 func selectRelease(releases []release, match []string) *release {
 	major, _ := strconv.ParseUint(match[1], 10, 64)
 	minor, _ := strconv.ParseUint(match[2], 10, 64)
@@ -215,10 +185,6 @@ func (f *Fetcher) listReleases(ctx context.Context) ([]release, error) {
 	return all, nil
 }
 
-// downloadLock fetches the asset through the API URL with an octet-stream
-// Accept header, which GitHub answers with a redirect to the file. Unlike the
-// browser download URL this also works with a token against a private
-// repository, which keeps the command usable before the repository is public.
 func (f *Fetcher) downloadLock(ctx context.Context, a *asset) (*artifactlock.ArtifactLock, error) {
 	if _, err := url.Parse(a.URL); err != nil || a.URL == "" {
 		return nil, fmt.Errorf("release asset %s has no download URL", a.Name)
