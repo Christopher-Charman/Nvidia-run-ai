@@ -259,6 +259,11 @@ var _ = Describe("KAIConfigForRunaiConfig", func() {
 		Expect(kaiConfig.Spec.Global.QueueLabelKey).To(Equal(ptr.To(clustercommonconstants.RunaiQueueLabel)))
 	})
 
+	It("always selects the CUDA-native fractions mode", func() {
+		kaiConfig := buildKAIConfig(defaultRunaiConfig())
+		Expect(kaiConfig.Spec.Global.GpuSharingMode).To(Equal(ptr.To(kaicommon.GpuSharingModeNvFractions)))
+	})
+
 	It("sets the RunAI scheduler vocabulary on global, matching the engine adapter", func() {
 		runaiConfig := defaultRunaiConfig()
 		// The chart delivers the control-plane pull secret through this list.

@@ -7,6 +7,7 @@ package resources
 
 import (
 	kaiv1 "github.com/kai-scheduler/KAI-scheduler/pkg/apis/kai/v1"
+	kaicommon "github.com/kai-scheduler/KAI-scheduler/pkg/apis/kai/v1/common"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/utils/ptr"
 
@@ -34,6 +35,10 @@ func convertKAIGlobal(runaiConfig *runaiv1.RunaiConfig) *kaiv1.GlobalConfig {
 		NodePoolLabelKey:                  ptr.To(clustercommonconstants.NodePoolNameLabel),
 		RequireDefaultPodAntiAffinityTerm: ptr.To(runaiConfig.Spec.Global.RequireDefaultPodAntiAffinity),
 		VPA:                               convertVPA(runaiConfig.Spec.Global.VPA),
+		// From 3.0 fractions are always the CUDA-native ones. A node that cannot run them keeps
+		// the workload Pending rather than silently falling back to the unenforced legacy
+		// fractions, so this is deliberately not exposed as a user choice.
+		GpuSharingMode: ptr.To(kaicommon.GpuSharingModeNvFractions),
 	}
 
 	if runaiConfig.Spec.Internal.Global.Platform.KubernetesFlavor == runv1internal.KubernetesFlavorOpenShift {
