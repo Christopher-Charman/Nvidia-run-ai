@@ -2512,6 +2512,10 @@ spec:
                     description: ConfigMapToSyncLabel specifies the config map label
                       that cluster-sync will use to find the config map
                     type: string
+                  enableNodeGpuFractioningReadiness:
+                    description: EnableNodeGpuFractioningReadiness - should report
+                      GPU fractioning readiness per node
+                    type: boolean
                   enableNodeNvidiaComponentsReadiness:
                     description: EnableNodeNvidiaComponentsReadiness - should enable
                       readiness check for nvidia components on nodes

@@ -128,6 +128,11 @@ func (in *ClusterSync) DeepCopyInto(out *ClusterSync) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.EnableNodeGpuFractioningReadiness != nil {
+		in, out := &in.EnableNodeGpuFractioningReadiness, &out.EnableNodeGpuFractioningReadiness
+		*out = new(bool)
+		**out = **in
+	}
 	if in.UseNewWorkloadsApi != nil {
 		in, out := &in.UseNewWorkloadsApi, &out.UseNewWorkloadsApi
 		*out = new(bool)

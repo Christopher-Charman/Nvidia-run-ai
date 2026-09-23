@@ -120,6 +120,10 @@ type ClusterSync struct {
 	// +kubebuilder:validation:Optional
 	EnableNodeNvidiaComponentsReadiness *bool `json:"enableNodeNvidiaComponentsReadiness,omitempty"`
 
+	// EnableNodeGpuFractioningReadiness - should report GPU fractioning readiness per node
+	// +kubebuilder:validation:Optional
+	EnableNodeGpuFractioningReadiness *bool `json:"enableNodeGpuFractioningReadiness,omitempty"`
+
 	// DEPRECATED UseNewWorkloadsApi specifies whether to use the new workloads api to sync workloads, pods and events
 	// +kubebuilder:validation:Optional
 	UseNewWorkloadsApi *bool `json:"useNewWorkloadsApi,omitempty"`
@@ -267,6 +271,10 @@ func (c *ClusterSync) SetDefaultsWhereNeeded(internalSpec *runv1_internal.Intern
 
 	if c.EnableNodeNvidiaComponentsReadiness == nil {
 		c.EnableNodeNvidiaComponentsReadiness = ptr.To[bool](false)
+	}
+
+	if c.EnableNodeGpuFractioningReadiness == nil {
+		c.EnableNodeGpuFractioningReadiness = ptr.To[bool](false)
 	}
 
 	if c.UseNewWorkloadsApi == nil {
