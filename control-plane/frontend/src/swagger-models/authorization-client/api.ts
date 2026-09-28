@@ -1813,6 +1813,7 @@ export const ResourceType = {
     NfsAssets: 'nfs-assets',
     S3Assets: 's3-assets',
     ComputeResources: 'compute-resources',
+    ResourceClaimTemplates: 'resource-claim-templates',
     Templates: 'templates',
     Credentials: 'credentials',
     EventsHistory: 'events-history',
