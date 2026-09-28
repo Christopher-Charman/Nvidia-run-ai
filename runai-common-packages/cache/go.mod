@@ -26,14 +26,14 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-playground/validator/v10 v10.30.5 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
-	github.com/klauspost/compress v1.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/minio/highwayhash v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
