@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+// baseline-check-noop: trivial touch to trigger CI, no behavior change.
 package client
 
 import (
