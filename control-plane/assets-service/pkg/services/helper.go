@@ -12,6 +12,7 @@ import (
 	"net/http"
 
 	orgUnitApi "github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client/generated"
+	"github.com/dsx-ai-factory/run-ai/runai-application-packages/datastructs"
 
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/convutils"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/common/cluster-capabilities/checker"
@@ -27,6 +28,10 @@ import (
 
 var DefaultCheckerClusterConfig = &checker.ClustersCacheConfig{ExpirationSec: 600, CleanupSec: 10}
 
+var ClusterAndBelow = datastructs.NewSet[api.AssetKind]([]api.AssetKind{
+	api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE,
+}...)
+
 func ValidateAssetCreateRequestMeta(ctx context.Context, meta *api.AssetCreationRequest, kind api.AssetKind) *api.Error {
 	if meta == nil {
 		return api.NewValidationError("request meta is not provided")
@@ -35,6 +40,12 @@ func ValidateAssetCreateRequestMeta(ctx context.Context, meta *api.AssetCreation
 	scopeErr := assetsScope.ValidateScopeParameters(meta)
 	if scopeErr != nil {
 		return scopeErr
+	}
+
+	if ClusterAndBelow.Has(kind) {
+		if meta.Scope == api.SCOPE_TENANT || meta.Scope == api.SCOPE_SYSTEM {
+			return api.NewValidationError(fmt.Sprintf("scope %s is not supported for kind %s", meta.Scope, kind))
+		}
 	}
 
 	if meta.Scope == api.SCOPE_PROJECT || meta.Scope == api.SCOPE_DEPARTMENT {
