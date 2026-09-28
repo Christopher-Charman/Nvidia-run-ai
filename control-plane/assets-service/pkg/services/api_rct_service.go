@@ -63,17 +63,12 @@ func (s *RctApiService) CreateRct(ctx context.Context, request api.RctCreationRe
 		return NewErrorResponse(err), nil
 	}
 
-	resultMeta, actionError := dao.CreateAsset(ctx, assetKind, request.Meta, request.Spec, nameValidationQuery)
+	result, actionError := dao.CreateRct(ctx, request, nameValidationQuery)
 	if actionError != nil {
 		return NewErrorResponse(actionError), nil
 	}
 
-	audit.AuditFromCtx(ctx).WithEntityId(resultMeta.Id)
-
-	result := api.Rct{
-		Meta: *resultMeta,
-		Spec: request.Spec,
-	}
+	audit.AuditFromCtx(ctx).WithEntityId(result.Meta.Id)
 
 	return api.Response(http.StatusAccepted, result), nil
 }
