@@ -75,7 +75,7 @@ JUnit 5, Mockito, and AssertJ.
 
 ### Runtime image (Dockerfile)
 
-The Dockerfile is a minimal `alpine:3.21` image. It creates the extensions
+The Dockerfile is a minimal `busybox:stable-musl` image. It creates the extensions
 staging and shared target directories owned by `65532:65532`, copies in the
 built `runai-custom-providers.jar`, the OpenTelemetry agent JAR, the
 `runai-theme/`, and the `scripts/`. It runs as user `65532:65532`, and its

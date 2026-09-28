@@ -24,7 +24,7 @@ Go builder.
   server SPI deps (`compileOnly`, provided by the server at runtime). Tests:
   JUnit 5 + Mockito + AssertJ.
 - Generated code: none.
-- Runtime base image: `alpine:3.21` sidecar. Creates dirs owned by
+- Runtime base image: `busybox:stable-musl` sidecar. Creates dirs owned by
   `65532:65532`, copies in the provider JAR, OTel agent JAR, `runai-theme/`,
   and `scripts/`. Runs as `65532:65532`; CMD runs `copy-extensions.sh` then
   `write-keycloak-conf.sh` to populate `/providers`, `/themes`, `/agent`.

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-FROM docker.io/library/alpine:3.21
+FROM docker.io/library/busybox:stable-musl
 
 RUN mkdir -p /extensions/providers /extensions/themes /extensions/agent /providers /themes /agent /scripts && \
     chown -R 65532:65532 /extensions /providers /themes /agent /scripts
