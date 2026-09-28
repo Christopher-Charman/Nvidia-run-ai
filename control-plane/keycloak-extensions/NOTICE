@@ -32,7 +32,7 @@ contains NVIDIA-authored code exclusively.
 
 For completeness, the compile-time-only dependencies are:
 
-  - org.keycloak:keycloak-core, keycloak-server-spi, keycloak-services (26.6.+)
+  - org.keycloak:keycloak-core, keycloak-server-spi, keycloak-services (26.7.4)
   - com.fasterxml.jackson.core:jackson-databind (2.+)
   - jakarta.ws.rs:jakarta.ws.rs-api (4.0.+)
   - org.slf4j:slf4j-api (2.0.+)

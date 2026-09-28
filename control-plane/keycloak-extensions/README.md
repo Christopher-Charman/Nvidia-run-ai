@@ -69,7 +69,7 @@ inside a `gradle:8.12.0-jdk21` Docker container (`GRADLE_IMAGE`).
 | `make validate` | No-op |
 
 The Gradle project (`runai-custom-providers/build.gradle`) targets the Java 21
-toolchain and compiles against Keycloak `26.6.+` server SPI dependencies
+toolchain and compiles against Keycloak `26.7.4` server SPI dependencies
 (`compileOnly` — provided by the Keycloak server at runtime). Tests use
 JUnit 5, Mockito, and AssertJ.
 

@@ -20,7 +20,7 @@ Go builder.
 
 ## Key build notes
 
-- Language/toolchain: Java 21, Gradle 8.12; compiles against Keycloak `26.6.+`
+- Language/toolchain: Java 21, Gradle 8.12; compiles against Keycloak `26.7.4`
   server SPI deps (`compileOnly`, provided by the server at runtime). Tests:
   JUnit 5 + Mockito + AssertJ.
 - Generated code: none.
