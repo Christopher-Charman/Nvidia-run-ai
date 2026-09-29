@@ -263,6 +263,38 @@ func (_m *IWorkloadsClient) InternalEnrichOrgUnitRanking(ctx context.Context, re
 	return r0, r1
 }
 
+// InternalGetWorkloadsTelemetry provides a mock function with given fields: ctx, telemetryType, clusterId, groupBy, filterBy
+func (_m *IWorkloadsClient) InternalGetWorkloadsTelemetry(ctx context.Context, telemetryType openapi.WorkloadTelemetryType, clusterId string, groupBy []string, filterBy []string) (*openapi.TelemetryResponse, *openapi.Error) {
+	ret := _m.Called(ctx, telemetryType, clusterId, groupBy, filterBy)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InternalGetWorkloadsTelemetry")
+	}
+
+	var r0 *openapi.TelemetryResponse
+	var r1 *openapi.Error
+	if rf, ok := ret.Get(0).(func(context.Context, openapi.WorkloadTelemetryType, string, []string, []string) (*openapi.TelemetryResponse, *openapi.Error)); ok {
+		return rf(ctx, telemetryType, clusterId, groupBy, filterBy)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, openapi.WorkloadTelemetryType, string, []string, []string) *openapi.TelemetryResponse); ok {
+		r0 = rf(ctx, telemetryType, clusterId, groupBy, filterBy)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*openapi.TelemetryResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, openapi.WorkloadTelemetryType, string, []string, []string) *openapi.Error); ok {
+		r1 = rf(ctx, telemetryType, clusterId, groupBy, filterBy)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*openapi.Error)
+		}
+	}
+
+	return r0, r1
+}
+
 // InternalUpdateNodePods provides a mock function with given fields: ctx, clusterId, nodeName, networkTopologyLabelValues
 func (_m *IWorkloadsClient) InternalUpdateNodePods(ctx context.Context, clusterId string, nodeName string, networkTopologyLabelValues []string) *openapi.Error {
 	ret := _m.Called(ctx, clusterId, nodeName, networkTopologyLabelValues)
