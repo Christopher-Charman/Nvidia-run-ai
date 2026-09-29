@@ -78,7 +78,6 @@ The chart renders and manages:
 │   ├── _helpers.tpl, NOTES.txt
 │   └── tests/                   # Helm test hooks (validate-crds)
 ├── tests/                   # helm-unittest suites (+ __snapshot__)
-├── script/uploadChart.sh    # Chart publishing helper
 ├── Makefile
 └── .helmignore
 ```

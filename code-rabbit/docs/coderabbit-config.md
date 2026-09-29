@@ -81,7 +81,7 @@ And to accept:
 - **SAFE**: `fmt.Sprintf("%s > ?", column), value` -- column from constant, value as bind parameter
 - **SAFE**: `db.Raw(sql, params...)` -- values passed as separate arguments
 
-This is based on the [SQL Injection Retro](https://runai.atlassian.net/wiki/spaces/EN/pages/4518969345/SQL+Injection+Retro) where a real vulnerability was found in the assets service.
+Interpolating values into raw SQL lets user-controlled input change the query; bind parameters keep data separate from SQL.
 
 #### Dockerfiles (`**/Dockerfile`)
 
