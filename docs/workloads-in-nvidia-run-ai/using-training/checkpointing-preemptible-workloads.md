@@ -52,7 +52,7 @@ signal.signal(signal.SIGTERM, graceful_exit_handler)
 
 **Note**
 
-For the signal to be captured, it must be propagated from the startup script to the Python child process. See code [here](https://github.com/run-ai/docs/blob/master/quickstart/unattended-execution/startup.sh).
+For the signal to be captured, it must be propagated from the startup script to the Python child process. For example, start the Python process with `exec` so it receives the signal directly.
 
 </Info>
 

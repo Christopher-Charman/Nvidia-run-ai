@@ -4,13 +4,13 @@
 >
 > **Companions:** [`infw-fields.html`](./infw-fields.html) — filterable field-by-field mapping table · [`infw-to-workloadrunner.slides.html`](./infw-to-workloadrunner.slides.html) — slide deck.
 >
-> **⚠ Schema-version note.** Every YAML example in this design uses the **target** `WorkloadRunner` schema — `instructions.networking.endpoints[]` for the Service + Ingress layer. **The networking plugin has no `InPod` mode.** Sidecar auth (what we've been calling "InPod") is composed at the **control-plane composer** level via Liran's design (still in review): the OAuth2-proxy sidecar is baked directly into the Knative Service template's pod spec (`spec.template.spec.template.spec.containers[]`), alongside the user container. **There is no `instructions.initContainer.*` field on `WorkloadRunner` — that's a CP composer responsibility, not a runtime plugin.** The networking plugin only sees the Service + Ingress shape and is unaware of the sidecar. The schema in `master` today is the v1 flat shape (`instructions.networking.services[]`, `MaxItems: 1`, workload-level `externalAccess`); nothing migrates until both PR #19525 (multi-endpoint networking) **and** Liran's CP composer design land — see §7.1.
+> **⚠ Schema-version note.** Every YAML example in this design uses the **target** `WorkloadRunner` schema — `instructions.networking.endpoints[]` for the Service + Ingress layer. **The networking plugin has no `InPod` mode.** Sidecar auth (what we've been calling "InPod") is composed at the **control-plane composer** level via the CP composer design (still in review): the OAuth2-proxy sidecar is baked directly into the Knative Service template's pod spec (`spec.template.spec.template.spec.containers[]`), alongside the user container. **There is no `instructions.initContainer.*` field on `WorkloadRunner` — that's a CP composer responsibility, not a runtime plugin.** The networking plugin only sees the Service + Ingress shape and is unaware of the sidecar. The schema on `main` today is the v1 flat shape (`instructions.networking.services[]`, `MaxItems: 1`, workload-level `externalAccess`); nothing migrates until both PR 19525 (multi-endpoint networking) **and** CP composer design land — see §7.1.
 
 ## 1. TL;DR
 
 1. **Composer is the heavy lift.** Once `InferenceFields` are translated to Knative annotations and the right `spec.template` is in place, Knative handles the runtime behaviour natively. We don't re-implement autoscaling, revisions, etc.
-2. **The serving port pattern doesn't change.** Legacy made the OAuth2-proxy sidecar port-bearing so Knative's auto-Service routes through it. On the new path the **CP composer** bakes the sidecar directly into the Knative Service template's pod spec (Liran's design — in review) — the networking plugin is unaware. No new `corev1.Service` for InfW.
-3. **Tools (`exposedUrls`) need multi-endpoint.** Legacy injects one OAuth2-proxy sidecar **per URL**, each with its own auth. The new path requires PR #19525 multi-endpoint support to land — that's the blocking dependency.
+2. **The serving port pattern doesn't change.** Legacy made the OAuth2-proxy sidecar port-bearing so Knative's auto-Service routes through it. On the new path the **CP composer** bakes the sidecar directly into the Knative Service template's pod spec (design — in review) — the networking plugin is unaware. No new `corev1.Service` for InfW.
+3. **Tools (`exposedUrls`) need multi-endpoint.** Legacy injects one OAuth2-proxy sidecar **per URL**, each with its own auth. The new path requires PR 19525 multi-endpoint support to land — that's the blocking dependency.
 
 ## 2. Architecture
 
@@ -41,12 +41,12 @@ The composer's responsibility ends at "produce a complete WLR." The cluster-side
 
 | Plugin | Status | Drives | Responsible for |
 |---|---|---|---|
-| `networking` | v1 shipped · v2 pending (PR #19525) | `instructions.networking` | Services + Ingress / Route / HTTPRoute. **No `InPod` mode and no sidecar awareness** — the OAuth2-proxy sidecar is composed into the template by the CP composer. **InfW depends on PR #19525 (multi-endpoint).** |
+| `networking` | v1 shipped · v2 pending (PR 19525) | `instructions.networking` | Services + Ingress / Route / HTTPRoute. **No `InPod` mode and no sidecar awareness** — the OAuth2-proxy sidecar is composed into the template by the CP composer. **InfW depends on PR 19525 (multi-endpoint).** |
 | `mnnvl` | shipped | `instructions.gpuOptimizations.mnnvl` | N/A for single-replica InfW |
 | `storage` | design | `instructions.storage.newPvcs` | Lifecycle-bound new PVCs |
 | `personal-credentials` | design | per-user secret synthesis | Per-user image-pull / env-var creds |
 
-> **Not a plugin: CP composer responsibilities (Liran's design — in review).** Init-containers (`gitSync`, `s3`) and the OAuth2-proxy **sidecar** for auth are *not* a runtime plugin. The CP composer writes them directly into the template's pod spec (`spec.template.spec.template.spec.{initContainers,containers}` for Knative; `leaderTemplate.spec.{initContainers,containers}` for LWS). There is no `instructions.initContainer.*` field on `WorkloadRunner`. **InfW depends on this design landing.**
+> **Not a plugin: CP composer responsibilities (design — in review).** Init-containers (`gitSync`, `s3`) and the OAuth2-proxy **sidecar** for auth are *not* a runtime plugin. The CP composer writes them directly into the template's pod spec (`spec.template.spec.template.spec.{initContainers,containers}` for Knative; `leaderTemplate.spec.{initContainers,containers}` for LWS). There is no `instructions.initContainer.*` field on `WorkloadRunner`. **InfW depends on this design landing.**
 
 ### 2.2 The Knative-Service Karta
 
@@ -172,7 +172,7 @@ external → Ingress → Knative auto-Service → user container
 
 - **Knative auto-creates** the same Service. The composed-in sidecar becomes **port-bearing**, so the auto-Service routes through the proxy.
 - **Composer (CP) does two things:**
-  - Bakes the OAuth2-proxy as an extra container into `spec.template.spec.template.spec.containers[]` next to the user container (port-bearing, configured from the auth fields). This is the part of Liran's design (in review) we hard-depend on.
+  - Bakes the OAuth2-proxy as an extra container into `spec.template.spec.template.spec.containers[]` next to the user container (port-bearing, configured from the auth fields). This is the part of design (in review) we hard-depend on.
   - Emits `instructions.networking.endpoints[0]` with `services[].ref` at the Knative auto-Service + `externalAccess.ingress` (networking plugin: Service + Ingress).
 - The **networking plugin is unaware** of the sidecar. The Knative auto-Service routes to whichever container is port-bearing — the composer puts the proxy there when auth is on.
 - **No new `corev1.Service`.** Matches legacy exactly (`inference-workload-controller/internal/builders/utils.go:458-481`).
@@ -210,7 +210,7 @@ tool-2: external → Ingress → auto-Service:portB → sidecar-2 → user conta
 …
 ```
 
-**Dependency:** This scenario does not work until PR #19525 (multi-endpoint networking) **and** Liran's CP composer design both land. See §7.1.
+**Dependency:** This scenario does not work until PR 19525 (multi-endpoint networking) **and** CP composer design both land. See §7.1.
 
 ## 6. What each layer creates — at a glance
 
@@ -234,25 +234,25 @@ tool-2: external → Ingress → auto-Service:portB → sidecar-2 → user conta
 | TW/IW/DW gap matrix | Generic field gaps tracked there, not here |
 | Personal Credentials Plugin | Owns `imagePullSecrets` + env-creds. **Action:** composer iterates Karta `childComponents` for multi-component CRDs (LWS); InfW is single-pod so this is a no-op for our composer, but the plugin must still synthesize. |
 | Storage Plugin | Owns new-PVC lifecycle (`pvcs`, `dataVolumes`) |
-| **CP composer feature** (Liran, in review) — composes init-containers + sidecars (`gitSync`, `s3`, OAuth2-proxy) directly into the target template's pod spec. **Not a runtime plugin.** | **Blocking** — owns OAuth2-proxy sidecar composition. Without it, InfW auth can't be reproduced (no `InPod` mode in the networking plugin). |
-| Networking plugin redesign — Multi-Endpoint (PR #19525) | **Blocking** for tools / `exposedUrls`. Network plugin will only handle Service + Ingress; sidecar auth is the CP composer's job (no `InPod` mode in networking). |
+| **CP composer feature** (in review) — composes init-containers + sidecars (`gitSync`, `s3`, OAuth2-proxy) directly into the target template's pod spec. **Not a runtime plugin.** | **Blocking** — owns OAuth2-proxy sidecar composition. Without it, InfW auth can't be reproduced (no `InPod` mode in the networking plugin). |
+| Networking plugin redesign — Multi-Endpoint (PR 19525) | **Blocking** for tools / `exposedUrls`. Network plugin will only handle Service + Ingress; sidecar auth is the CP composer's job (no `InPod` mode in networking). |
 
 ### 7.1 The sidecar dependency is hard
 
 InfW auth needs an OAuth2-proxy **sidecar** in the Knative pod template that becomes port-bearing in front of the user container — that's how Knative's auto-Service routes through the proxy and how legacy InfW already works today. Two consequences:
 
-- **There is no `InPod` mode in the networking plugin.** Sidecar injection is the **CP composer's** job, via Liran's design. The networking plugin only creates Services + Ingress and is unaware of the sidecar. There is no `instructions.initContainer.*` field — the sidecar appears directly in `spec.template.spec.template.spec.containers[]`.
+- **There is no `InPod` mode in the networking plugin.** Sidecar injection is the **CP composer's** job, via the CP composer design. The networking plugin only creates Services + Ingress and is unaware of the sidecar. There is no `instructions.initContainer.*` field — the sidecar appears directly in `spec.template.spec.template.spec.containers[]`.
 - **`Standalone` auth (separate Deployment + Service) — the networking plugin's only current auth mode — is not a viable substitute for inference.** With Standalone the Knative auto-Service still targets the unprotected user container, regressing every existing InfW. And for **tools** (`exposedUrls`), Standalone would require one extra Deployment + Service per URL, all separately wired into Ingress — operationally much worse than the per-URL sidecar legacy already ships.
 
-**Decision: we hard-block on Liran's CP composer design landing.** No fallback to Standalone for inference.
+**Decision: we hard-block on CP composer design landing.** No fallback to Standalone for inference.
 
 ## 8. Deliverables for InfW migration
 
 1. **CP composer (InfW → WLR)** — translate every field per the [companion field-mapping table](./infw-fields.html). Heaviest of the composers — most of the Knative-annotation translation is here. **The composer also owns anything the Karta doesn't surface** (autoscaling annotations, `containerConcurrency`, `timeoutSeconds`, etc.) — write straight into `spec.template`.
 2. **Knative-Service Karta** — already ships (`BuildKNativeServiceV1`). No work here. If the migration uncovers gaps, fix them in the composer/builder, not in the Karta.
 3. **Dependencies** (sibling tracks):
-   - **Networking plugin (PR #19525)** — multi-endpoint (`maxItems > 1` on `services[]` + per-endpoint `externalAccess`) — needed for `exposedUrls` and the metrics endpoint when NIM is on. **No InPod / sidecar work here.**
-   - **CP composer init/sidecar feature (Liran — in review)** — composes git-sync init-containers, S3 init-containers, and the OAuth2-proxy sidecar (one per serving-port + one per exposed URL) directly into the target template's pod spec. **Not a runtime plugin; lives in the CP composer.**
+   - **Networking plugin (PR 19525)** — multi-endpoint (`maxItems > 1` on `services[]` + per-endpoint `externalAccess`) — needed for `exposedUrls` and the metrics endpoint when NIM is on. **No InPod / sidecar work here.**
+   - **CP composer init/sidecar feature (in review)** — composes git-sync init-containers, S3 init-containers, and the OAuth2-proxy sidecar (one per serving-port + one per exposed URL) directly into the target template's pod spec. **Not a runtime plugin; lives in the CP composer.**
 4. **CP composer networking behaviour** (ours):
    - Emit `instructions.networking.endpoints[]` per the multi-endpoint schema — one endpoint per serving-port + one per `exposedUrls[]` entry.
    - **Serving endpoint uses `services[].ref`** at the Knative auto-Service, not `create`. Creating a parallel `corev1.Service` would be a wasteful object with no functional role.

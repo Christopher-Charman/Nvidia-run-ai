@@ -85,14 +85,14 @@ Removal targets the management stack, not the running workload objects.
 
 | PR | Area | Final implemented result |
 |---|---|---|
-| #25614 — 01 / Submission Cutover | Agent, cluster-sync, runtime-rules | WorkloadRunner-only submission, typed legacy delete-only handling, read-only legacy sync, and no legacy runtime actions |
-| #25615 — 02 / Ownership and Webhook Handoff | Workloads Manager, Agent, AnyWorkload, init-ca | Carries the original submitter to WorkloadRunner and moves ownership webhooks to AnyWorkload |
-| #25616 — 03 / Operator Dependencies | go-operator, Helm hooks | Moves **workloads-auth** ownership and decouples MPI and Training operators from legacy controller flags |
-| #25617 — 04 / Missing-CRD Readiness | Helm, CRD upgrader, surviving consumers | Removes all 11 legacy CRDs from installation packages and makes missing APIs safe |
-| #25618 — 05 / Controller Retirement | go-operator, cleanup Job, Helm hooks, project-controller | Introduces the Operator-managed cleanup Job, safety checks, condition tracking, and exact asset inventory |
-| #26398 — Fresh-Install Defaults Follow-up | Helm hooks | Historical follow-up that made the transition path independent of target semantic-version parsing |
-| #26564 — Remove Legacy Workload Controllers | SDK, go-operator, Helm, cleanup Job | Removes all three deployable controllers and RunaiConfig fields, migrates retained configuration to AnyWorkload, and makes cleanup resource-driven |
-| #26571 — Allow RestartRequest Webhook | Cleanup safety gate | Keeps the live RestartRequest validation webhook outside the retired-resource set |
+| PR 25614 — 01 / Submission Cutover | Agent, cluster-sync, runtime-rules | WorkloadRunner-only submission, typed legacy delete-only handling, read-only legacy sync, and no legacy runtime actions |
+| PR 25615 — 02 / Ownership and Webhook Handoff | Workloads Manager, Agent, AnyWorkload, init-ca | Carries the original submitter to WorkloadRunner and moves ownership webhooks to AnyWorkload |
+| PR 25616 — 03 / Operator Dependencies | go-operator, Helm hooks | Moves **workloads-auth** ownership and decouples MPI and Training operators from legacy controller flags |
+| PR 25617 — 04 / Missing-CRD Readiness | Helm, CRD upgrader, surviving consumers | Removes all 11 legacy CRDs from installation packages and makes missing APIs safe |
+| PR 25618 — 05 / Controller Retirement | go-operator, cleanup Job, Helm hooks, project-controller | Introduces the Operator-managed cleanup Job, safety checks, condition tracking, and exact asset inventory |
+| PR 26398 — Fresh-Install Defaults Follow-up | Helm hooks | Historical follow-up that made the transition path independent of target semantic-version parsing |
+| PR 26564 — Remove Legacy Workload Controllers | SDK, go-operator, Helm, cleanup Job | Removes all three deployable controllers and RunaiConfig fields, migrates retained configuration to AnyWorkload, and makes cleanup resource-driven |
+| PR 26571 — Allow RestartRequest Webhook | Cleanup safety gate | Keeps the live RestartRequest validation webhook outside the retired-resource set |
 
 ### Review Result
 
@@ -104,14 +104,14 @@ Removal targets the management stack, not the running workload objects.
 
 | PR | Production surfaces reviewed | Covered in |
 |---|---|---|
-| #25614 | Agent, cluster-sync cache/controllers/handlers, runtime-rules, go-operator Agent operand, RunaiConfig schema | Slide 3 |
-| #25615 | Workloads Manager queue/API, Agent, AnyWorkload ownership, init-ca, OpenShift chart, and legacy ownership handoff | Slide 4 |
-| #25616 | Managed operands, AnyWorkload Secret, legacy dependency removal, Helm post hooks, and RunaiConfig rendering | Slide 5 |
-| #25617 | CRD packages/copy scripts, cluster-sync policy and workload registration, project blockers, exporter, runtime-rules, and then-transitional controller binaries | Slide 6 |
-| #25618 | Initial go-operator cleanup reconciliation, clients, permissions, safety checks, finalizers, cleanup operand, chart RBAC, and RunaiConfig condition | Slides 7–9 |
-| #26398 | Historical transition-default behavior later superseded by controller removal | Slides 5 and 11 |
-| #26564 | Controller source and operand removal, RunaiConfig schema/config migration, resource detection, direct asset deletion, and final cleanup flow | Slides 5 and 7–11 |
-| #26571 | RestartRequest webhook compatibility in the cleanup safety gate | Slide 8 |
+| PR 25614 | Agent, cluster-sync cache/controllers/handlers, runtime-rules, go-operator Agent operand, RunaiConfig schema | Slide 3 |
+| PR 25615 | Workloads Manager queue/API, Agent, AnyWorkload ownership, init-ca, OpenShift chart, and legacy ownership handoff | Slide 4 |
+| PR 25616 | Managed operands, AnyWorkload Secret, legacy dependency removal, Helm post hooks, and RunaiConfig rendering | Slide 5 |
+| PR 25617 | CRD packages/copy scripts, cluster-sync policy and workload registration, project blockers, exporter, runtime-rules, and then-transitional controller binaries | Slide 6 |
+| PR 25618 | Initial go-operator cleanup reconciliation, clients, permissions, safety checks, finalizers, cleanup operand, chart RBAC, and RunaiConfig condition | Slides 7–9 |
+| PR 26398 | Historical transition-default behavior later superseded by controller removal | Slides 5 and 11 |
+| PR 26564 | Controller source and operand removal, RunaiConfig schema/config migration, resource detection, direct asset deletion, and final cleanup flow | Slides 5 and 7–11 |
+| PR 26571 | RestartRequest webhook compatibility in the cleanup safety gate | Slide 8 |
 
 #### Speaker Note
 
@@ -154,11 +154,11 @@ The cluster has no WorkloadRunner enable flag in 3.0+. WorkloadRunner is the onl
 
 - Stale workloads are shown as unmanaged, readable, and delete-only.
 - Unsupported actions are hidden in the UI and rejected by the API.
-- The final stale identity signal still needs confirmation; **sourceApi is empty** remains a question for Ofer.
+- The final stale identity signal still needs confirmation; **sourceApi is empty** remains an open question.
 
 #### Speaker Note
 
-The cluster cutover is implemented in #25614. The stale UI and API response remain the Control Plane contract.
+The cluster cutover is implemented in PR 25614. The stale UI and API response remain the Control Plane contract.
 
 ---
 
@@ -211,7 +211,7 @@ flowchart LR
 
 #### Speaker Note
 
-#25615 completes both sides of the handoff: owner data for new WorkloadRunners and surviving admission for retained legacy CRs.
+PR 25615 completes both sides of the handoff: owner data for new WorkloadRunners and surviving admission for retained legacy CRs.
 
 ---
 
@@ -248,11 +248,11 @@ flowchart LR
 
 ### Final Follow-Up
 
-#26398 removed target-version parsing from the interim transition-default flow. #26564 then removed that flow entirely by deleting the legacy RunaiConfig fields and controller operands.
+PR 26398 removed target-version parsing from the interim transition-default flow. PR 26564 then removed that flow entirely by deleting the legacy RunaiConfig fields and controller operands.
 
 #### Speaker Note
 
-#25616 moved shared dependencies; #26564 made controller absence structural rather than flag-driven.
+PR 25616 moved shared dependencies; PR 26564 made controller absence structural rather than flag-driven.
 
 ---
 
@@ -302,7 +302,7 @@ Five policy CRDs:
 
 #### Speaker Note
 
-#25617 made missing APIs safe; #26564 subsequently removed the three transitional controller processes themselves.
+PR 25617 made missing APIs safe; PR 26564 subsequently removed the three transitional controller processes themselves.
 
 ---
 
@@ -538,7 +538,7 @@ Fresh install starts directly in the final state. Upgrade uses resource-driven c
 
 ### Open Questions
 
-1. Confirm the Control Plane stale-workload identity signal, including whether **sourceApi is empty** is sufficient, with Ofer.
+1. Confirm the Control Plane stale-workload identity signal, including whether **sourceApi is empty** is sufficient.
 2. Confirm the final UI label and API error for unsupported stale-workload actions.
 3. Confirm MNNVL and existing ComputeDomain behavior after legacy controllers stop reconciling.
 4. Decide which later release, operator setting, and empty-cluster checks will own optional CRD deletion.

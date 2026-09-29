@@ -358,11 +358,11 @@
     </div>
     <ul style="margin-top:24px;">
       <li><strong>Most fields map cleanly</strong> — <code>InferenceFields</code> become Knative annotations; Knative handles the runtime behaviour natively.</li>
-      <li><strong>The serving-port pattern doesn't change</strong> — port-bearing OAuth2-proxy sidecar composed into the Knative template by the <strong>CP composer</strong> (Liran's design — in review). No new <code>corev1.Service</code> for InfW.</li>
+      <li><strong>The serving-port pattern doesn't change</strong> — port-bearing OAuth2-proxy sidecar composed into the Knative template by the <strong>CP composer</strong> (design — in review). No new <code>corev1.Service</code> for InfW.</li>
       <li><strong>Tools (<code>exposedUrls</code>) need multi-endpoint</strong> — one OAuth2-proxy sidecar per URL. Blocking dependency on PR #19525.</li>
     </ul>
     <p style="margin-top:20px; font-size:14px; color:var(--runai-purple);">
-      ⚠ <strong>Schema-version note:</strong> every YAML in this deck uses the <strong>target</strong> WLR schema — <code>instructions.networking.endpoints[]</code> (post-PR #19525) for Service + Ingress. The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (Liran's design — in review) directly into the Knative pod template's <code>containers[]</code>. <strong>There is no <code>instructions.initContainer.*</code> field on <code>WorkloadRunner</code></strong> — sidecar/init-container composition is a CP feature, not a runtime plugin. Nothing migrates until PR #19525 + Liran's CP composer design land.
+      ⚠ <strong>Schema-version note:</strong> every YAML in this deck uses the <strong>target</strong> WLR schema — <code>instructions.networking.endpoints[]</code> (post-PR #19525) for Service + Ingress. The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (design — in review) directly into the Knative pod template's <code>containers[]</code>. <strong>There is no <code>instructions.initContainer.*</code> field on <code>WorkloadRunner</code></strong> — sidecar/init-container composition is a CP feature, not a runtime plugin. Nothing migrates until PR #19525 + CP composer design land.
     </p>
   </div>
 </div>
@@ -776,7 +776,7 @@ instructions.networking.endpoints:
       </div>
     </div>
     <p style="color: var(--runai-purple); font-size:15px; margin-top:8px;">
-      ⚠ Blocked on Liran's CP composer design landing.
+      ⚠ Blocked on CP composer design landing.
     </p>
   </div>
 </div>
@@ -878,7 +878,7 @@ instructions.networking.endpoints:
     services: [{ ref: { name: my-llm, port: 4181 } }]
     externalAccess: { ingress: { } }</pre>
     <p style="color: var(--runai-purple); font-size:14px; margin-top:6px;">
-      ⚠ Hard-blocked on PR #19525 (multi-endpoint) <strong>and</strong> Liran's CP composer design.
+      ⚠ Hard-blocked on PR #19525 (multi-endpoint) <strong>and</strong> CP composer design.
     </p>
   </div>
 </div>
@@ -980,12 +980,12 @@ spec.instructions.networking.endpoints:
         </ul>
       </div>
       <div class="col" style="border-color: var(--runai-purple);">
-        <h4>CP composer feature · Liran's design · what it does</h4>
+        <h4>CP composer feature · design · what it does</h4>
         <ul style="font-size:15px;">
           <li>Bakes the <strong>OAuth2-proxy sidecar</strong> directly into the Knative pod template's <code>containers[]</code> (port-bearing → Knative auto-Service routes through it)</li>
           <li>Same feature also bakes <strong>git-sync</strong> + <strong>S3</strong> as init-containers into the template</li>
           <li>No new field on <code>WorkloadRunner</code> — sidecar appears in the template's pod spec</li>
-          <li>Blocker: <strong>Liran's CP composer design</strong> — in review</li>
+          <li>Blocker: <strong>CP composer design</strong> — in review</li>
         </ul>
       </div>
     </div>
@@ -1008,7 +1008,7 @@ spec.instructions.networking.endpoints:
       <tr><td>TW/IW/DW gap matrix</td><td>Generic field gaps tracked there</td></tr>
       <tr><td>Personal Credentials Plugin</td><td>Owns <code>imagePullSecrets</code> + env-creds</td></tr>
       <tr><td>Storage Plugin</td><td>Owns new-PVC lifecycle (<code>pvcs</code>, <code>dataVolumes</code>)</td></tr>
-      <tr><td><strong>CP composer feature</strong> · Liran (in review) — <em>not</em> a runtime plugin</td><td class="status-denied">Blocking — composer bakes OAuth2-proxy sidecar (+ git-sync, S3) directly into the template's pod spec</td></tr>
+      <tr><td><strong>CP composer feature</strong> · in review — <em>not</em> a runtime plugin</td><td class="status-denied">Blocking — composer bakes OAuth2-proxy sidecar (+ git-sync, S3) directly into the template's pod spec</td></tr>
       <tr><td>Networking redesign · Multi-Endpoint (<code>PR #19525</code>)</td><td class="status-denied">Blocking — needed for tools (multi-endpoint); no InPod mode</td></tr>
     </table>
   </div>
@@ -1023,7 +1023,7 @@ spec.instructions.networking.endpoints:
       <li><strong>CP composer</strong> — every InfW field → WLR template or instructions. Translation rules per <code>infw-fields.html</code>. Also owns anything the Karta doesn't surface — writes straight into <code>spec.template</code>.</li>
       <li><strong>Knative-Service Karta</strong> — already ships (<code>BuildKNativeServiceV1</code>). No work here.</li>
       <li><strong>Networking-plugin v2</strong> — multi-endpoint per PR #19525 (Service + Ingress; no sidecar / no InPod here).</li>
-      <li><strong>CP composer feature (Liran)</strong> — composer bakes OAuth2-proxy sidecar (+ git-sync, S3 init-containers) directly into the template's pod spec. <em>Not a runtime plugin.</em></li>
+      <li><strong>CP composer feature</strong> — composer bakes OAuth2-proxy sidecar (+ git-sync, S3 init-containers) directly into the template's pod spec. <em>Not a runtime plugin.</em></li>
       <li><strong>Composer networking behaviour</strong> — emit one endpoint per <code>exposedUrls[]</code> entry; <code>services[].ref</code> at Knative auto-Service for serving; emit metrics endpoint when NIM label is present.</li>
       <li><strong>Validation</strong> — reject ambiguous <code>authorizedUsersOrGroups</code> (both users-list and groups-list set).</li>
     </ol>

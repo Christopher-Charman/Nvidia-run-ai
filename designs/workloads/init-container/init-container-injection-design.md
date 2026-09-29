@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | **Status** | Ready for development |
-| **Author(s)** | Liran (Lee) Elisha |
+| **Author(s)** | NVIDIA Run:ai |
 | **Reviewers** | Chen Amiel, Nael Asbi |
 | **Created** | 2026-04-29 |
 | **Last updated** | 2026-05-25 |
@@ -365,7 +365,7 @@ This section makes the "two parallel implementations" row above concrete: where 
 
 Each new CP init container constructor mirrors the entrypoint exported by its corresponding cluster file — the exact function name, signature, and inputs are derived from that file at implementation time. The cluster files stay unmodified for the native-path sunset; they remain the native-path runtime **and** the test source of truth for the new CP init container constructors' golden tests (§9.1) plus the composer-level parity test (§9.2).
 
-The "PRs to audit" column counts non-baseline PRs that touched each file since the May 2025 refactor that established the current shape (#9312). It is the per-constructor measure of how much historical-fix territory the rewrite has to cover; `oauth2_proxy.go` is the heaviest by a wide margin and is the main reason PR 1c is sized at ~3.5 days. The audit deliverable in §13 enumerates each PR by ID and disposition.
+The "PRs to audit" column counts non-baseline PRs that touched each file since the May 2025 refactor that established the current shape (PR 9312). It is the per-constructor measure of how much historical-fix territory the rewrite has to cover; `oauth2_proxy.go` is the heaviest by a wide margin and is the main reason PR 1c is sized at ~3.5 days. The audit deliverable in §13 enumerates each PR by ID and disposition.
 
 The one architectural change versus the originals is the input boundary: every value the cluster builders read from `os.Getenv` — wired today through [`runai-cluster/cluster/workload-common/config/config.go`](../runai-cluster/cluster/workload-common/config/config.go) and (for `s3.go` and `oauth2_proxy.go`) [`runai-cluster/cluster/workload-common/feature-gate/`](../runai-cluster/cluster/workload-common/feature-gate/) — becomes a method on a CP-only `WorkloadConfig` interface, populated from the in-memory `ClusterSnapshot`. Short-term scope: container values and the four image references both come up via `runai-public` (§8.2.3); the deferred admin layer (§8.1) replaces the image source with a CP-side store later without changing the constructor-side boundary.
 

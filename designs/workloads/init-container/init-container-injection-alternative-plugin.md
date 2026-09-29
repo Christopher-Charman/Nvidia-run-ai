@@ -10,7 +10,7 @@
 | Field | Value |
 |---|---|
 | **Status** | Alternative — not in scope |
-| **Author(s)** | Liran (Lee) Elisha |
+| **Author(s)** | NVIDIA Run:ai |
 | **Reviewers** | Chen Amiel, Nael Asbi |
 | **Created** | 2026-04-29 |
 | **Last updated** | 2026-05-25 |

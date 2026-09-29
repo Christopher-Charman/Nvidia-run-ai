@@ -226,9 +226,9 @@
   <p style="margin: 10px 0 0; font-size: 12px; color: var(--fg-dim);">
     <strong style="color: var(--runai);">⚠ Schema-version note.</strong>
     <strong>Left side</strong> is the runai Inference API DTO (what users submit). <strong>Right side</strong> is the
-    target WorkloadRunner shape — <code>instructions.networking.endpoints[]</code> for Service + Ingress (post-PR #19525). The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (Liran's design — in review): the sidecar is baked directly into the Knative Service template's pod spec (<code>spec.template.spec.template.spec.containers[]</code>), alongside the user container.
+    target WorkloadRunner shape — <code>instructions.networking.endpoints[]</code> for Service + Ingress (post-PR #19525). The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (design — in review): the sidecar is baked directly into the Knative Service template's pod spec (<code>spec.template.spec.template.spec.containers[]</code>), alongside the user container.
     <strong>The networking plugin has no <code>InPod</code> mode.</strong> Sidecar auth is a CP composer responsibility — <strong>not</strong> a runtime plugin. There is no <code>instructions.initContainer.*</code> field on <code>WorkloadRunner</code>.
-    Today's shipped WLR schema is the v1 flat shape (<code>services[]</code>, <code>MaxItems: 1</code>). Nothing migrates until PR #19525 + Liran's CP composer design land.
+    Today's shipped WLR schema is the v1 flat shape (<code>services[]</code>, <code>MaxItems: 1</code>). Nothing migrates until PR #19525 + CP composer design land.
   </p>
   <p style="margin: 10px 0 0; font-size: 12px; color: var(--fg-dim);">
     <strong style="color: var(--accent);">🔧 Where to implement.</strong>
@@ -236,7 +236,7 @@
     Topic-specific composition: <code>fields_composer_compute.go</code> · <code>fields_composer_security.go</code> · <code>fields_composer_storage.go</code> · <code>fields_composer_ports_urls.go</code>.
     PodSpec / k8s-shape setters (env vars, scheduler name, DNS policy, host networking, auto-injected labels, …):
     <strong><code>setters_impl_k8s.go</code></strong>.
-    Reference: PR #19903 (Ofer · merged) — sibling TW/IW/DW path; same patterns apply for InfW.
+    Reference: PR #19903 (merged) — sibling TW/IW/DW path; same patterns apply for InfW.
   </p>
 </section>
 
@@ -338,7 +338,7 @@ const FIELDS = [
   { group: "General", path: "command", src: "model_inference_spec_spec.go:32",
     target: "containers[0].command — via ParseCommandLine shell parser",
     verdict: "translate", diff: "Mid", special: false, plugin: false,
-    notes: "<strong>Not a naive split.</strong> Use <code>composer_v2/cmdline.go</code> (ported from <code>workload-common/builders/cmdline.go:19</code> in Ofer's PR #19903) — a state-machine that handles single + double quotes, backslash escapes, and tab/space delimiters. Empty string → nil (k8s convention).",
+    notes: "<strong>Not a naive split.</strong> Use <code>composer_v2/cmdline.go</code> (ported from <code>workload-common/builders/cmdline.go:19</code> in PR #19903) — a state-machine that handles single + double quotes, backslash escapes, and tab/space delimiters. Empty string → nil (k8s convention).",
     example: {
       takeaway: "ParseCommandLine is the canonical parser. Honors quoting + escapes; emits nil (not an empty slice) when the input is empty.",
       infw: "{\n  \"command\": \"tritonserver --model-store=/mnt/models --log-info=true\"\n}",
@@ -347,7 +347,7 @@ const FIELDS = [
   { group: "General", path: "args", src: "model_inference_spec_spec.go:28",
     target: "containers[0].args — via ParseCommandLine shell parser",
     verdict: "translate", diff: "Mid", special: false, plugin: false,
-    notes: "Same parser as <code>command</code> — <code>composer_v2/cmdline.go</code> (Ofer's PR #19903). Use this rather than splitting on whitespace so quoted arguments like <code>--flag &quot;hello world&quot;</code> survive intact.",
+    notes: "Same parser as <code>command</code> — <code>composer_v2/cmdline.go</code> (PR #19903). Use this rather than splitting on whitespace so quoted arguments like <code>--flag &quot;hello world&quot;</code> survive intact.",
     example: {
       takeaway: "ParseCommandLine preserves quoted arguments as a single token — naive whitespace splitting would shatter them.",
       infw: "{\n  \"args\": \"--config /etc/config.json --label \\\"my model\\\" -v\"\n}",
@@ -371,7 +371,7 @@ const FIELDS = [
   { group: "General", path: "environmentVariables[]", src: "model_inference_spec_spec.go:37 → composer_v2/setters_impl_k8s.go (EnvVarsToK8sEnv)",
     target: "containers[0].env[] — via EnvVarsToK8sEnv + template-substitution pre-processor",
     verdict: "synthesize", diff: "Mid", special: false, plugin: false,
-    notes: "<strong>Not a passthrough.</strong> <strong>Implement / extend <code>composer_v2/setters_impl_k8s.go</code> (<code>EnvVarsToK8sEnv</code>).</strong> Ofer's PR #19903 already covers the four basic <code>ValueType</code> cases (Text, Secret, ConfigMap, PodFieldRef); <code>EnvValueUserCredentials</code> is marked <code>WAIT_FOR_OFER</code> in the code and will need the personal-credentials plugin hookup. Two transformations happen: <strong>(1) Template substitution</strong> on plain text values — substitutes <code>${RUNAI_PROJECT}</code> (project from namespace label <code>runai/queue</code>), <code>${RUNAI_JOB_NAME}</code> (workload metadata.name), <code>${RUNAI_UID}</code> / <code>${RUNAI_GID}</code> (from security.runAsUid / runAsGid). Legacy: <code>workload-common/builders/env_vars.go:191</code> (<code>PatchTemplateVariables</code>). <strong>(2) Reference-source decoding</strong> via value prefixes: <code>SECRET:&lt;key&gt;,&lt;name&gt;</code> → secretKeyRef, <code>CONFIGMAP:&lt;key&gt;,&lt;name&gt;</code> → configMapKeyRef, <code>PODFIELDREF:&lt;path&gt;</code> → fieldRef, <code>USERCREDENTIAL:&lt;name&gt;</code> → personal-credentials plugin synth. <code>exclude: true</code> entries are skipped.",
+    notes: "<strong>Not a passthrough.</strong> <strong>Implement / extend <code>composer_v2/setters_impl_k8s.go</code> (<code>EnvVarsToK8sEnv</code>).</strong> PR #19903 already covers the four basic <code>ValueType</code> cases (Text, Secret, ConfigMap, PodFieldRef); <code>EnvValueUserCredentials</code> is marked <code>WAIT_FOR_OFER</code> in the code and will need the personal-credentials plugin hookup. Two transformations happen: <strong>(1) Template substitution</strong> on plain text values — substitutes <code>${RUNAI_PROJECT}</code> (project from namespace label <code>runai/queue</code>), <code>${RUNAI_JOB_NAME}</code> (workload metadata.name), <code>${RUNAI_UID}</code> / <code>${RUNAI_GID}</code> (from security.runAsUid / runAsGid). Legacy: <code>workload-common/builders/env_vars.go:191</code> (<code>PatchTemplateVariables</code>). <strong>(2) Reference-source decoding</strong> via value prefixes: <code>SECRET:&lt;key&gt;,&lt;name&gt;</code> → secretKeyRef, <code>CONFIGMAP:&lt;key&gt;,&lt;name&gt;</code> → configMapKeyRef, <code>PODFIELDREF:&lt;path&gt;</code> → fieldRef, <code>USERCREDENTIAL:&lt;name&gt;</code> → personal-credentials plugin synth. <code>exclude: true</code> entries are skipped.",
     example: {
       takeaway: "The composer calls ConstructEnvVar per entry. Plain values get ${RUNAI_PROJECT}/${RUNAI_JOB_NAME}/${RUNAI_UID}/${RUNAI_GID} substituted in-place. Special-prefix values become envVar.ValueFrom references (Secret, ConfigMap, PodFieldRef, UserCredential). Reuse the existing ConstructEnvVar function.",
       infw: "{\n  \"security\": { \"runAsUid\": 1001 },\n  \"environmentVariables\": [\n    { \"name\": \"OUTPUT_DIR\",  \"value\": \"/data/${RUNAI_PROJECT}/${RUNAI_JOB_NAME}\" },\n    { \"name\": \"USER_HOME\",   \"value\": \"/home/runai-${RUNAI_UID}\" },\n    { \"name\": \"API_KEY\",     \"value\": \"SECRET:api-key,my-secret\" },\n    { \"name\": \"FEATURE_X\",   \"value\": \"CONFIGMAP:enabled,my-config\" },\n    { \"name\": \"POD_NAME\",    \"value\": \"PODFIELDREF:metadata.name\" }\n  ]\n}",
@@ -411,7 +411,7 @@ const FIELDS = [
   { group: "Scheduling", path: "priorityClass", src: "model_inference_spec_spec.go:57",
     target: "pod.spec.priorityClassName + labels['priorityClassName']",
     verdict: "synthesize", diff: "Mid", special: true, plugin: false,
-    notes: "API exposes an enum (very-low to very-high); composer maps to the cluster's PriorityClass names AND adds the value as a workload label (<code>LabelPriorityClassName</code>) — see <code>workload-common/builders/objectmeta.go:36-50</code> (<code>SetPriorityClassLabelOnLabels</code>). <strong>⚠ Validation gap:</strong> legacy cluster-side <code>validatePriorityClassExists</code> (<code>objectmeta.go:42</code>) checks the named PriorityClass actually exists in the cluster — the new path doesn't validate this yet. <strong>TODO (Ofer): add CP-side validation</strong> using the cluster-info the CP already has (the CP knows which PriorityClasses exist via its sync state)." },
+    notes: "API exposes an enum (very-low to very-high); composer maps to the cluster's PriorityClass names AND adds the value as a workload label (<code>LabelPriorityClassName</code>) — see <code>workload-common/builders/objectmeta.go:36-50</code> (<code>SetPriorityClassLabelOnLabels</code>). <strong>⚠ Validation gap:</strong> legacy cluster-side <code>validatePriorityClassExists</code> (<code>objectmeta.go:42</code>) checks the named PriorityClass actually exists in the cluster — the new path doesn't validate this yet. <strong>TODO: add CP-side validation</strong> using the cluster-info the CP already has (the CP knows which PriorityClasses exist via its sync state)." },
   { group: "Scheduling", path: "preemptibility", src: "model_inference_spec_spec.go:55",
     target: "pod.metadata.labels['kai.scheduler/preemptibility']",
     verdict: "synthesize", diff: "Easy", special: false, plugin: false,
@@ -595,7 +595,7 @@ const FIELDS = [
   { group: "Storage", path: "storage.git[]", src: "model_inference_spec_spec_all_of_storage.go:30",
     target: "(CP composer feature)",
     verdict: "translate", diff: "Hard", special: true, plugin: true,
-    notes: "CP composer (Liran's design — in review) bakes a git-sync init-container directly into the Knative pod template. Not a runtime plugin.",
+    notes: "CP composer (design — in review) bakes a git-sync init-container directly into the Knative pod template. Not a runtime plugin.",
     example: {
       takeaway: "CP composer injects an initContainer running git-sync into the template's pod spec directly.",
       infw: "{\n  \"storage\": {\n    \"git\": [{ \"repository\": \"https://github.com/me/r\", \"path\": \"/code\", \"branch\": \"main\" }]\n  }\n}",
@@ -784,7 +784,7 @@ const FIELDS = [
   { group: "Auto-injected", path: "(workload labels)", src: "objectmeta.go:16-31 → composer_v2/setters_impl_k8s.go",
     target: "metadata.labels[*] on the WLR and the rendered pod template",
     verdict: "synthesize", diff: "Easy", special: true, plugin: false,
-    notes: "Composer must emit the standard runai labels on every workload: <code>workloadKind</code>, <code>release</code>, <code>workloadName</code>, <code>app</code>, <code>createdBy</code>, <code>runai/queue</code> (project). The personal-credentials plugin, the GPU-fractioning admission controller, and ServiceMonitor selectors all rely on these labels. <strong>Implement in <code>composer_v2/setters_impl_k8s.go</code></strong> (sibling to Ofer's TW/IW work in PR #19903)." },
+    notes: "Composer must emit the standard runai labels on every workload: <code>workloadKind</code>, <code>release</code>, <code>workloadName</code>, <code>app</code>, <code>createdBy</code>, <code>runai/queue</code> (project). The personal-credentials plugin, the GPU-fractioning admission controller, and ServiceMonitor selectors all rely on these labels. <strong>Implement in <code>composer_v2/setters_impl_k8s.go</code></strong> (sibling to the TW/IW work in PR #19903)." },
 ];
 
 /* ===== Theme toggle ===== */

@@ -63,7 +63,7 @@ external := idm.NewIdmExternalClient("https://<your-domain>")
 
 mgr, err := idm.NewAuthnManager(ctx, idm.AuthnManagerConfig{
     ClientId:      "my-client",
-    ClientSecret:  "s3cr3t",
+    ClientSecret:  "<client-secret>",
     IdmClient:     external,
     RefreshBuffer: 30 * time.Second, // optional
 })
