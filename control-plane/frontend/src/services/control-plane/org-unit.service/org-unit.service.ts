@@ -484,7 +484,7 @@ async function getDepartmentsRanking(
 //******** ReportsApi ************
 
 /**
- * Checks if the report API is available - usually available only in SaaS.
+ * Checks if the report API is available.
  */
 async function isReportApiAvailable(): Promise<boolean> {
   try {

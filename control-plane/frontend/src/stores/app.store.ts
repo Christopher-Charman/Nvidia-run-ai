@@ -74,9 +74,6 @@ export const useAppStore = defineStore("App", {
     isMultiTenant(): boolean {
       return this.config.isMultiTenant;
     },
-    tenantDomain(): string {
-      return this.config.tenantName?.concat(".", window.location.hostname).replace("app.run.ai", "run.ai");
-    },
     isPageLoading(): boolean {
       return this.pageLoading;
     },

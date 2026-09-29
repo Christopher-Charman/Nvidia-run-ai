@@ -75,7 +75,6 @@ export const defaultOcpMappers: Mappers = {
 };
 
 export const settingUpdateSuccessMessage = "Settings saved";
-export const defaultEntityId = "runai-app.run.ai/runai";
 export const urlHintMessage = "If left empty, the latest metadata file will be used";
 const withEmailSupportCopy = (message: string): string =>
   DOCS.SUPPORT.URL ? `${message} If the issue persists, contact Run:ai support.` : message;

@@ -378,8 +378,8 @@ SPDX-License-Identifier: Apache-2.0
   "{{ .Release.Name }}-notifications-service". Unlike the other control-plane
   services (whose legacy Secrets are fullnameOverride-based, e.g.
   runai-backend-diagnostics-service), notifications-service was a subchart whose
-  Secret was named "{Release.Name}-notifications-service". On SaaS pools the
-  release name is NOT runai-backend (e.g. saas-pool1 -> saas-pool1-notifications-service),
+  Secret was named "{Release.Name}-notifications-service". On hosted multi-tenant
+  deployments the release name is NOT runai-backend (e.g. pool1 -> pool1-notifications-service),
   so a fullnameOverride-based default would MISS the legacy Secret and regenerate
   the key, making stored sink credentials unreadable. Because this generator runs
   in the same release, .Release.Name reconstructs the exact legacy name on every

@@ -2957,8 +2957,8 @@ traefik:
     interval: 30s
     scrapeTimeout: 30s
 
-# When set, /api/docs and /redoc/* paths redirect to this external URL (used in SaaS).
-# Leave empty for self-hosted (no API docs endpoint served).
+# When set, /api/docs and /redoc/* paths redirect to this external URL.
+# Leave empty to serve no API docs endpoint.
 redoc:
   docsSite:
     url: ""
