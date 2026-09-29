@@ -294,11 +294,10 @@ var _ = Describe("Rct API tests", func() {
 				"devices": map[string]any{"requests": []any{}},
 			})
 			Expect(resp.Code).To(Equal(http.StatusBadRequest))
-			// Two separate substrings — the JSON response body escapes the
-			// inner double-quotes around the field name, so
-			// `unknown field "devics"` won't match verbatim.
-			Expect(resp.Body.String()).To(ContainSubstring("unknown field"))
-			Expect(resp.Body.String()).To(ContainSubstring("devics"))
+			// The response body is JSON-encoded, so the inner double-quotes
+			// around the field name arrive as `\"...\"`. Backticks let us
+			// match that verbatim without Go-string escaping the backslashes.
+			Expect(resp.Body.String()).To(ContainSubstring(`unknown field \"devics\"`))
 		})
 
 		It("rejects an unknown nested field inside devices.requests[] via typed-decode layer", func() {
@@ -314,9 +313,8 @@ var _ = Describe("Rct API tests", func() {
 				},
 			})
 			Expect(resp.Code).To(Equal(http.StatusBadRequest))
-			// See note above on why we split the substring assertions.
-			Expect(resp.Body.String()).To(ContainSubstring("unknown field"))
-			Expect(resp.Body.String()).To(ContainSubstring("unexpectedNestedKey"))
+			// See note above on why the backticks + escaped quotes.
+			Expect(resp.Body.String()).To(ContainSubstring(`unknown field \"unexpectedNestedKey\"`))
 		})
 
 		It("rejects a shape mismatch (devices.requests as string) via schema layer", func() {
@@ -360,7 +358,7 @@ var _ = Describe("Rct API tests", func() {
 		It("rejects a cluster far below (2.15.0, the OldClustersPreK8sObjectsTracker mock)", func() {
 			// Matches OldClustersPreK8sObjectsTracker — the same version the
 			// shared cannotDeleteAssetBeingUsed helper uses and why we set
-			// notSupportedPre31: true on the RCT entry.
+			// minClusterVersion: "3.1.0" on the RCT entry.
 			resp := postRctToClusterVersion("2.15.0")
 			Expect(resp.Code).To(Equal(http.StatusBadRequest))
 			Expect(resp.Body.String()).To(ContainSubstring("not supported for this cluster version"))

@@ -19,6 +19,7 @@ import (
 
 	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/generated/pkg/api"
 	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/pkg/database/dao"
+	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/pkg/database/dbmodel"
 	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/pkg/projects"
 	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/pkg/query_types"
 	"github.com/dsx-ai-factory/run-ai/control-plane/assets-service/pkg/services/response_patching"
@@ -68,22 +69,24 @@ func (s *RctApiService) CreateRct(ctx context.Context, request api.RctCreationRe
 	assetKind := api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE
 	audit.AuditFromCtx(ctx).WithEntityType(string(assetKind)).WithEntityName(request.Meta.Name).WithClusterId(safeStrPtr(request.Meta.ClusterId))
 
-	// RBAC before meta validation. RCT has x-no-authorization on POST, so no
-	// framework auth middleware runs upstream — the RBAC check has to happen
-	// inside the handler. Placing it before ValidateAssetCreateRequestMeta
-	// mirrors what framework auth does for other asset kinds (auth first,
-	// then validation), and matters for scope=SYSTEM: RCT is in
-	// ClusterAndBelow, so the validator would otherwise return 400 "scope
-	// system is not supported for kind resource-claim-template" before RBAC
-	// gets a chance to return the correct 403.
-	rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfCreateRequest(&request.Meta), string(assetKind), backend.ACTION_CREATE, convutils.Deref(request.Meta.Private, false))
-	if rbacErr != nil {
-		return NewErrorResponse(api.NewError(int(rbacErr.Code), rbacErr.Message, errors.New(rbacErr.Details))), nil
+	// SYSTEM-scope RBAC pre-check: RCT is x-no-authorization + ClusterAndBelow,
+	// so without this the validator returns 400 before RBAC can return the
+	// correct 403. Non-SYSTEM requests fall through to the standard order
+	// (validate → RBAC) used by every other asset handler.
+	if request.Meta.Scope == api.SCOPE_SYSTEM {
+		if rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfCreateRequest(&request.Meta), string(assetKind), backend.ACTION_CREATE, convutils.Deref(request.Meta.Private, false)); rbacErr != nil {
+			return NewErrorResponse(api.NewError(int(rbacErr.Code), rbacErr.Message, errors.New(rbacErr.Details))), nil
+		}
 	}
 
 	validationError := ValidateAssetCreateRequestMeta(ctx, &request.Meta, assetKind)
 	if validationError != nil {
 		return NewErrorResponse(validationError), nil
+	}
+
+	rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfCreateRequest(&request.Meta), string(assetKind), backend.ACTION_CREATE, convutils.Deref(request.Meta.Private, false))
+	if rbacErr != nil {
+		return NewErrorResponse(api.NewError(int(rbacErr.Code), rbacErr.Message, errors.New(rbacErr.Details))), nil
 	}
 
 	if specErr := validateRctObjectSpec(request.Spec.ObjectSpec); specErr != nil {
@@ -131,6 +134,9 @@ func (s *RctApiService) ListRcts(ctx context.Context, offset int32, limit int32)
 		return NewErrorResponse(authError), nil
 	}
 
+	// WAIT_FOR_OFER currently the code does not support filtering by scope, so the
+	// list will filter the result by the entire scope the user is allowed to see.
+	// once we support filtering, we need to filter by scope as well.
 	result, actionError := dao.ListRcts(ctx, offset, limit)
 	if actionError != nil {
 		return NewErrorResponse(actionError), nil
@@ -173,6 +179,9 @@ func (s *RctApiService) UpdateRctById(ctx context.Context, id string, request ap
 	if getError != nil {
 		return NewErrorResponse(getError), nil
 	}
+	if kindErr := requireRctKind(assetMeta, id); kindErr != nil {
+		return NewErrorResponse(kindErr), nil
+	}
 	audit.AuditFromCtx(ctx).WithClusterId(safeStrPtr(assetMeta.ClusterId))
 
 	rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfDbMeta(assetMeta), string(assetKind), backend.ACTION_UPDATE, convutils.Deref(assetMeta.Private, false))
@@ -212,6 +221,9 @@ func (s *RctApiService) DeleteRctById(ctx context.Context, id string) (api.ImplR
 	if getError != nil {
 		return NewErrorResponse(getError), nil
 	}
+	if kindErr := requireRctKind(assetMeta, id); kindErr != nil {
+		return NewErrorResponse(kindErr), nil
+	}
 	audit.AuditFromCtx(ctx).WithEntityName(assetMeta.Name).WithClusterId(safeStrPtr(assetMeta.ClusterId))
 
 	rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfDbMeta(assetMeta), string(assetKind), backend.ACTION_DELETE, convutils.Deref(assetMeta.Private, false))
@@ -226,6 +238,21 @@ func (s *RctApiService) DeleteRctById(ctx context.Context, id string) (api.ImplR
 	return NewDeletionResponse(), nil
 }
 
+// requireRctKind guards Update/Delete against IDs that belong to a different
+// asset kind. dao.GetAssetMetaById is kind-agnostic — without this check a
+// caller could POST/DELETE at /resource-claim-templates/{id} with the id of
+// e.g. a compute asset and drive it through RCT's RBAC and DAO paths. We
+// return the same 404 shape that dao.GetRctById returns for a missing RCT so
+// the endpoint's namespace behaves symmetrically and doesn't leak the fact
+// that the id exists under a different kind.
+func requireRctKind(assetMeta *dbmodel.AssetMeta, id string) *api.Error {
+	if assetMeta.Kind == api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE {
+		return nil
+	}
+	return api.NewError(http.StatusNotFound,
+		fmt.Sprintf("resource claim template with id %s not found", id), nil)
+}
+
 // validateRctObjectSpec checks that the free-form objectSpec conforms to the
 // Kubernetes OpenAPI schema for resource.k8s.io/v1 ResourceClaimSpec (i.e.
 // starts with `devices`; the outer ResourceClaimTemplateSpec wrapping is not
@@ -233,12 +260,12 @@ func (s *RctApiService) DeleteRctById(ctx context.Context, id string) (api.ImplR
 // (see schemas/README.md) and loaded once at process start.
 //
 // Two-layer validation:
-//   1. OpenAPI schema (rctObjectSpecValidator) — types, enums, required
-//      fields, and constraints declared in the schema (min/max, length, ...).
-//   2. Typed struct decode with DisallowUnknownFields — rejects misspelled
-//      fields. Necessary because K8s publishes permissive schemas: without
-//      `additionalProperties: false` (which they never set), JSON Schema
-//      allows any extra key, so `{"devics": {}}` would pass layer 1.
+//  1. OpenAPI schema (rctObjectSpecValidator) — types, enums, required
+//     fields, and constraints declared in the schema (min/max, length, ...).
+//  2. Typed struct decode with DisallowUnknownFields — rejects misspelled
+//     fields. Necessary because K8s publishes permissive schemas: without
+//     `additionalProperties: false` (which they never set), JSON Schema
+//     allows any extra key, so `{"devics": {}}` would pass layer 1.
 //
 // Does NOT catch cluster-side concerns (DeviceClass existence, CEL selector
 // evaluation) — those are checked at apply time by the K8s API server and

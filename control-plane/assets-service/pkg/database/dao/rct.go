@@ -69,6 +69,7 @@ func ListRcts(ctx context.Context, offset, limit int32) (*api.RctListResponse, *
 	if err != nil {
 		return nil, err
 	}
+	applyAssetsSpecTenantFilter(ctx, result)
 
 	// Fetch limit+1 so we can detect "is there a next page" without a count query.
 	fetchLimit := int(limit) + 1
@@ -122,6 +123,7 @@ func GetRctById(ctx context.Context, id string) (*api.Rct, *api.Error) {
 	if err != nil {
 		return nil, err
 	}
+	applyAssetsSpecTenantFilter(ctx, result)
 
 	scanRows, scanErr := result.Scan(&combinedRec)
 	if scanErr != nil || scanRows == 0 {
@@ -179,7 +181,7 @@ func updateRctInTransaction(ctx context.Context, tx orm.DB, id string, request a
 		return nil, assetMeta, database.ErrorWithCode(database.UPDATE, api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE, http.StatusBadRequest).WithDetails(marshalErr)
 	}
 
-	recId := dbmodel.AssetSpecRec{AssetId: id}
+	recId := dbmodel.AssetSpecRec{AssetId: id, TenantId: auth.TenantIdOf(ctx)}
 	update := dbmodel.AssetSpecUpdate{Spec: specMap}
 
 	saveRows, saveErr := tx.Where(recId).Save(&update)
@@ -235,7 +237,7 @@ func deleteRctInTransaction(ctx context.Context, tx orm.DB, id string, deletionT
 		return nil
 	}
 
-	recId := dbmodel.AssetSpecRec{AssetId: id}
+	recId := dbmodel.AssetSpecRec{AssetId: id, TenantId: auth.TenantIdOf(ctx)}
 	delRows, delErr := tx.Where(&recId).Delete(&recId)
 	if delErr != nil || delRows == 0 {
 		return database.Error(database.DELETE, api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE).WithDetailsFromDbResult(delRows, delErr)
@@ -259,4 +261,14 @@ func deleteRctInTransaction(ctx context.Context, tx orm.DB, id string, deletionT
 // assets_spec expose.
 func assetsSpecJoin() string {
 	return fmt.Sprintf("%s.%s", dbtables.TableNameAssetsSpec, "spec")
+}
+
+// applyAssetsSpecTenantFilter narrows the joined assets_spec rows to the
+// caller's tenant. assets_metadata is already tenant-filtered upstream by
+// filterAssetMeta, and we write assets_spec.tenant_id to match at create
+// time — but keeping the DB-side filter here means (a) a future code bug
+// that writes a mismatched tenant_id can't leak rows across tenants and
+// (b) Postgres can use the assets_spec_by_tenant index during the join.
+func applyAssetsSpecTenantFilter(ctx context.Context, db orm.DB) {
+	db.Where(fmt.Sprintf("%s.tenant_id = ?", dbtables.TableNameAssetsSpec), auth.TenantIdOf(ctx))
 }

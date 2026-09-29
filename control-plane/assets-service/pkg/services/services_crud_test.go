@@ -598,7 +598,7 @@ var _ = Describe("Test Asset Service CRUD logic", func() {
 
 	Context("delete an asset which is being used by a workload", func() {
 		DescribeTable("delete fail for the deleted item with precondition error", func(testData AssetTest) {
-			if testData.notSupportedPre217 || testData.notSupportedPre220 || testData.notSupportedPre31 {
+			if !testData.supportsClusterMockVersion(testing.OldClustersPreK8sObjectsTracker) {
 				return
 			}
 
@@ -609,7 +609,7 @@ var _ = Describe("Test Asset Service CRUD logic", func() {
 
 	Context("test usage info - workspaces, trainings and templates", func() {
 		DescribeTable("request should return usage info of the asset", func(testData AssetTest) {
-			if testData.testUsageInfo && !testData.notSupportedPre217 && !testData.notSupportedPre220 && !testData.notSupportedPre31 {
+			if testData.testUsageInfo && testData.supportsClusterMockVersion(testing.OldClustersPreK8sObjectsTracker) {
 				//   environment asset we always need
 				envAsset, envSpec, _ := createEnvironmentAsset(buildRandomTenantEnvironmentAsset(randoms), router, headerForAdmin(randoms))
 

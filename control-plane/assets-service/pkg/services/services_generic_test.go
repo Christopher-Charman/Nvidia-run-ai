@@ -17,6 +17,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/util/version"
 )
 
 var (
@@ -94,9 +95,13 @@ type AssetTest struct {
 	supportsPresets           bool // supports preset assets
 	supportsWorkloadType      bool // supports preset assets
 	supportsAutoDeletion      bool
-	notSupportedPre217        bool // we need it for some tests which checks behavior in old clusters
-	notSupportedPre220        bool // we need it for some tests which checks behavior in old clusters
-	notSupportedPre31         bool // asset requires cluster >= 3.1 (e.g. RCT); skips tests that swap in the OldClustersPreK8sObjectsTracker mock
+	// minClusterVersion, when non-empty, marks the asset as requiring a
+	// Run:ai cluster at least at this version (semver-ish, matches whatever
+	// checker.NewClusterCapabilitiesCheckerForVersion parses). Generic tests
+	// that swap in an older cluster mock (e.g. OldClustersPreK8sObjectsTracker)
+	// call supportsClusterMockVersion to skip when the mock version is below
+	// this floor. Empty = no floor, compatible with any mock.
+	minClusterVersion string
 
 	filteringStyle     AssetFilterStyle // how the list endpoint accepts filters (default: query-string)
 	supportOffsetLimit bool             // list endpoint accepts ?offset= and ?limit=
@@ -122,6 +127,26 @@ func (a *AssetTest) canRunOnScope(scope api.Scope) bool {
 	}
 
 	return true
+}
+
+// supportsClusterMockVersion reports whether the asset can run against a
+// cluster mock reporting the given version string. Assets without a
+// minClusterVersion are always compatible. Fails closed (returns false) on
+// unparseable versions on either side — treat any parse failure as
+// "incompatible" rather than silently pretending the asset works there.
+func (a *AssetTest) supportsClusterMockVersion(v string) bool {
+	if a.minClusterVersion == "" {
+		return true
+	}
+	min, err := version.ParseGeneric(a.minClusterVersion)
+	if err != nil {
+		return false
+	}
+	actual, err := version.ParseGeneric(v)
+	if err != nil {
+		return false
+	}
+	return !actual.LessThan(min)
 }
 
 func (a *AssetTest) canRunOnlyOnScope(scope api.Scope) bool {
@@ -240,9 +265,9 @@ func NewAssetKindTable(router chi.Router) []ginkgo.TableEntry {
 			testUsageInfo:      true,
 			testComplianceInfo: true,
 			testStatusInfo:     true,
-			allowedScopes:      &clusterDownScopes,
-			notSupportedPre220: true,
-			supportsCleanup:    true,
+			allowedScopes:     &clusterDownScopes,
+			minClusterVersion: "2.20.0",
+			supportsCleanup:   true,
 		}),
 
 		ginkgo.Entry(string(api.ASSETKIND_SECRET_VOLUME), AssetTest{
@@ -250,7 +275,7 @@ func NewAssetKindTable(router chi.Router) []ginkgo.TableEntry {
 			testUsageInfo:              true,
 			testComplianceInfo:         true,
 			allowedScopes:              &projectScopeOnly,
-			notSupportedPre217:         true,
+			minClusterVersion:          "2.17.0",
 			skipClusterDeleteEventTest: true, // Skipping test cluster scope because it requires some refactor in the test i/f
 			supportsCleanup:            true,
 		}),
@@ -296,7 +321,7 @@ func NewAssetKindTable(router chi.Router) []ginkgo.TableEntry {
 			supportsCleanup:        true,
 			filteringStyle:         FilterStyleCustom, // query-string filters not exposed on this endpoint
 			supportOffsetLimit:     true,
-			notSupportedPre31:      true, // cluster capability MinVersionResourceClaimTemplates = "3.1.0"
+			minClusterVersion:      "3.1.0", // matches checker.MinVersionResourceClaimTemplates
 			allowedScopes:          &clusterDownScopes,
 		}),
 	}
