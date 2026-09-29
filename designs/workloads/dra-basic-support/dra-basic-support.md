@@ -53,7 +53,7 @@ The feature designed here serves two purposes:
 
    2. Support only 1.34+ clusters (in which the feature is enabled by default). 🟢
 
-   3. Spec identical to k8s spec.
+   3. Spec compatible with  k8s `ResourceClaimTeamplte` spec. 🟢
 
    4. Creation rejected if the spec contains a `DeviceClass` that does not exist in the cluster.  
 

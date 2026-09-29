@@ -102,7 +102,7 @@ func ValidateAssetCreateRequestMeta(ctx context.Context, meta *api.AssetCreation
 			}
 
 			if !supports {
-				return api.NewValidationError(fmt.Sprintf("resource claim templates are not supported for this cluster version %s", clusterInfo.Version.Get()))
+				return api.NewValidationError(fmt.Sprintf("resource claim templates are not supported for this cluster version %s", convutils.Deref(clusterInfo.Version.Get(), "unknown version")))
 			}
 
 			// and we need k8s version that fully supports DRA

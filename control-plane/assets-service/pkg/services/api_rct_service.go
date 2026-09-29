@@ -68,14 +68,22 @@ func (s *RctApiService) CreateRct(ctx context.Context, request api.RctCreationRe
 	assetKind := api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE
 	audit.AuditFromCtx(ctx).WithEntityType(string(assetKind)).WithEntityName(request.Meta.Name).WithClusterId(safeStrPtr(request.Meta.ClusterId))
 
-	validationError := ValidateAssetCreateRequestMeta(ctx, &request.Meta, assetKind)
-	if validationError != nil {
-		return NewErrorResponse(validationError), nil
-	}
-
+	// RBAC before meta validation. RCT has x-no-authorization on POST, so no
+	// framework auth middleware runs upstream — the RBAC check has to happen
+	// inside the handler. Placing it before ValidateAssetCreateRequestMeta
+	// mirrors what framework auth does for other asset kinds (auth first,
+	// then validation), and matters for scope=SYSTEM: RCT is in
+	// ClusterAndBelow, so the validator would otherwise return 400 "scope
+	// system is not supported for kind resource-claim-template" before RBAC
+	// gets a chance to return the correct 403.
 	rbacErr := auth.ValidateAccessByActionAndAssetKind(ctx, ScopeInfoOfCreateRequest(&request.Meta), string(assetKind), backend.ACTION_CREATE, convutils.Deref(request.Meta.Private, false))
 	if rbacErr != nil {
 		return NewErrorResponse(api.NewError(int(rbacErr.Code), rbacErr.Message, errors.New(rbacErr.Details))), nil
+	}
+
+	validationError := ValidateAssetCreateRequestMeta(ctx, &request.Meta, assetKind)
+	if validationError != nil {
+		return NewErrorResponse(validationError), nil
 	}
 
 	if specErr := validateRctObjectSpec(request.Spec.ObjectSpec); specErr != nil {
