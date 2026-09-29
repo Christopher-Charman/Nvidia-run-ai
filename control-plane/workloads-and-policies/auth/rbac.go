@@ -82,7 +82,7 @@ var resourceTypeOfKind = map[assets.AssetKind]authClient.ResourceType{
 	assets.ASSETKIND_NGC_API_KEY:       authClient.RESOURCETYPE_CREDENTIALS,
 
 	assets.ASSETKIND_RESOURCE_CLAIM_TEMPLATE: authClient.RESOURCETYPE_RESOURCE_CLAIM_TEMPLATES,
-	
+
 	WorkspaceAsAssetKind: authClient.RESOURCETYPE_WORKSPACES,
 	TrainingAsAssetKind:  authClient.RESOURCETYPE_TRAININGS,
 	InferenceAsAssetKind: authClient.RESOURCETYPE_INFERENCES,
