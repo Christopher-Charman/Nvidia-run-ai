@@ -84,4 +84,4 @@ To delete a template:
 
 ## Using API
 
-Go to the [Workload template](https://app.run.ai/api/docs#tag/Template) API reference to view the available actions.
+Go to the [Workload template](https://run-ai-docs.nvidia.com/api/2.26/workload-assets/template) API reference to view the available actions.

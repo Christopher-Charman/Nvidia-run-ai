@@ -120,9 +120,9 @@ The protocols for handling planned maintenance and unplanned downtime are identi
 
 To rejoin a node to the Kubernetes cluster, follow these steps:
 
-1.  **Generate a join command on the master node**
+1.  **Generate a join command on the control plane node**
 
-    On the master node, copy the following command to your terminal:
+    On the control plane node, copy the following command to your terminal:
 
     ```bash
     kubeadm token create --print-join-command
@@ -139,7 +139,7 @@ To rejoin a node to the Kubernetes cluster, follow these steps:
     Copy the `kubeadm join` command generated from the previous step and run it on the worker node that needs to rejoin the cluster.
 
     ```bash
-    kubeadm join <master-ip>:<master-port> 
+    kubeadm join <control-plane-ip>:<control-plane-port> 
     --token <token> \ --discovery-token-ca-cert-hash sha256:<hash>
     ```
 

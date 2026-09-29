@@ -228,7 +228,7 @@ The bulk of the design. Sub-sections cover the API surface, data model, system f
 
 > **Status: deferred to a follow-up after native-path removal.** Short-term scope (this design) has the four image references flow up from the cluster via `runai-public` (§8.2.3), with no CP-side image store and no admin endpoints. The admin API below is documented so the contract is reviewed once and the follow-up doesn't redesign it from scratch.
 
-Two new admin endpoints on the control-plane Clusters service. Follow the [Run:AI API Design Guidelines](https://runai.atlassian.net/wiki/spaces/EN/pages/) for naming, error shape, and versioning.
+Two new admin endpoints on the control-plane Clusters service. Follow the Run:AI API design guidelines for naming, error shape, and versioning.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -365,7 +365,7 @@ This section makes the "two parallel implementations" row above concrete: where 
 
 Each new CP init container constructor mirrors the entrypoint exported by its corresponding cluster file — the exact function name, signature, and inputs are derived from that file at implementation time. The cluster files stay unmodified for the native-path sunset; they remain the native-path runtime **and** the test source of truth for the new CP init container constructors' golden tests (§9.1) plus the composer-level parity test (§9.2).
 
-The "PRs to audit" column counts non-baseline PRs that touched each file since the May 2025 refactor that established the current shape ([#9312](https://github.com/dsx-ai-factory/run-ai/pull/9312)). It is the per-constructor measure of how much historical-fix territory the rewrite has to cover; `oauth2_proxy.go` is the heaviest by a wide margin and is the main reason PR 1c is sized at ~3.5 days. The audit deliverable in §13 enumerates each PR by ID and disposition.
+The "PRs to audit" column counts non-baseline PRs that touched each file since the May 2025 refactor that established the current shape (#9312). It is the per-constructor measure of how much historical-fix territory the rewrite has to cover; `oauth2_proxy.go` is the heaviest by a wide margin and is the main reason PR 1c is sized at ~3.5 days. The audit deliverable in §13 enumerates each PR by ID and disposition.
 
 The one architectural change versus the originals is the input boundary: every value the cluster builders read from `os.Getenv` — wired today through [`runai-cluster/cluster/workload-common/config/config.go`](../runai-cluster/cluster/workload-common/config/config.go) and (for `s3.go` and `oauth2_proxy.go`) [`runai-cluster/cluster/workload-common/feature-gate/`](../runai-cluster/cluster/workload-common/feature-gate/) — becomes a method on a CP-only `WorkloadConfig` interface, populated from the in-memory `ClusterSnapshot`. Short-term scope: container values and the four image references both come up via `runai-public` (§8.2.3); the deferred admin layer (§8.1) replaces the image source with a CP-side store later without changing the constructor-side boundary.
 
@@ -422,7 +422,7 @@ One feature flag gates the short-term rollout:
 |---|---|---|
 | `composer.init_container_injection.enabled` | `false` initially → `true` per cluster, then fleet | Composer runs the common code for all init containers; off means anyworkload submissions ship without the four containers (the not-yet-implemented state today, but explicit). |
 
-Rollout stages: internal cluster → 1 friendly customer cluster → all customers. Kill switch: flip `composer.init_container_injection.enabled` to `false`; the anyworkload path returns to the current state (no injections), no other regression.
+Rollout stages: internal cluster → an early-adopter cluster → all customers. Kill switch: flip `composer.init_container_injection.enabled` to `false`; the anyworkload path returns to the current state (no injections), no other regression.
 
 The deferred CP-side image admin layer (§11) adds its own `cluster_service.workload_image_overrides.enabled` flag when it ships.
 
@@ -525,4 +525,3 @@ The CP-side image admin layer (§11.3) ships in a separate, post-native-path-rem
 
 - alternative design considered (cluster-side plugin), with full pros/cons and time estimate.
 - [`plugins/anyworkload-runai/skills/anyworkload-runai/SKILL.md`](../plugins/anyworkload-runai/skills/anyworkload-runai/SKILL.md) — internal end-to-end reference for the anyworkload system.
-- Run:AI API Design Guidelines, Run:AI DB Migration Guidelines, Run:AI E2E Guidelines (Confluence canonical pages).

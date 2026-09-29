@@ -98,18 +98,18 @@ Each service directory has a Makefile with standard targets (`make build`, `make
 
 ## Installation
 
-NVIDIA Run:ai can be deployed on Kubernetes or OpenShift in connected or air-gapped environments. To understand the full setup lifecycle, see the [Installation and Configuration Overview](https://nvidia-preview-01a02a68-bbb9-71d8-b4ab-3579d895216b.docs.buildwithfern.com/run-ai/self-hosted/documentation/installation-and-configuration/overview).
+NVIDIA Run:ai can be deployed on Kubernetes or OpenShift in connected or air-gapped environments. To understand the full setup lifecycle, see the [Installation and Configuration Overview](docs/installation-and-configuration/overview.md).
 
 **Before you start:**
 
-- **[Support Matrix](https://nvidia-preview-01a02a68-bbb9-71d8-b4ab-3579d895216b.docs.buildwithfern.com/run-ai/self-hosted/documentation/installation-and-configuration/support-matrix)** - Kubernetes/OpenShift versions, operating systems, GPU and network operators, and third-party services NVIDIA Run:ai supports.
-- **[System Requirements](https://nvidia-preview-01a02a68-bbb9-71d8-b4ab-3579d895216b.docs.buildwithfern.com/run-ai/self-hosted/documentation/installation-and-configuration/system-requirements)** - Infrastructure, networking, and access you need to prepare before installing.
+- **[Support Matrix](docs/installation-and-configuration/support-matrix.md)** - Kubernetes/OpenShift versions, operating systems, GPU and network operators, and third-party services NVIDIA Run:ai supports.
+- **[System Requirements](docs/installation-and-configuration/system-requirements/README.md)** - Infrastructure, networking, and access you need to prepare before installing.
 
 Choose an installation method based on how you want to manage the deployment:
 
-- **[Guided installation](https://nvidia-preview-01a02a68-bbb9-71d8-b4ab-3579d895216b.docs.buildwithfern.com/run-ai/self-hosted/documentation/installation-and-configuration/installation/guided-installation-recommended) (recommended)** - Uses the `runai-installer` CLI with a configuration YAML file. The installer performs preflight checks, installs required dependencies, and deploys the NVIDIA Run:ai control plane and cluster.
+- **[Guided installation](docs/installation-and-configuration/installation/guided-installation/README.md) (recommended)** - Uses the `runai-installer` CLI with a configuration YAML file. The installer performs preflight checks, installs required dependencies, and deploys the NVIDIA Run:ai control plane and cluster.
 
-- **[Manual installation](https://nvidia-preview-01a05288-a018-735b-ad78-e678676b8b99.docs.buildwithfern.com/run-ai/self-hosted/documentation/installation-and-configuration/installation/manual-helm/control-plane-system-requirements)** - Deploys the NVIDIA Run:ai Helm charts directly. Use this path if you manage deployments through your own tooling, such as Argo CD, or require granular control over Helm values.
+- **[Manual installation](docs/installation-and-configuration/installation/install-using-helm/preparations.md)** - Deploys the NVIDIA Run:ai Helm charts directly. Use this path if you manage deployments through your own tooling, such as Argo CD, or require granular control over Helm values.
 
 To build and run NVIDIA Run:ai locally for development, see [Usage](#usage).
 

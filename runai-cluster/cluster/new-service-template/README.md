@@ -2,8 +2,6 @@
 
 This is a cookiecutter template for a new service in the runai-operator repository.
 It will automatically generate most of what you need when writing a new service for the cluster.
-The full documentation of what it does can be found here:
-https://runai.atlassian.net/wiki/spaces/EN/pages/2703524287/Tutorial+-+New+Service+Creation
 
 ## Usage
 `cd runai-cluster/cluster`

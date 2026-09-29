@@ -28,7 +28,6 @@ The feature designed here serves two purposes:
 
 | Details | Link                                                         |
 | ------- | ------------------------------------------------------------ |
-| PRD     | https://docs.google.com/document/d/1LPvjpdUlX2MpVl3TkUNgbwTcafRIbc7vskVNeyCexRQ/edit?tab=t.0 |
 | K8s Doc | https://kubernetes.io/docs/concepts/resource-management/dynamic-resource-allocation/ |
 
 ## 2. Definition of Done

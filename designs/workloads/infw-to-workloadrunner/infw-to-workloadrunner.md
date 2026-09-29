@@ -4,7 +4,7 @@
 >
 > **Companions:** [`infw-fields.html`](./infw-fields.html) — filterable field-by-field mapping table · [`infw-to-workloadrunner.slides.html`](./infw-to-workloadrunner.slides.html) — slide deck.
 >
-> **⚠ Schema-version note.** Every YAML example in this design uses the **target** `WorkloadRunner` schema — `instructions.networking.endpoints[]` for the Service + Ingress layer. **The networking plugin has no `InPod` mode.** Sidecar auth (what we've been calling "InPod") is composed at the **control-plane composer** level via Liran's design (still in review): the OAuth2-proxy sidecar is baked directly into the Knative Service template's pod spec (`spec.template.spec.template.spec.containers[]`), alongside the user container. **There is no `instructions.initContainer.*` field on `WorkloadRunner` — that's a CP composer responsibility, not a runtime plugin.** The networking plugin only sees the Service + Ingress shape and is unaware of the sidecar. The schema in `master` today is the v1 flat shape (`instructions.networking.services[]`, `MaxItems: 1`, workload-level `externalAccess`); nothing migrates until both [PR #19525](https://github.com/dsx-ai-factory/run-ai/pull/19525) (multi-endpoint networking) **and** Liran's CP composer design land — see §7.1.
+> **⚠ Schema-version note.** Every YAML example in this design uses the **target** `WorkloadRunner` schema — `instructions.networking.endpoints[]` for the Service + Ingress layer. **The networking plugin has no `InPod` mode.** Sidecar auth (what we've been calling "InPod") is composed at the **control-plane composer** level via Liran's design (still in review): the OAuth2-proxy sidecar is baked directly into the Knative Service template's pod spec (`spec.template.spec.template.spec.containers[]`), alongside the user container. **There is no `instructions.initContainer.*` field on `WorkloadRunner` — that's a CP composer responsibility, not a runtime plugin.** The networking plugin only sees the Service + Ingress shape and is unaware of the sidecar. The schema in `master` today is the v1 flat shape (`instructions.networking.services[]`, `MaxItems: 1`, workload-level `externalAccess`); nothing migrates until both PR #19525 (multi-endpoint networking) **and** Liran's CP composer design land — see §7.1.
 
 ## 1. TL;DR
 
@@ -41,7 +41,7 @@ The composer's responsibility ends at "produce a complete WLR." The cluster-side
 
 | Plugin | Status | Drives | Responsible for |
 |---|---|---|---|
-| `networking` | v1 shipped · v2 pending ([PR #19525](https://github.com/dsx-ai-factory/run-ai/pull/19525)) | `instructions.networking` | Services + Ingress / Route / HTTPRoute. **No `InPod` mode and no sidecar awareness** — the OAuth2-proxy sidecar is composed into the template by the CP composer. **InfW depends on PR #19525 (multi-endpoint).** |
+| `networking` | v1 shipped · v2 pending (PR #19525) | `instructions.networking` | Services + Ingress / Route / HTTPRoute. **No `InPod` mode and no sidecar awareness** — the OAuth2-proxy sidecar is composed into the template by the CP composer. **InfW depends on PR #19525 (multi-endpoint).** |
 | `mnnvl` | shipped | `instructions.gpuOptimizations.mnnvl` | N/A for single-replica InfW |
 | `storage` | design | `instructions.storage.newPvcs` | Lifecycle-bound new PVCs |
 | `personal-credentials` | design | per-user secret synthesis | Per-user image-pull / env-var creds |
@@ -235,7 +235,7 @@ tool-2: external → Ingress → auto-Service:portB → sidecar-2 → user conta
 | Personal Credentials Plugin | Owns `imagePullSecrets` + env-creds. **Action:** composer iterates Karta `childComponents` for multi-component CRDs (LWS); InfW is single-pod so this is a no-op for our composer, but the plugin must still synthesize. |
 | Storage Plugin | Owns new-PVC lifecycle (`pvcs`, `dataVolumes`) |
 | **CP composer feature** (Liran, in review) — composes init-containers + sidecars (`gitSync`, `s3`, OAuth2-proxy) directly into the target template's pod spec. **Not a runtime plugin.** | **Blocking** — owns OAuth2-proxy sidecar composition. Without it, InfW auth can't be reproduced (no `InPod` mode in the networking plugin). |
-| Networking plugin redesign — Multi-Endpoint ([PR #19525](https://github.com/dsx-ai-factory/run-ai/pull/19525)) | **Blocking** for tools / `exposedUrls`. Network plugin will only handle Service + Ingress; sidecar auth is the CP composer's job (no `InPod` mode in networking). |
+| Networking plugin redesign — Multi-Endpoint (PR #19525) | **Blocking** for tools / `exposedUrls`. Network plugin will only handle Service + Ingress; sidecar auth is the CP composer's job (no `InPod` mode in networking). |
 
 ### 7.1 The sidecar dependency is hard
 

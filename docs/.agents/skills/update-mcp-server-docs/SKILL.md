@@ -19,12 +19,12 @@ Detect changes to tools in `runai-mcp-server/internal/tools/` on the current bra
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
-BASE=$(git merge-base origin/master HEAD)
+BASE=$(git merge-base origin/main HEAD)
 CHANGED=$(git diff --name-only "$BASE"...HEAD | grep 'runai-mcp-server/internal/tools/')
 echo "$CHANGED"
 ```
 
-If `CHANGED` is empty, tell the user "No MCP tool changes detected against master" and stop.
+If `CHANGED` is empty, tell the user "No MCP tool changes detected against main" and stop.
 
 ---
 

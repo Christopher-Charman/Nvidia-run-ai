@@ -226,7 +226,7 @@
   <p style="margin: 10px 0 0; font-size: 12px; color: var(--fg-dim);">
     <strong style="color: var(--runai);">⚠ Schema-version note.</strong>
     <strong>Left side</strong> is the runai Inference API DTO (what users submit). <strong>Right side</strong> is the
-    target WorkloadRunner shape — <code>instructions.networking.endpoints[]</code> for Service + Ingress (post-<a href="https://github.com/dsx-ai-factory/run-ai/pull/19525">PR #19525</a>). The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (Liran's design — in review): the sidecar is baked directly into the Knative Service template's pod spec (<code>spec.template.spec.template.spec.containers[]</code>), alongside the user container.
+    target WorkloadRunner shape — <code>instructions.networking.endpoints[]</code> for Service + Ingress (post-PR #19525). The OAuth2-proxy <strong>sidecar</strong> for auth is composed at the <strong>CP composer</strong> level (Liran's design — in review): the sidecar is baked directly into the Knative Service template's pod spec (<code>spec.template.spec.template.spec.containers[]</code>), alongside the user container.
     <strong>The networking plugin has no <code>InPod</code> mode.</strong> Sidecar auth is a CP composer responsibility — <strong>not</strong> a runtime plugin. There is no <code>instructions.initContainer.*</code> field on <code>WorkloadRunner</code>.
     Today's shipped WLR schema is the v1 flat shape (<code>services[]</code>, <code>MaxItems: 1</code>). Nothing migrates until PR #19525 + Liran's CP composer design land.
   </p>
@@ -236,7 +236,7 @@
     Topic-specific composition: <code>fields_composer_compute.go</code> · <code>fields_composer_security.go</code> · <code>fields_composer_storage.go</code> · <code>fields_composer_ports_urls.go</code>.
     PodSpec / k8s-shape setters (env vars, scheduler name, DNS policy, host networking, auto-injected labels, …):
     <strong><code>setters_impl_k8s.go</code></strong>.
-    Reference: <a href="https://github.com/dsx-ai-factory/run-ai/pull/19903">PR #19903</a> (Ofer · merged) — sibling TW/IW/DW path; same patterns apply for InfW.
+    Reference: PR #19903 (Ofer · merged) — sibling TW/IW/DW path; same patterns apply for InfW.
   </p>
 </section>
 

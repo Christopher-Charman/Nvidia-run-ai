@@ -37,7 +37,7 @@ NVIDIA Run:ai is available as open source. The NVIDIA Run:ai Support-Entitled Re
   <Card
     title="Local Development"
     icon="square-terminal"
-    href="https://github.com/dsx-ai-factory/run-ai/blob/master/local-dev.md"
+    href="https://github.com/dsx-ai-factory/run-ai/blob/main/local-dev.md"
   >
     Build NVIDIA Run:ai and run the full stack locally for development.
   </Card>

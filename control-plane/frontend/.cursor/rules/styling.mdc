@@ -16,4 +16,3 @@ alwaysApply: false
 ## Canonical Examples
 
 - **Quasar classes**: See Quasar docs for `row`, `col`, `flex`, spacing utilities
-- **Design tokens**: See Figma Integration guide in Confluence (if mcp available)

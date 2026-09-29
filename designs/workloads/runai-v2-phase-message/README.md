@@ -235,7 +235,7 @@ Everything else (lifecycle phases, init/image-pull/replica messages, engine-nati
 
 ## 6. Verification
 1. Unit tests beside `runaistatus/`, `job_handler.go`, and the cluster-sync guard.
-2. E2E (env-in-a-click): submit Training + Workspace; confirm `observedStatus.message` + v2 API `phase`/`phaseMessage` match v1 — including a degraded/failed case (force a plugin/issue).
+2. E2E environment: submit Training + Workspace; confirm `observedStatus.message` + v2 API `phase`/`phaseMessage` match v1 — including a degraded/failed case (force a plugin/issue).
 3. Regression: non-Run:ai Jobs and other types unchanged (gate off / annotation absent).
 4. **Top-owner invariant:** assert the ExternalWorkload is still built for the **Job** (not the wlr) after adding the watch + RBAC — the wlr must never appear as a top owner. Backed at runtime by the top-owner guard (§2) that skips + logs critical if the wlr is ever the top owner.
 

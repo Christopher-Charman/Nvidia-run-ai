@@ -45,10 +45,10 @@ These flags must be configured in the API server startup parameters for each clu
 
 1. Locate the Kubernetes API server configuration file. For vanilla Kubernetes, the configuration file is typically located at: `/etc/kubernetes/manifests/kube-apiserver.yaml`.
 2. Edit the file. Under the `command` section, add the [required OIDC flags](cluster-authentication.md#retrieve-required-oidc-values).
-3.  Verify that the changes have been applied. After saving the file, the API server should automatically restart since it's managed as a static pod. Confirm that the `kube-apiserver-<master-node-name>` pod in the `kube-system` namespace has restarted and is running with the new configuration. You can run the following command to check the pod status:
+3.  Verify that the changes have been applied. After saving the file, the API server should automatically restart since it's managed as a static pod. Confirm that the `kube-apiserver-<control-plane-node-name>` pod in the `kube-system` namespace has restarted and is running with the new configuration. You can run the following command to check the pod status:
 
     ```bash
-    kubectl get pods -n kube-system kube-apiserver-<master-node-name> -o yaml
+    kubectl get pods -n kube-system kube-apiserver-<control-plane-node-name> -o yaml
     ```
 
 </Accordion>
@@ -127,7 +127,7 @@ To configure researcher authentication on GKE, use **Anthos Identity Service** a
 
     ```bash
     kubectl -n runai patch runaiconfig runai -p '{"spec": {"researcher-service": 
-    {"args": {"gkeOidcEnvoyHost": "35.236.229.19"}}}}'  --type="merge"
+    {"args": {"gkeOidcEnvoyHost": "203.0.113.10"}}}}'  --type="merge"
     ```
 
 </Accordion>

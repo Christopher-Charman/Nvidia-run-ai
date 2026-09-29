@@ -353,10 +353,10 @@ sequenceDiagram
 
 ## Dromos modification
 
-Currently the controller-runtime manager is [internal for dromos](https://github.com/dsx-ai-factory/run-ai/blob/19a0fbc492fc2bfe27a88cae882b436042339e4a/runai-cluster/cluster/dromos/pkg/app/app.go#L89), We need this to add hooks, reconcilers and more.
+Currently the controller-runtime manager is [internal for dromos](https://github.com/dsx-ai-factory/run-ai/blob/main/runai-cluster/cluster/dromos/pkg/app/app.go), We need this to add hooks, reconcilers and more.
 
 - We don't want to to add specific restart/handoff reconcilers to dromos.
-- The goal is to do a minor refactor to dromos in order to allow using the controller manager in anyworkload controller, probably by separating [dromos.RunController](https://github.com/dsx-ai-factory/run-ai/blob/master/runai-cluster/cluster/dromos/pkg/app/app.go#L75C6-L75C19) and allow re-using manager.
+- The goal is to do a minor refactor to dromos in order to allow using the controller manager in anyworkload controller, probably by separating [dromos.RunController](https://github.com/dsx-ai-factory/run-ai/blob/main/runai-cluster/cluster/dromos/pkg/app/app.go#L75C6-L75C19) and allow re-using manager.
   
 ## Dromos plugin: NodeAffinity
 

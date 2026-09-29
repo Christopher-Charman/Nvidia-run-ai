@@ -3,7 +3,6 @@
 The workload-exporter is a service that exports metrics about pods and workloads of runai.
 In the past, we used metrics-exporter to export metrics about pod-groups,
 but stating version 2.17 we need metrics on the workload level, and not on the pod-group level.
-Detailed metrics deign is described here: https://runai.atlassian.net/wiki/spaces/EN/pages/2730623054/Design+-+New+Workloads+Metrics
 
 ## metrics exported by workload-exporter:
 * runai_workload_info

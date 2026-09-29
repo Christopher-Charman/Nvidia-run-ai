@@ -85,14 +85,14 @@ Removal targets the management stack, not the running workload objects.
 
 | PR | Area | Final implemented result |
 |---|---|---|
-| [#25614 — 01 / Submission Cutover](https://github.com/dsx-ai-factory/run-ai/pull/25614) | Agent, cluster-sync, runtime-rules | WorkloadRunner-only submission, typed legacy delete-only handling, read-only legacy sync, and no legacy runtime actions |
-| [#25615 — 02 / Ownership and Webhook Handoff](https://github.com/dsx-ai-factory/run-ai/pull/25615) | Workloads Manager, Agent, AnyWorkload, init-ca | Carries the original submitter to WorkloadRunner and moves ownership webhooks to AnyWorkload |
-| [#25616 — 03 / Operator Dependencies](https://github.com/dsx-ai-factory/run-ai/pull/25616) | go-operator, Helm hooks | Moves **workloads-auth** ownership and decouples MPI and Training operators from legacy controller flags |
-| [#25617 — 04 / Missing-CRD Readiness](https://github.com/dsx-ai-factory/run-ai/pull/25617) | Helm, CRD upgrader, surviving consumers | Removes all 11 legacy CRDs from installation packages and makes missing APIs safe |
-| [#25618 — 05 / Controller Retirement](https://github.com/dsx-ai-factory/run-ai/pull/25618) | go-operator, cleanup Job, Helm hooks, project-controller | Introduces the Operator-managed cleanup Job, safety checks, condition tracking, and exact asset inventory |
-| [#26398 — Fresh-Install Defaults Follow-up](https://github.com/dsx-ai-factory/run-ai/pull/26398) | Helm hooks | Historical follow-up that made the transition path independent of target semantic-version parsing |
-| [#26564 — Remove Legacy Workload Controllers](https://github.com/dsx-ai-factory/run-ai/pull/26564) | SDK, go-operator, Helm, cleanup Job | Removes all three deployable controllers and RunaiConfig fields, migrates retained configuration to AnyWorkload, and makes cleanup resource-driven |
-| [#26571 — Allow RestartRequest Webhook](https://github.com/dsx-ai-factory/run-ai/pull/26571) | Cleanup safety gate | Keeps the live RestartRequest validation webhook outside the retired-resource set |
+| #25614 — 01 / Submission Cutover | Agent, cluster-sync, runtime-rules | WorkloadRunner-only submission, typed legacy delete-only handling, read-only legacy sync, and no legacy runtime actions |
+| #25615 — 02 / Ownership and Webhook Handoff | Workloads Manager, Agent, AnyWorkload, init-ca | Carries the original submitter to WorkloadRunner and moves ownership webhooks to AnyWorkload |
+| #25616 — 03 / Operator Dependencies | go-operator, Helm hooks | Moves **workloads-auth** ownership and decouples MPI and Training operators from legacy controller flags |
+| #25617 — 04 / Missing-CRD Readiness | Helm, CRD upgrader, surviving consumers | Removes all 11 legacy CRDs from installation packages and makes missing APIs safe |
+| #25618 — 05 / Controller Retirement | go-operator, cleanup Job, Helm hooks, project-controller | Introduces the Operator-managed cleanup Job, safety checks, condition tracking, and exact asset inventory |
+| #26398 — Fresh-Install Defaults Follow-up | Helm hooks | Historical follow-up that made the transition path independent of target semantic-version parsing |
+| #26564 — Remove Legacy Workload Controllers | SDK, go-operator, Helm, cleanup Job | Removes all three deployable controllers and RunaiConfig fields, migrates retained configuration to AnyWorkload, and makes cleanup resource-driven |
+| #26571 — Allow RestartRequest Webhook | Cleanup safety gate | Keeps the live RestartRequest validation webhook outside the retired-resource set |
 
 ### Review Result
 

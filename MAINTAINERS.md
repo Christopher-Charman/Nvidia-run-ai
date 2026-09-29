@@ -8,7 +8,7 @@ role is granted and relinquished.
 Maintainers are tracked as a GitHub team rather than a name list in this file,
 so membership changes do not require a pull request:
 
-- https://github.com/orgs/run-ai/teams/maintainers
+- https://github.com/orgs/dsx-ai-factory/teams/maintainers
 
 Path-level review ownership is separate and is defined in
 [`CODEOWNERS`](CODEOWNERS), which maps each area of the repository to the teams

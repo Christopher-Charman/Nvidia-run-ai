@@ -59,7 +59,7 @@ if err != nil {
 ### Usage
 
 ```go
-external := idm.NewIdmExternalClient("https://app.run.ai")
+external := idm.NewIdmExternalClient("https://<your-domain>")
 
 mgr, err := idm.NewAuthnManager(ctx, idm.AuthnManagerConfig{
     ClientId:      "my-client",
@@ -72,7 +72,7 @@ if err != nil {
 }
 
 httpClient := mgr.HttpClient() // == &http.Client{Transport: mgr}
-resp, err := httpClient.Get("https://app.run.ai/api/v1/users")
+resp, err := httpClient.Get("https://<your-domain>/api/v1/users")
 ```
 
 > **Important:** When an HTTP client uses `AuthnManager` as its transport, the

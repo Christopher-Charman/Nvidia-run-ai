@@ -6,8 +6,6 @@ For example, if we have an accessrule that assigns a specific user the Role
 to CRUD workloads in a specific project - 
 the accessrule-controller will make sure there's a RoleBinding object, binding between the
 Role to the user, in the project's namespace.
-You can read more here -
-https://runai.atlassian.net/wiki/spaces/EN/pages/2521006122/Design+-+Reflecting+RBAC+in+the+k8s+-+Authorization+Service .
 
 ## Testing
 
