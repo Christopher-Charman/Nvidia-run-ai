@@ -38,6 +38,8 @@ type IWorkloadsClient interface {
 	// InternalEnrichOrgUnitRanking enriches org unit ranking items with workload counts
 	InternalEnrichOrgUnitRanking(ctx context.Context, request openapi.InternalEnrichOrgUnitRankingRequest) (*openapi.InternalEnrichOrgUnitRankingResponse, error)
 
+	InternalGetWorkloadsTelemetry(ctx context.Context, telemetryType openapi.WorkloadTelemetryType, clusterId string, groupBy []string, filterBy []string) (*openapi.TelemetryResponse, *openapi.Error)
+
 	// InternalUpdateNodePods updates topology information for all pods running on a specific node
 	InternalUpdateNodePods(ctx context.Context, clusterId string, nodeName string, networkTopologyLabelValues []string) *openapi.Error
 }
