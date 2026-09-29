@@ -16,16 +16,16 @@ import (
 )
 
 var _ = Describe("AI application reconciliation status", func() {
-	It("exposes credential revocation and recovery despite a previously deployed release", func() {
+	DescribeTable("exposes credential revocation and recovery despite a previously deployed release", func(credentialError string) {
 		var report api.AiApplicationForSync
 		Expect(json.Unmarshal([]byte(`{
 			"k8sPhase":"deployed",
 			"actionInfo":{
 				"status":"completed", "helmPhase":"deployed",
-				"message":"install completed",
-				"helmError":"personal credentials unavailable"
+				"message":"install completed"
 			}
 		}`), &report)).To(Succeed())
+		report.ActionInfo.HelmError = credentialError
 		report.Id = uuid.NewString()
 
 		failed, err := mapSyncApplicationToModel("tenant", "cluster", report)
@@ -37,7 +37,7 @@ var _ = Describe("AI application reconciliation status", func() {
 		}, api.AIAPPLICATIONVERBOSITY_FULL)
 		Expect(response.Phase).To(Equal("failed"))
 		Expect(response.ActionStatus).To(HaveValue(Equal("failed")))
-		Expect(response.ActionMessage).To(HaveValue(Equal("personal credentials unavailable")))
+		Expect(response.ActionMessage).To(HaveValue(Equal(credentialError)))
 
 		report.ActionInfo.HelmError = ""
 		recovered, err := mapSyncApplicationToModel("tenant", "cluster", report)
@@ -45,7 +45,10 @@ var _ = Describe("AI application reconciliation status", func() {
 		Expect(recovered.K8sPhase).To(Equal("deployed"))
 		Expect(recovered.ActualPhase).To(Equal("deployed"))
 		Expect(recovered.Message).To(HaveValue(Equal("install completed")))
-	})
+	},
+		Entry("shared Secret removed", "application credential Secrets unavailable"),
+		Entry("personal source removed", "personal credentials unavailable"),
+	)
 
 	DescribeTable("preserves action status when no reconciliation error exists",
 		func(info *api.AiApplicationSyncActionInfo, phase, message string) {
