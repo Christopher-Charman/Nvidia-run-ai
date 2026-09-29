@@ -25,7 +25,7 @@ import (
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/auth"
 )
 
-// the user is allowed to see only system scope or tenant scoped from his own tenant
+// the user is allowed to see only system scope or tenant scoped from their own tenant
 func filterMappingSelectorsByTenant(res orm.DB, ctx context.Context) orm.DB {
 	tenantID := auth.TenantIdOf(ctx)
 	whereSQL := filterMappingSelectorsByTenantQuery()

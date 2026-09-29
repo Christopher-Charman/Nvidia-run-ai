@@ -46,7 +46,7 @@ func (t *Terminal) Exec(ctx context.Context, workload *apis.Workload, options *O
 	defer stream.Close()
 
 	if options.Stdin || options.TTY {
-		// we need this to enable the slave TTY handle the buffer
+		// raw mode lets the remote TTY handle the buffer
 		oldState, stateErr := term.MakeRaw(int(os.Stdin.Fd()))
 		if stateErr != nil {
 			return stateErr

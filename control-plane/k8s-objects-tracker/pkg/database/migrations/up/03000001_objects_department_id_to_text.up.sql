@@ -7,7 +7,7 @@
 --
 -- The objects table currently holds only cluster-scoped StorageClasses, which have no
 -- department. Those rows carry the zero UUID (00000000-0000-0000-0000-000000000000),
--- written by the Go model's uuid.UUID zero value -- so instead of casting that junk value
+-- written by the Go model's uuid.UUID zero value -- so instead of casting that placeholder value
 -- to a literal string, USING '' normalizes every existing row to an empty string.
 ALTER TABLE IF EXISTS k8s_objects_tracker.objects
     ALTER COLUMN department_id TYPE TEXT USING '',

@@ -685,6 +685,6 @@ const TemplateWorkspaceHybrid = defineComponent({
   },
 });
 
-//Dima todo - Type assertion to prevent TS7056 while maintaining type safety -- will be refactored later --hide the annoying warning
+// TODO: type assertion to prevent TS7056 while keeping type safety; refactor later
 export default TemplateWorkspaceHybrid as typeof TemplateWorkspaceHybrid & DefineComponent;
 </script>

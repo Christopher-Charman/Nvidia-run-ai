@@ -298,7 +298,7 @@ func UrlsToWorkloadRunner(info *composer.ExposedUrlInfo, target any, cookie any)
 // runaiHostTrimPrefix is stripped from the URL host on OpenShift+subdomain
 // clusters so the hostname matches the *.<domain> wildcard certificate. The
 // V1 cluster builder applies the same trim (RunaiTrimStr) to Routes/HTTPRoutes
-// and the oauth2-proxy redirect/whitelist domains; we keep the value identical
+// and the oauth2-proxy redirect/allowlist domains; we keep the value identical
 // so the generated resources line up.
 const runaiHostTrimPrefix = "runai."
 

@@ -616,7 +616,7 @@ func applyPriorityClassLabelWorkaround(ctx context.Context, responseSpec *worklo
 	}
 
 	// MinVersionTrainingPriorityClassPatchFix (2.18) is below the minimum supported cluster
-	// version, so the patch-fix is always available — apply the priority-class label hack
+	// version, so the patch-fix is always available — apply the priority-class label workaround
 	// unconditionally for clusters that lack flexible priority classes.
 	value := responseSpec.PriorityClass.Get()
 	valErr := composer.ValidateStaticPriorityClass(*value, workloadType) // todo: remove in new clusters

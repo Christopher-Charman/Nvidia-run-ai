@@ -345,7 +345,7 @@ var _ = Describe("BuildOAuth2ProxyContainers", func() {
 		))
 	})
 
-	It("should strip the runai. prefix from redirect and whitelist on openshift with subdomain routing", func() {
+	It("should strip the runai. prefix from redirect and allowlist on openshift with subdomain routing", func() {
 		config := composer.StaticClusterStorageConfig{}
 		config.SetOauth2ProxyImage(oauth2ParityImage)
 		config.SetExternalAuthUrlEnabled(true)

@@ -135,8 +135,7 @@ func (ht *HierarchyTree) validateImposedAssets(ctx context.Context, policyScope 
 		//    (typically all three are the same: assetKind = nfs, datasource list response has nfs field
 		//    and workload has nfs storage). but for configMapVolume the asset kind is config-map, the
 		//    field in the datasource list will appear as "config_map", and in the workload payload it
-		//    is expected as "configMapVolume". guys, it is merged already, so we cannot change it...
-		//    but please... next time, let's keep it consistent, ok?
+		//    is expected as "configMapVolume". this naming is already released and cannot change.
 		//
 		workloadFieldName, workloadFieldOk := composer_v2.MapAssetKindToWorkloadSpec[assetKind]
 		if !workloadFieldOk {

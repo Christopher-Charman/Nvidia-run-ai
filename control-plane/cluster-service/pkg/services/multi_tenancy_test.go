@@ -144,7 +144,7 @@ var _ = Describe("ApiClustersService", Ordered, func() {
 			Expect(displayedClusters[0].Name).To(Equal(cluster1Name))
 			Expect(*displayedClusters[0].Domain).To(Equal("cluster-1"))
 
-			// Check that we can see the clusters in other scope - sees only his own even if he has permitted scopes, since he is not a mgmt tenant
+			// Check that we can see the clusters in other scope - sees only their own even if they have permitted scopes, since they are not a mgmt tenant
 			resp, err = clustersApiService.GetClusters(otherCtx, "full", []string{}, false)
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(resp.Code).To(Equal(200))
@@ -265,7 +265,7 @@ var _ = Describe("ApiClustersService", Ordered, func() {
 			Expect(ok).To(BeTrue())
 			Expect(nodes.Nodes).To(HaveLen(0))
 
-			// Check that we can see the nodes in other scope - sees only his own even if he has permitted scopes, since he is not a mgmt tenant
+			// Check that we can see the nodes in other scope - sees only their own even if they have permitted scopes, since they are not a mgmt tenant
 			resp, err = nodeService.GetTenantNodes(otherCtx, []string{fmt.Sprintf("clusterUuid==%s", clusters[1].Uuid)}, "", "", 0, 0, "")
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(resp.Code).To(Equal(200))

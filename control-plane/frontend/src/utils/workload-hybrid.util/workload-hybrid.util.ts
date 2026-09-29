@@ -2038,7 +2038,7 @@ function prepareDistributedFlatRequest(model: IUISuperWorkloadCreationRequest): 
       security,
       compute,
     },
-    // at the moment this data is junk that remains after the spread operator, we will initialize it later on if its needed
+    // at the moment this is leftover data from the spread operator, we will initialize it later on if its needed
     masterSpec: undefined,
   };
 
