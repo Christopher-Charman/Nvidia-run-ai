@@ -37,6 +37,10 @@ func applyCredentialBindings(loaded *chart.Chart, overrides map[string]interface
 	if err := chartutil.ProcessDependenciesWithMerge(loaded, overrides); err != nil {
 		return nil, fmt.Errorf("process chart dependencies for credentials: %w", err)
 	}
+	defaults, err := chartutil.MergeValues(loaded, nil)
+	if err != nil {
+		return nil, fmt.Errorf("merge chart defaults for credentials: %w", err)
+	}
 	// Keep explicit nulls until Helm's final coalescing, so deleted defaults stay deleted.
 	effective, err := chartutil.MergeValues(loaded, overrides)
 	if err != nil {
@@ -55,6 +59,7 @@ func applyCredentialBindings(loaded *chart.Chart, overrides map[string]interface
 	type assignment struct {
 		binding v1alpha1.HelmCredentialBinding
 		path    helmvalues.Path
+		flag    *helmvalues.Path
 	}
 	assignments := make([]assignment, 0, len(bindings))
 	for _, binding := range bindings {
@@ -62,13 +67,42 @@ func applyCredentialBindings(loaded *chart.Chart, overrides map[string]interface
 		if err != nil {
 			return nil, err
 		}
-		assignments = append(assignments, assignment{binding: binding, path: path})
+		item := assignment{binding: binding, path: path}
+		if required := path.CreateFlag(); required != "" {
+			flag, err := helmvalues.Parse(required)
+			if err != nil {
+				return nil, err
+			}
+			item.flag = &flag
+		} else if candidate, ok := path.SiblingCreateFlag(); ok {
+			if value, err := candidate.Get(defaults); err == nil {
+				if _, isBoolean := value.(bool); isBoolean {
+					item.flag = &candidate
+				}
+			}
+		}
+		assignments = append(assignments, item)
+	}
+	for _, item := range assignments {
+		if item.flag == nil {
+			continue
+		}
+		for _, other := range assignments {
+			if item.path.Compare(other.path) != 0 && item.flag.Compare(other.path) == 0 {
+				return nil, fmt.Errorf("credential destinations %q and %q overlap", item.binding.Variable, other.binding.Variable)
+			}
+		}
 	}
 	slices.SortFunc(assignments, func(a, b assignment) int { return a.path.Compare(b.path) })
 	for _, assignment := range assignments {
 		binding, path := assignment.binding, assignment.path
 		if err := path.Set(effective, binding.SecretName); err != nil {
 			return nil, fmt.Errorf("set credential destination %q: %w", binding.Variable, err)
+		}
+		if assignment.flag != nil {
+			if err := assignment.flag.Set(effective, false); err != nil {
+				return nil, fmt.Errorf("disable chart Secret creation: %w", err)
+			}
 		}
 		if array, indexed := path.ArrayParent(); indexed {
 			// Helm replaces arrays. Carry the whole effective array, including untouched chart defaults.
@@ -82,12 +116,8 @@ func applyCredentialBindings(loaded *chart.Chart, overrides map[string]interface
 		} else if err := path.Set(result, binding.SecretName); err != nil {
 			return nil, err
 		}
-		if flag := path.CreateFlag(); flag != "" {
-			companion, err := helmvalues.Parse(flag)
-			if err != nil {
-				return nil, err
-			}
-			if err := companion.Set(result, false); err != nil {
+		if assignment.flag != nil {
+			if err := assignment.flag.Set(result, false); err != nil {
 				return nil, fmt.Errorf("disable chart Secret creation: %w", err)
 			}
 		}

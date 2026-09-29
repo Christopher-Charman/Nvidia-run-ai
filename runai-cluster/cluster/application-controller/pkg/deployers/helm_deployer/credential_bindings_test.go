@@ -62,9 +62,10 @@ var _ = Describe("Runtime credential bindings", func() {
 		Expect(loaded.Values["pulls"].([]interface{})[0].(map[string]interface{})["name"]).To(Equal("default-first"))
 	})
 
-	It("lets selected credentials win while preserving explicit nulls and custom create settings", func() {
+	It("lets selected credentials win while disabling chart-defined create switches", func() {
 		overrides := map[string]interface{}{
 			"global":  map[string]interface{}{"imagePullSecret": map[string]interface{}{"name": "user-name", "create": true}},
+			"custom":  map[string]interface{}{"create": true},
 			"deleted": nil,
 		}
 		values, err := applyCredentialBindings(loaded, overrides, []v1alpha1.HelmCredentialBinding{
@@ -79,9 +80,25 @@ var _ = Describe("Runtime credential bindings", func() {
 			"imagePullSecret": map[string]interface{}{"name": "pull-reference", "create": false},
 			"ngcApiSecret":    map[string]interface{}{"name": "api-reference", "create": false},
 		}))
-		Expect(effective["custom"]).To(Equal(map[string]interface{}{"name": "custom-reference", "create": true}))
+		Expect(effective["custom"]).To(Equal(map[string]interface{}{"name": "custom-reference", "create": false}))
 		Expect(effective).NotTo(HaveKey("deleted"))
-		Expect(values["custom"]).NotTo(HaveKey("create"))
+		Expect(values["custom"]).To(Equal(map[string]interface{}{"name": "custom-reference", "create": false}))
+	})
+
+	It("does not invent a create switch for a chart without one", func() {
+		loaded.Values = map[string]interface{}{"externalCredential": map[string]interface{}{"name": "default"}}
+		values, err := applyCredentialBindings(loaded, map[string]interface{}{
+			"externalCredential": map[string]interface{}{"create": true},
+		}, []v1alpha1.HelmCredentialBinding{{Variable: "externalCredential.name", SecretName: "selected"}})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(values["externalCredential"]).To(Equal(map[string]interface{}{"name": "selected", "create": true}))
+	})
+
+	It("disables a chart-defined create switch within an indexed entry", func() {
+		loaded.Values["pulls"] = []interface{}{map[string]interface{}{"name": "default", "create": true, "keep": "sibling"}}
+		values, err := applyCredentialBindings(loaded, nil, []v1alpha1.HelmCredentialBinding{{Variable: "pulls[0].name", SecretName: "selected"}})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(values["pulls"]).To(Equal([]interface{}{map[string]interface{}{"name": "selected", "create": false, "keep": "sibling"}}))
 	})
 
 	It("respects user array replacement and applies multiple bindings within it", func() {

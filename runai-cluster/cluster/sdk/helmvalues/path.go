@@ -164,6 +164,17 @@ func (p Path) CreateFlag() string {
 	return ""
 }
 
+// SiblingCreateFlag identifies a create switch beside a bound name, if the path has one.
+// The caller must check the chart defaults before treating it as a Secret-creation switch.
+func (p Path) SiblingCreateFlag() (Path, bool) {
+	if len(p.segments) == 0 || p.segments[len(p.segments)-1] != (segment{key: "name"}) {
+		return Path{}, false
+	}
+	segments := append([]segment(nil), p.segments...)
+	segments[len(segments)-1] = segment{key: "create"}
+	return Path{segments: segments}, true
+}
+
 // ValidatePaths rejects duplicate/overlapping destinations, including automatically managed create flags.
 func ValidatePaths(variables []string) error {
 	if len(variables) > MaxBindings {
