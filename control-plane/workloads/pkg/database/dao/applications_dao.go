@@ -91,7 +91,9 @@ func deleteApplicationsWithExcluded(tx orm.DB, tenantId string, clusterId string
 	// in case of full sync, we need to delete all applications which are not received from cluster
 	query := tx.
 		Where("tenant_id = ?", tenantId).
-		Where("cluster_id = ?", clusterId)
+		Where("cluster_id = ?", clusterId).
+		Where("NOT (actual_phase = ? AND EXISTS (SELECT 1 FROM application_crud_sync AS pending WHERE pending.application_id = applications.id AND pending.desired_phase IS DISTINCT FROM ?))",
+			models.ApplicationPhaseCreating, models.ApplicationPhaseDeleted)
 
 	if len(applicationIdsToExclude) > 0 {
 		query = query.Where("id not in ?", applicationIdsToExclude)

@@ -203,6 +203,9 @@ func (s *AIApplicationsService) CreateApplication(ctx context.Context, createApp
 	if orgUnitErr != nil {
 		return NewErrorResponse(api.NewError(int(orgUnitErr.Code), "failed to get project", nil).WithDetails(orgUnitErr)), nil
 	}
+	if project.ClusterId != createApplicationRequest.ClusterId {
+		return NewErrorResponse(api.NewError(http.StatusBadRequest, "project does not belong to the requested cluster", nil)), nil
+	}
 
 	permittedScopes, err := authorization_client.ParsePermittedScopes(ctx)
 	if err != nil {
@@ -539,12 +542,19 @@ func mapSyncApplicationToModel(tenantId string, clusterId string, applicationFor
 			ClusterName: resource.ClusterName,
 		})
 	}
+	phase := applicationForSync.K8sPhase
+	// A deployed Helm release can lose a required credential after installation.
+	// Surface reconciliation failures instead of presenting that release as healthy.
+	if applicationForSync.ActionInfo != nil && applicationForSync.ActionInfo.HelmError != "" {
+		phase = "failed"
+	}
 	applicationStatus := models.ApplicationStatus{
-		K8sPhase:  applicationForSync.K8sPhase,
+		K8sPhase:  phase,
 		Resources: applicationResources,
 	}
 
-	// actualPhase is calculated like this:
+	// Reconciliation errors take precedence over the last Helm action's result.
+	// Otherwise, actualPhase is calculated like this:
 	// for a non-completed application -> the status is the status of the action
 	// for a completed application -> the status is the helmStatus (deployed, for example) or k8sPhase if no helm status
 	actualPhase, messagePtr := determineStatus(applicationForSync)
@@ -570,6 +580,9 @@ func mapSyncApplicationToModel(tenantId string, clusterId string, applicationFor
 
 // the actualPhase and message are
 func determineStatus(applicationForSync api.AiApplicationForSync) (string, *string) {
+	if applicationForSync.ActionInfo != nil && applicationForSync.ActionInfo.HelmError != "" {
+		return "failed", convutils.Ref(applicationForSync.ActionInfo.HelmError)
+	}
 	var actualPhase string
 	var message string
 

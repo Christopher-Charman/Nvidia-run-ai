@@ -54,14 +54,19 @@ var _ = Describe("AI applications API tests", Ordered, func() {
 		ctx = testing.SetContext(testing.TestTenant, testing.TestUser, []string{})
 		orgUnitClient.SetMock(orgUnitClient.NewSimpleMock().
 			WithProject("proj-1", orgUnitApi.Project{
-				Id:       "proj-1",
-				Name:     "project-1",
-				ParentId: "dept-1",
+				Id:        "proj-1",
+				Name:      "project-1",
+				ParentId:  "dept-1",
+				ClusterId: testing.ClusterUuid1,
+			}).
+			WithProject("proj-2", orgUnitApi.Project{
+				Id: "proj-2", Name: "project-2", ParentId: "dept-1", ClusterId: testing.ClusterUuid2,
 			}).
 			WithProject("proj-del", orgUnitApi.Project{
-				Id:       "proj-del",
-				Name:     "project-del",
-				ParentId: "dept-1",
+				Id:        "proj-del",
+				Name:      "project-del",
+				ParentId:  "dept-1",
+				ClusterId: testing.ClusterUuid1,
 			}).
 			// Department whose name is resolvable from org-unit-service, used to
 			// verify the sync backward-compatibility fallback for older clusters
@@ -1501,8 +1506,23 @@ var _ = Describe("AI applications API tests", Ordered, func() {
 			testing.CleanTables()
 		})
 
+		It("rejects a project belonging to another valid cluster", func() {
+			orgUnitClient.SetMock(orgUnitClient.NewSimpleMock().WithProject("proj-1", orgUnitApi.Project{
+				Id: "proj-1", Name: "project-1", ParentId: "dept-1", ClusterId: testing.ClusterUuid1,
+			}))
+			response, err := aiApplicationsService.CreateApplication(ctx, api.AiApplicationCreationRequest{
+				Name: "wrong-project-cluster", ClusterId: testing.ClusterUuid2, ProjectId: "proj-1",
+				Spec: api.AiApplicationSpec{ChartRef: api.AiApplicationSpecChartRef{ChartURL: "https://example.com/chart.tgz"}},
+			})
+			Expect(err).To(BeNil())
+			Expect(response.Code).To(Equal(http.StatusBadRequest))
+		})
+
 		It("should reject creation when cluster version is below 2.25", func() {
 			oldClusterId := testing.ClusterUuid3
+			orgUnitClient.SetMock(orgUnitClient.NewSimpleMock().WithProject("proj-1", orgUnitApi.Project{
+				Id: "proj-1", Name: "project-1", ParentId: "dept-1", ClusterId: oldClusterId,
+			}))
 			checkerClusterClient.SetMock(checkerClusterClient.NewSimpleMockClient().
 				WithCluster(oldClusterId, testing.BuildDisplayedCluster(oldClusterId, "2.24.0", nil)))
 			checker.InitClusterCapabilitiesChecker("", testing.GetDefaultClustersCacheConfig(), "")
@@ -1825,6 +1845,18 @@ var _ = Describe("AI applications API tests", Ordered, func() {
 			return resp.Body.(api.AiApplication).Id
 		}
 
+		It("keeps an application awaiting cluster creation through an empty full sync", func() {
+			id := createApp("pending-full-sync", clusterId, "proj-1")
+			response, err := aiApplicationsService.SyncApplications(ctx, clusterId.String(), api.AiApplicationsForSync{
+				FullSync: true,
+			})
+			Expect(err).To(BeNil())
+			Expect(response.Code).To(Equal(http.StatusNoContent))
+			application, err := dao.GetApplicationById(ctx, testing.TestTenant, uuid.MustParse(id), nil)
+			Expect(err).To(BeNil())
+			Expect(application.ID.String()).To(Equal(id))
+		})
+
 		parseApplicationSyncResponse := func(httpResponse api.ImplResponse) api.AiApplicationSyncResponse {
 			bytes, err := json.Marshal(httpResponse.Body)
 			Expect(err).To(BeNil())
@@ -1907,7 +1939,7 @@ var _ = Describe("AI applications API tests", Ordered, func() {
 
 		It("should isolate sync updates by cluster", func() {
 			createApp("cluster1-app", clusterId, "proj-1")
-			createApp("cluster2-app", cluster2Id, "proj-1")
+			createApp("cluster2-app", cluster2Id, "proj-2")
 
 			sync1, _ := aiApplicationsService.RequestApplicationsUpdates(ctx, 0, clusterId.String(), api.ClusterSyncReport{})
 			resp1 := parseApplicationSyncResponse(sync1)

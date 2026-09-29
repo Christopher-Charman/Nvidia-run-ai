@@ -183,14 +183,24 @@ func ReleaseMatchesDesired(rel *release.Release, spec *v1alpha1.HelmSpec, status
 	if err != nil {
 		return false
 	}
-	desiredValues, err = applyCredentialBindings(rel.Chart, desiredValues, spec.CredentialBindings)
-	if err != nil {
-		return false
-	}
 
 	deployedChartUrl := ""
 	if status != nil {
 		deployedChartUrl = status.ChartUrl
+	}
+	if rel.Labels[releaseDesiredFingerprintLabel] != "" || rel.Labels[releaseConfigFingerprintLabel] != "" {
+		if deployedChartUrl != desiredChartUrl {
+			return false
+		}
+		desired, desiredErr := desiredFingerprint(desiredChartUrl, desiredValues, spec.CredentialBindings)
+		config, configErr := fingerprint(rel.Config)
+		return desiredErr == nil && configErr == nil &&
+			rel.Labels[releaseDesiredFingerprintLabel] == desired &&
+			rel.Labels[releaseConfigFingerprintLabel] == config
+	}
+	desiredValues, err = applyCredentialBindings(rel.Chart, desiredValues, spec.CredentialBindings)
+	if err != nil {
+		return false
 	}
 
 	// Prefer comparing stored DeployedChartUrl to desired (covers both ChartUrl and ChartRef).

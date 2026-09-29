@@ -98,17 +98,32 @@ func NewTask(ctx context.Context,
 	return nil, fmt.Errorf("internal: unknown helm-task action %s", taskActionType)
 }
 
+// ValidateCredentialBindings also runs after installation, since shared Secrets can disappear
+// without changing the desired Helm release.
+func ValidateCredentialBindings(ctx context.Context, k8sClient client.Client, application *v1alpha1.Application) error {
+	for _, binding := range application.Spec.Helm.CredentialBindings {
+		secret := &corev1.Secret{}
+		key := types.NamespacedName{Namespace: application.Namespace, Name: binding.SecretName}
+		if err := k8sClient.Get(ctx, key, secret); err != nil {
+			return fmt.Errorf(
+				"credential Secret for %q is unavailable in namespace %q; "+
+					"check credential synchronization and retry: %w",
+				binding.Variable, application.Namespace, err,
+			)
+		}
+	}
+
+	return nil
+}
+
 func NewInstallParams(ctx context.Context, k8sClient client.Client, application *v1alpha1.Application) (*InstallParams, error) {
 	if application == nil || application.Spec.Helm == nil {
 		return nil, fmt.Errorf("invalid application: spec.helm is nil")
 	}
 
 	helmSpec := application.Spec.Helm
-	for _, binding := range helmSpec.CredentialBindings {
-		secret := &corev1.Secret{}
-		if err := k8sClient.Get(ctx, types.NamespacedName{Namespace: application.Namespace, Name: binding.SecretName}, secret); err != nil {
-			return nil, fmt.Errorf("credential Secret for %q is unavailable in namespace %q; check credential synchronization and retry: %w", binding.Variable, application.Namespace, err)
-		}
+	if err := ValidateCredentialBindings(ctx, k8sClient, application); err != nil {
+		return nil, err
 	}
 
 	values, err := convertHelmValues(helmSpec.Values)
@@ -170,6 +185,10 @@ func (t *TaskInstall) Execute(ctx context.Context, reportProgress func(*AppStatu
 	if err != nil {
 		return NewAppStatus().TaskFailed(t, err)
 	}
+	labels, err := fingerprintLabels(t.InstallParams, values)
+	if err != nil {
+		return NewAppStatus().TaskFailed(t, err)
+	}
 
 	reportProgress(NewAppStatus().TaskRunning(t))
 
@@ -180,6 +199,7 @@ func (t *TaskInstall) Execute(ctx context.Context, reportProgress func(*AppStatu
 	installClient.CreateNamespace = false // Namespace should already exist (Application CR is in it)
 	installClient.SkipCRDs = false
 	installClient.Wait = false // Don't wait for resources to be ready
+	installClient.Labels = labels
 
 	// Run the installation
 	rel, err := installClient.RunWithContext(ctx, chartRequested, values)
@@ -209,6 +229,10 @@ func (t *TaskUpgrade) Execute(ctx context.Context, reportProgress func(*AppStatu
 	if err != nil {
 		return NewAppStatus().TaskFailed(t, err)
 	}
+	labels, err := fingerprintLabels(t.InstallParams, values)
+	if err != nil {
+		return NewAppStatus().TaskFailed(t, err)
+	}
 
 	reportProgress(NewAppStatus().TaskRunning(t))
 
@@ -216,6 +240,7 @@ func (t *TaskUpgrade) Execute(ctx context.Context, reportProgress func(*AppStatu
 	upgradeClient := action.NewUpgrade(t.ActionConfig)
 	upgradeClient.Namespace = t.ReleaseId.Namespace
 	upgradeClient.Wait = false // Don't wait for resources to be ready
+	upgradeClient.Labels = labels
 
 	// Run the upgrade
 	rel, err := upgradeClient.RunWithContext(ctx, t.ReleaseId.Name, chartRequested, values)

@@ -21,12 +21,16 @@ import (
 const (
 	applicationsSavepoint  = "SAVEPOINT sp"
 	applicationsRollbackTo = "ROLLBACK TO SAVEPOINT sp"
+	applicationsPendingGuard = " AND (NOT (actual_phase = ? AND EXISTS " +
+		"(SELECT 1 FROM application_crud_sync AS pending " +
+		"WHERE pending.application_id = applications.id " +
+		"AND pending.desired_phase IS DISTINCT FROM ?)))"
 
 	applicationsSaveUpdate    = "UPDATE applications SET updated_at=?,deleted_at=?,updated_by=?,deleted_by=?,name=?,source=?,type=?,actual_phase=?,tenant_id=?,cluster_id=?,department_id=?,department_name=?,project_id=?,project_name=?,k8s_phase=?,resources=?,message=? WHERE applications.deleted_at IS NULL AND id = ?"
 	applicationsFallbackUpdte = "UPDATE applications SET k8s_phase=?,resources=?,updated_at=? WHERE id = ? AND tenant_id = ? AND cluster_id = ?"
 	applicationsDelete        = "UPDATE applications SET deleted_at=? WHERE tenant_id = ? AND cluster_id = ? AND id in (?) AND applications.deleted_at IS NULL"
-	applicationsDeleteExcl    = "UPDATE applications SET deleted_at=? WHERE tenant_id = ? AND cluster_id = ? AND applications.deleted_at IS NULL"
-	applicationsDeleteExclIn  = "UPDATE applications SET deleted_at=? WHERE tenant_id = ? AND cluster_id = ? AND id not in (?) AND applications.deleted_at IS NULL"
+	applicationsDeleteExcl   = "UPDATE applications SET deleted_at=? WHERE tenant_id = ? AND cluster_id = ?" + applicationsPendingGuard + " AND applications.deleted_at IS NULL"
+	applicationsDeleteExclIn = "UPDATE applications SET deleted_at=? WHERE tenant_id = ? AND cluster_id = ?" + applicationsPendingGuard + " AND id not in (?) AND applications.deleted_at IS NULL"
 
 	applicationsVerboseSelect    = "SELECT * FROM applications_view WHERE tenant_id = ? AND applications_view.deleted_at IS NULL ORDER BY id DESC"
 	applicationsNonVerboseSelect = "SELECT applications.*, acs.spec, acs.desired_phase, acs.update_count FROM applications LEFT JOIN (SELECT application_id, spec, desired_phase, update_count FROM application_crud_sync) AS acs ON acs.application_id = applications.id WHERE tenant_id = ? AND applications.deleted_at IS NULL ORDER BY id DESC"

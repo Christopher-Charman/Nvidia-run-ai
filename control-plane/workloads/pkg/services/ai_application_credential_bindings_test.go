@@ -78,6 +78,25 @@ var _ = Describe("AI Application runtime credential bindings", func() {
 		Expect(err.Message).To(ContainSubstring("no longer exists or is not accessible. Please reselect"))
 	})
 
+	DescribeTable("interprets the credential API deletion timestamp",
+		func(metadataJSON string, deleted bool) {
+			var responseMetadata assetsApi.AssetMeta
+			Expect(json.Unmarshal([]byte(metadataJSON), &responseMetadata)).To(Succeed())
+			credential.Meta.DeletedAt = responseMetadata.DeletedAt
+			_, err := process()
+			if deleted {
+				Expect(err).NotTo(BeNil())
+				Expect(err.Message).To(ContainSubstring("no longer exists or is not accessible. Please reselect"))
+			} else {
+				Expect(err).To(BeNil())
+			}
+		},
+		Entry("omitted timestamp is active", `{}`, false),
+		Entry("null timestamp is active", `{"deletedAt":null}`, false),
+		Entry("zero timestamp returned for active assets is active", `{"deletedAt":"0001-01-01T00:00:00Z"}`, false),
+		Entry("nonzero timestamp is deleted", `{"deletedAt":"2026-09-28T10:00:00Z"}`, true),
+	)
+
 	It("drops overridden literals and personal placeholders before persistence and legacy resolution", func() {
 		request.Spec.Values = map[string]interface{}{"global": map[string]interface{}{"ngcApiSecret": map[string]interface{}{
 			"name": "USERCREDENTIAL:deleted-personal-credential", "create": "test-only-sensitive-literal", "keep": true,
@@ -105,6 +124,26 @@ var _ = Describe("AI Application runtime credential bindings", func() {
 		Expect(err).NotTo(BeNil())
 		Expect(err.Message).To(ContainSubstring("target project"))
 	})
+
+	DescribeTable("enforces credential scope against the target project",
+		func(scope assetsApi.Scope, clusterID, departmentID string, projectID int32, valid bool) {
+			credential.Meta.Scope = scope
+			credential.Meta.ClusterId.Set(convutils.Ref(clusterID))
+			credential.Meta.DepartmentId.Set(convutils.Ref(departmentID))
+			credential.Meta.ProjectId.Set(convutils.Ref(projectID))
+			_, err := process()
+			Expect(err == nil).To(Equal(valid))
+		},
+		Entry("tenant", assetsApi.SCOPE_TENANT, "", "", int32(0), true),
+		Entry("matching cluster", assetsApi.SCOPE_CLUSTER, testing.ClusterUuid1, "", int32(0), true),
+		Entry("different cluster", assetsApi.SCOPE_CLUSTER, testing.ClusterUuid2, "", int32(0), false),
+		Entry("matching department", assetsApi.SCOPE_DEPARTMENT, testing.ClusterUuid1, "department", int32(0), true),
+		Entry("different department", assetsApi.SCOPE_DEPARTMENT, testing.ClusterUuid1, "other", int32(0), false),
+		Entry("same department ID in another cluster", assetsApi.SCOPE_DEPARTMENT, testing.ClusterUuid2, "department", int32(0), false),
+		Entry("matching project", assetsApi.SCOPE_PROJECT, testing.ClusterUuid1, "department", int32(1), true),
+		Entry("same project ID in another cluster", assetsApi.SCOPE_PROJECT, testing.ClusterUuid2, "department", int32(1), false),
+		Entry("unknown scope", assetsApi.Scope("unknown"), testing.ClusterUuid1, "department", int32(1), false),
+	)
 
 	DescribeTable("enforces compatible Secret representations",
 		func(kind assetsApi.AssetKind, fieldType string, valid bool) {

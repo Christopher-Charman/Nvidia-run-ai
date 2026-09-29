@@ -896,6 +896,60 @@ var _ = Describe("ApplicationsHandler", func() {
 			Expect(*handler.syncReport.theReport.Updates[0].Message.Get()).To(ContainSubstring("unknown project"))
 		})
 
+		It("acknowledges deletion when the project has already disappeared", func() {
+			ctx := context.Background()
+			Expect(fakeClient.Create(ctx, &runv1alpha1.Application{ObjectMeta: metav1.ObjectMeta{
+				Name: "orphaned-app", Namespace: "old-project-namespace",
+				Annotations: map[string]string{clusterCommonConstants.ControlPlaneApplicationIdAnnotation: "orphaned-id"},
+			}})).To(Succeed())
+			response := &workloads_openapi.AIApplicationSyncResponse{Applications: []workloads_openapi.AIApplicationSyncInfo{{
+				UpdateCount: convutils.Ref(int64(1)),
+				Application: &workloads_openapi.AIApplicationSyncItem{
+					Id: convutils.Ref("orphaned-id"), Name: convutils.Ref("orphaned-app"),
+					ProjectId: convutils.Ref("deleted-project"), DesiredPhase: convutils.Ref(applicationDesiredPhaseDeleted),
+				},
+			}}}
+			handler.syncReport.theReport.Updates = make([]workloads_openapi.ClusterSyncReportUpdate, 1)
+			Expect(handler.processApplications(ctx, response)).To(Succeed())
+			Expect(handler.syncReport.theReport.Updates[0].Message.Get()).To(BeNil())
+			key := client.ObjectKey{Name: "orphaned-app", Namespace: "old-project-namespace"}
+			Expect(errors.IsNotFound(fakeClient.Get(ctx, key, &runv1alpha1.Application{}))).To(BeTrue())
+		})
+
+		It("reports an invalid application spec without pinning the sync checkpoint", func() {
+			ctx := context.Background()
+			Expect(fakeClient.Create(ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+				Name: configmaps.AgentConfigName, Namespace: clusterCommonConstants.NamespaceRunAi,
+			}, Data: map[string]string{configmaps.ApplicationsSyncCounter: "0"}})).To(Succeed())
+			count := int64(1)
+			response := workloads_openapi.AIApplicationSyncResponse{
+				Applications: []workloads_openapi.AIApplicationSyncInfo{{
+					UpdateCount: &count,
+					Application: &workloads_openapi.AIApplicationSyncItem{
+						Id: convutils.Ref("invalid-id"), Name: convutils.Ref("invalid-app"), ProjectId: convutils.Ref("proj-1"),
+						Spec: &workloads_openapi.AIApplicationSpec{Values: map[string]interface{}{"credential": "USERCREDENTIAL:"}},
+					},
+				}},
+				ResponseInfo: &workloads_openapi.ResponseInfo{HighestUpdate: &count},
+				SystemInfo:   &workloads_openapi.SystemInfo{HighestUpdate: &count},
+			}
+			cfg := workloads_openapi.NewConfiguration()
+			transport := applicationSyncTransport(func(request *http.Request) (*http.Response, error) {
+				raw, err := json.Marshal(response)
+				Expect(err).NotTo(HaveOccurred())
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(string(raw))),
+				}, nil
+			})
+			cfg.HTTPClient = &http.Client{Transport: transport}
+			handler.backendClient.WorkloadsClient = workloads_openapi.NewAPIClient(cfg)
+			Expect(handler.Handle()).To(Succeed())
+			Expect(handler.syncCounter).To(Equal(count))
+			Expect(handler.syncReport.theReport.Updates[0].Message.Get()).NotTo(BeNil())
+		})
+
 		It("should record error in sync report for failed secret resolution", func() {
 			response := &workloads_openapi.AIApplicationSyncResponse{
 				Applications: []workloads_openapi.AIApplicationSyncInfo{

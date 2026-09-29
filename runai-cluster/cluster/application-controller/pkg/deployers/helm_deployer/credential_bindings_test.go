@@ -19,10 +19,13 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/yaml"
 )
@@ -106,6 +109,56 @@ var _ = Describe("Runtime credential bindings", func() {
 		Expect(ReleaseMatchesDesired(rel, spec, status)).To(BeTrue())
 		spec.CredentialBindings = []v1alpha1.HelmCredentialBinding{{Variable: "pulls[0].name", SecretName: "changed"}}
 		Expect(ReleaseMatchesDesired(rel, spec, status)).To(BeFalse())
+	})
+
+	It("does not trigger an upgrade after an indexed subchart binding survives Helm Secret storage", func() {
+		loaded.AddDependency(&chart.Chart{
+			Metadata: &chart.Metadata{Name: "child", Version: "1.0.0", APIVersion: "v2"},
+			Values: map[string]interface{}{"pulls": []interface{}{
+				map[string]interface{}{"name": "default", "keep": "sibling"},
+			}},
+		})
+		bindings := []v1alpha1.HelmCredentialBinding{{Variable: "child.pulls[0].name", SecretName: "selected"}}
+		values, err := applyCredentialBindings(loaded, nil, bindings)
+		Expect(err).NotTo(HaveOccurred())
+		params := &InstallParams{chartUrl: "https://example.test/chart.tgz", credentialBindings: bindings}
+		labels, err := fingerprintLabels(params, values)
+		Expect(err).NotTo(HaveOccurred())
+		store := storage.Init(driver.NewSecrets(k8sfake.NewSimpleClientset().CoreV1().Secrets("project")))
+		Expect(store.Create(&release.Release{
+			Name: "indexed-subchart", Namespace: "project", Version: 1,
+			Info: &release.Info{Status: release.StatusDeployed}, Chart: loaded, Config: values, Labels: labels,
+		})).To(Succeed())
+		stored, err := store.Get("indexed-subchart", 1)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(stored.Labels).To(Equal(labels))
+		storedConfigFingerprint, err := fingerprint(stored.Config)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(storedConfigFingerprint).To(Equal(labels[releaseConfigFingerprintLabel]))
+		spec := &v1alpha1.HelmSpec{ChartUrl: "https://example.test/chart.tgz", CredentialBindings: bindings}
+		Expect(ReleaseMatchesDesired(stored, spec, &v1alpha1.HelmStatus{ChartUrl: spec.ChartUrl})).To(BeTrue())
+		spec.CredentialBindings[0].SecretName = "changed"
+		Expect(ReleaseMatchesDesired(stored, spec, &v1alpha1.HelmStatus{ChartUrl: spec.ChartUrl})).To(BeFalse())
+		spec.CredentialBindings[0].SecretName = "selected"
+		stored.Config["external-edit"] = true
+		Expect(ReleaseMatchesDesired(stored, spec, &v1alpha1.HelmStatus{ChartUrl: spec.ChartUrl})).To(BeFalse())
+	})
+
+	It("does not trigger an upgrade when empty values round-trip as null through Helm storage", func() {
+		params := &InstallParams{chartUrl: "https://example.test/chart.tgz", values: map[string]interface{}{}}
+		labels, err := fingerprintLabels(params, map[string]interface{}{})
+		Expect(err).NotTo(HaveOccurred())
+		store := storage.Init(driver.NewSecrets(k8sfake.NewSimpleClientset().CoreV1().Secrets("project")))
+		Expect(store.Create(&release.Release{
+			Name: "empty-values", Namespace: "project", Version: 1,
+			Info: &release.Info{Status: release.StatusDeployed}, Chart: loaded,
+			Config: map[string]interface{}{}, Labels: labels,
+		})).To(Succeed())
+		stored, err := store.Get("empty-values", 1)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(stored.Config).To(BeNil())
+		spec := &v1alpha1.HelmSpec{ChartUrl: params.chartUrl}
+		Expect(ReleaseMatchesDesired(stored, spec, &v1alpha1.HelmStatus{ChartUrl: spec.ChartUrl})).To(BeTrue())
 	})
 
 	It("preserves imported dependency defaults and remains stable after Helm processes dependencies", func() {

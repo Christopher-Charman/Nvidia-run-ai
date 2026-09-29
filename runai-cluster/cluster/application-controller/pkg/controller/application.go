@@ -94,6 +94,11 @@ func (c *ApplicationController) SetupWithManager(mgr ctrl.Manager) error {
 		return fmt.Errorf("index application personal credentials: %w", err)
 	}
 
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1alpha1.Application{},
+		credentialBindingsIndex, credentialSecretNames); err != nil {
+		return fmt.Errorf("index application credential Secrets: %w", err)
+	}
+
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Application{})
 
@@ -163,6 +168,11 @@ func (c *ApplicationController) SetupWithManager(mgr ctrl.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(c.mapPersonalCredentialSourceToApplications),
 			builder.WithPredicates(c.personalCredentialSourcePredicate()),
 		)
+
+	controllerBuilder = controllerBuilder.Watches(
+		&corev1.Secret{},
+		handler.EnqueueRequestsFromMapFunc(c.mapCredentialSecretToApplications),
+	)
 
 	return controllerBuilder.Owns(
 		&corev1.Secret{},

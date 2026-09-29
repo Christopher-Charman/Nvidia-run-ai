@@ -48,6 +48,7 @@ const (
 )
 
 var errNoMatchingSecret = errors.New("no matching secret found")
+var errInvalidApplicationSpec = errors.New("invalid application specification")
 
 type applicationProjectInfo struct {
 	namespace      string
@@ -58,8 +59,9 @@ type applicationProjectInfo struct {
 }
 
 type ApplicationSyncReportInfo struct {
-	numApplications int
-	theReport       workloads_openapi.ClusterSyncReport
+	numApplications  int
+	theReport        workloads_openapi.ClusterSyncReport
+	retryableUpdates []bool
 }
 
 type ApplicationsHandler struct {
@@ -154,7 +156,9 @@ func (h *ApplicationsHandler) Handle() error {
 		failedDeletion := false
 		for i, update := range h.syncReport.theReport.Updates {
 			if message := update.Message.Get(); message != nil && *message != "" {
-				checkpoint = min(checkpoint, max(0, ptr.Deref(update.UpdateCount, h.syncCounter+1)-1))
+				if i >= len(h.syncReport.retryableUpdates) || h.syncReport.retryableUpdates[i] {
+					checkpoint = min(checkpoint, max(0, ptr.Deref(update.UpdateCount, h.syncCounter+1)-1))
+				}
 			}
 			if backendApplications.Applications[i].Application.GetDesiredPhase() == applicationDesiredPhaseDeleted && (innerErr != nil || update.Message.Get() != nil) {
 				failedDeletion = true
@@ -209,12 +213,50 @@ func (h *ApplicationsHandler) processApplications(ctx context.Context, response 
 	}
 
 	allObjectsErrors := make([]error, len(response.Applications))
+	h.syncReport.retryableUpdates = make([]bool, len(response.Applications))
+	for i := range h.syncReport.retryableUpdates {
+		h.syncReport.retryableUpdates[i] = true
+	}
 
 	for idx, appSyncInfo := range response.Applications {
 		item := appSyncInfo.Application
 		if item == nil {
 			log.Error().Msgf("Application sync info at index %d has nil application, skipping", idx)
 			allObjectsErrors[idx] = fmt.Errorf("nil application in sync info")
+			h.syncReport.retryableUpdates[idx] = false
+			continue
+		}
+
+		if item.GetDesiredPhase() == applicationDesiredPhaseDeleted {
+			projInfo, found := projInfoMap[item.GetProjectId()]
+			if !found {
+				// The Project may disappear before its Application delete update arrives.
+				// Find the old namespace by the stable control-plane ID, or acknowledge
+				// the delete when the Application is already absent.
+				if item.GetId() == "" {
+					allObjectsErrors[idx] = fmt.Errorf("cannot delete application without control-plane ID")
+					continue
+				}
+				var applications runv1alpha1.ApplicationList
+				if listErr := h.cachedClient.List(ctx, &applications); listErr != nil {
+					allObjectsErrors[idx] = fmt.Errorf("find application for deleted project: %w", listErr)
+					continue
+				}
+				for _, application := range applications.Items {
+					if application.Annotations[clusterCommonConstants.ControlPlaneApplicationIdAnnotation] == item.GetId() {
+						clusterUpdates.ToDelete = append(clusterUpdates.ToDelete, types.NamespacedName{
+							Namespace: application.Namespace, Name: application.Name,
+						})
+						clusterUpdates.DeleteRef = append(clusterUpdates.DeleteRef, idx)
+					}
+				}
+				continue
+			}
+			clusterUpdates.ToDelete = append(clusterUpdates.ToDelete, types.NamespacedName{
+				Namespace: projInfo.namespace,
+				Name:      item.GetName(),
+			})
+			clusterUpdates.DeleteRef = append(clusterUpdates.DeleteRef, idx)
 			continue
 		}
 
@@ -225,19 +267,13 @@ func (h *ApplicationsHandler) processApplications(ctx context.Context, response 
 			continue
 		}
 
-		if item.GetDesiredPhase() == applicationDesiredPhaseDeleted {
-			clusterUpdates.ToDelete = append(clusterUpdates.ToDelete, types.NamespacedName{
-				Namespace: projInfo.namespace,
-				Name:      item.GetName(),
-			})
-			clusterUpdates.DeleteRef = append(clusterUpdates.DeleteRef, idx)
-			continue
-		}
-
 		application, convertErr := h.convertToApplication(ctx, projInfo, item, appSyncInfo.UpdateCount)
 		if convertErr != nil {
 			log.Error().Msgf("Failed to convert application %s: %s", item.GetName(), convertErr.Error())
 			allObjectsErrors[idx] = convertErr
+			if errors.Is(convertErr, errInvalidApplicationSpec) {
+				h.syncReport.retryableUpdates[idx] = false
+			}
 			continue
 		}
 
@@ -287,7 +323,12 @@ func (h *ApplicationsHandler) processApplications(ctx context.Context, response 
 	return err
 }
 
-func (h *ApplicationsHandler) convertToApplication(ctx context.Context, projInfo applicationProjectInfo, item *workloads_openapi.AIApplicationSyncItem, updateCount *int64) (*runv1alpha1.Application, error) {
+func (h *ApplicationsHandler) convertToApplication(
+	ctx context.Context,
+	projInfo applicationProjectInfo,
+	item *workloads_openapi.AIApplicationSyncItem,
+	updateCount *int64,
+) (*runv1alpha1.Application, error) {
 	app := &runv1alpha1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      item.GetName(),
@@ -351,7 +392,10 @@ func (h *ApplicationsHandler) convertHelmSpec(
 		for key, val := range spec.Values {
 			rewritten, err := rewritePersonalCredentialPlaceholders(val, applicationName, credentialSources)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to rewrite Helm values for key '%s': %w", key, err)
+				return nil, nil, fmt.Errorf(
+					"%w: failed to rewrite Helm values for key '%s': %v",
+					errInvalidApplicationSpec, key, err,
+				)
 			}
 			raw, err := json.Marshal(rewritten)
 			if err != nil {

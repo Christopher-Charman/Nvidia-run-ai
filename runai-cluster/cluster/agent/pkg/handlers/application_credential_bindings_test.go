@@ -95,6 +95,21 @@ var _ = Describe("AI Application runtime credential bindings", func() {
 		Expect(err).To(HaveOccurred())
 	})
 
+	DescribeTable("rejects missing required Secret data entries",
+		func(credentialType, kind, expectedError string) {
+			item := secret("selected", "project", kind, false)
+			item.Data = map[string][]byte{"unrelated": []byte("synthetic-placeholder")}
+			binding := workloadsapi.AIApplicationCredentialBinding{
+				Variable: "custom.name", AssetId: "asset-id", CredentialType: credentialType,
+			}
+			_, err := newHandler(item).findBindingSecret(context.Background(), "project", binding)
+			Expect(err).To(MatchError(ContainSubstring(expectedError)))
+		},
+		Entry("NGC API key entry", "ngc-api-key", genericSecretKindLabel, "missing NGC_API_KEY"),
+		Entry("registry configuration entry", "image-pull-secret", dockerRegistryKindLabel,
+			"missing its registry configuration"),
+	)
+
 	It("supports an authorized existing Secret and checks its representation", func() {
 		existing := secret("external-reference", "project", genericSecretKindLabel, false)
 		existing.Labels = nil

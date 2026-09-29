@@ -20,13 +20,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (h *ApplicationsHandler) resolveCredentialBindings(ctx context.Context, applicationName, namespace string, bindings []workloadsapi.AIApplicationCredentialBinding, sources datastructs.Set[string]) ([]v1alpha1.HelmCredentialBinding, error) {
+func (h *ApplicationsHandler) resolveCredentialBindings(
+	ctx context.Context,
+	applicationName, namespace string,
+	bindings []workloadsapi.AIApplicationCredentialBinding,
+	sources datastructs.Set[string],
+) ([]v1alpha1.HelmCredentialBinding, error) {
 	variables := make([]string, 0, len(bindings))
 	for _, binding := range bindings {
 		variables = append(variables, binding.Variable)
 	}
 	if err := helmvalues.ValidatePaths(variables); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", errInvalidApplicationSpec, err)
 	}
 	var resolved []v1alpha1.HelmCredentialBinding
 	for _, binding := range bindings {
@@ -51,7 +56,7 @@ func (h *ApplicationsHandler) findBindingSecret(ctx context.Context, namespace s
 		kind = dockerRegistryKindLabel
 	case "ngc-api-key", "generic":
 	default:
-		return nil, fmt.Errorf("unsupported credential type %q", binding.CredentialType)
+		return nil, fmt.Errorf("%w: unsupported credential type %q", errInvalidApplicationSpec, binding.CredentialType)
 	}
 	reader := h.cachedClient
 	match := client.MatchingLabels{assetIdLabel: binding.AssetId, constants.RunaiAssetLabel: kind}
@@ -67,14 +72,18 @@ func (h *ApplicationsHandler) findBindingSecret(ctx context.Context, namespace s
 		}
 	} else {
 		if binding.AssetId == "" {
-			return nil, fmt.Errorf("credential asset ID is required")
+			return nil, fmt.Errorf("%w: credential asset ID is required", errInvalidApplicationSpec)
 		}
 		list := &corev1.SecretList{}
 		if err := reader.List(ctx, list, client.InNamespace(namespace), match); err != nil {
 			return nil, fmt.Errorf("failed to check credential Secret availability: %w", err)
 		}
 		if len(list.Items) != 1 {
-			return nil, fmt.Errorf("expected one %s Secret for selected credential in namespace %q, found %d; check credential synchronization and reselect or retry", kind, namespace, len(list.Items))
+			return nil, fmt.Errorf(
+				"expected one %s Secret for selected credential in namespace %q, found %d; "+
+					"check credential synchronization and reselect or retry",
+				kind, namespace, len(list.Items),
+			)
 		}
 		secret = &list.Items[0]
 	}

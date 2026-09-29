@@ -72,7 +72,7 @@ func processAIApplicationCredentialBindings(ctx context.Context, request *api.Ai
 	for i := range spec.CredentialBindings {
 		binding := &spec.CredentialBindings[i]
 		credential, found := credentials[binding.AssetId]
-		if !found || credential.Meta.DeletedAt != nil {
+		if !found || (credential.Meta.DeletedAt != nil && !credential.Meta.DeletedAt.IsZero()) {
 			return false, api.NewValidationError(fmt.Sprintf("Selected credential %q no longer exists or is not accessible. Please reselect.", binding.AssetId))
 		}
 		meta := credential.Meta

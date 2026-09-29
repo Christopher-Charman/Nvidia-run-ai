@@ -25,6 +25,7 @@ import (
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/application-controller/pkg/deployers/helm_deployer"
 	runv1alpha1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1alpha1"
 
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 
@@ -321,6 +322,72 @@ var _ = Describe("helm deployment controller test", func() {
 
 			gone := &runv1alpha1.Application{}
 			Expect(apierrors.IsNotFound(k8sCli.Get(ctx, appKey1, gone))).To(BeTrue())
+		})
+	})
+
+	Context("shared credential availability", func() {
+		var secret *corev1.Secret
+		BeforeEach(func() {
+			secret = &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: "shared-secret", Namespace: appKey1.Namespace}}
+			app := makeApp(appKey1)
+			app.Spec.Helm.CredentialBindings = []runv1alpha1.HelmCredentialBinding{{
+				Variable: "credential", SecretName: secret.Name,
+			}}
+			Expect(k8sCli.Create(ctx, app)).To(Succeed())
+		})
+
+		It("retries missing credentials before installing and recovers when they appear", func() {
+			Expect(reconcile(appKey1).RequeueAfter).To(Equal(30 * time.Second))
+			Expect(testController.HelmJobsChannel()).To(BeEmpty())
+			Expect(getApplication(appKey1).Status.HelmStatus.Error).To(Equal(errCredentialBindingsUnavailable.Error()))
+			Expect(k8sCli.Create(ctx, secret)).To(Succeed())
+			reconcile(appKey1)
+			Expect(drainJob(appKey1, "credential recovery").Task.Action()).To(Equal(helm_deployer.TaskActionInstall))
+			Expect(getApplication(appKey1).Status.HelmStatus.Error).To(BeEmpty())
+			Expect(getApplication(appKey1).Status.ActionStatus.Phase).To(Equal(helm_deployer.ActionQueued))
+		})
+
+		It("reports deletion after deployment and recovers without a Helm upgrade", func() {
+			Expect(k8sCli.Create(ctx, secret)).To(Succeed())
+			reconcile(appKey1)
+			drainJob(appKey1, "initial install")
+			installed := getApplication(appKey1)
+			installed.Status.ActionStatus.Phase = helm_deployer.ActionCompleted
+			Expect(k8sCli.Status().Update(ctx, installed)).To(Succeed())
+			Expect(store.Create(&release.Release{
+				Name: appKey1.Name, Namespace: appKey1.Namespace, Version: 1,
+				Info:   &release.Info{Status: release.StatusDeployed},
+				Config: map[string]interface{}{"credential": secret.Name},
+				Chart:  &chart.Chart{Metadata: &chart.Metadata{Name: "myapp", Version: "1.0.0"}},
+			})).To(Succeed())
+			Expect(reconcile(appKey1).RequeueAfter).To(BeZero())
+			Expect(getApplication(appKey1).Status.ActionStatus.Phase).To(Equal(helm_deployer.ActionCompleted))
+
+			Expect(k8sCli.Delete(ctx, secret)).To(Succeed())
+			Expect(reconcile(appKey1).RequeueAfter).To(Equal(30 * time.Second))
+			current := getApplication(appKey1)
+			Expect(current.Status.HelmStatus.Error).To(Equal(errCredentialBindingsUnavailable.Error()))
+			Expect(current.Status.HelmStatus.Error).NotTo(ContainSubstring(secret.Name))
+			Expect(testController.HelmJobsChannel()).To(BeEmpty())
+
+			secret.ResourceVersion = ""
+			Expect(k8sCli.Create(ctx, secret)).To(Succeed())
+			Expect(reconcile(appKey1).RequeueAfter).To(BeZero())
+			current = getApplication(appKey1)
+			Expect(current.Status.HelmStatus.Error).To(BeEmpty())
+			Expect(current.Status.ActionStatus.Phase).To(Equal(helm_deployer.ActionCompleted))
+			Expect(*current.Status.HelmStatus.ReleaseVersion).To(Equal(1))
+			Expect(testController.HelmJobsChannel()).To(BeEmpty())
+		})
+
+		It("allows uninstall while credentials are missing", func() {
+			Expect(store.Create(&release.Release{
+				Name: appKey1.Name, Namespace: appKey1.Namespace, Version: 1,
+				Info: &release.Info{Status: release.StatusDeployed},
+			})).To(Succeed())
+			Expect(k8sCli.Delete(ctx, getApplication(appKey1))).To(Succeed())
+			reconcile(appKey1)
+			Expect(drainJob(appKey1, "uninstall missing credential").Task.Action()).To(Equal(helm_deployer.TaskActionUninstall))
 		})
 	})
 

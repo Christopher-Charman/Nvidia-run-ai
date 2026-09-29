@@ -140,7 +140,7 @@ func (c *ApplicationController) reconcileHelmDeployment(ctx context.Context, app
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
-	recoveringFromCredentialFailure := isPersonalCredentialFailure(application)
+	recoveringFromCredentialFailure := isCredentialFailure(application)
 	if err := c.materializePersonalCredentials(ctx, application); err != nil {
 		log.Error().Err(err).Msgf("failed to materialize personal credentials for application %s", appKey.String())
 		status.WithError(errPersonalCredentialsUnavailable)
@@ -153,8 +153,19 @@ func (c *ApplicationController) reconcileHelmDeployment(ctx context.Context, app
 		c.updateHelmStatus(ctx, appKey, status)
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
+	if err := helm_deployer.ValidateCredentialBindings(ctx, c.client, application); err != nil {
+		log.Error().Err(err).Msgf("credential unavailable for application %s", appKey.String())
+		status.WithError(errCredentialBindingsUnavailable)
+		if application.Status.ActionStatus == nil || application.Status.ActionStatus.Phase == "" {
+			status.ActionFailedWithoutTask(string(helm_deployer.TaskActionInstall), errCredentialBindingsUnavailable.Error())
+		}
+		c.updateHelmStatus(ctx, appKey, status)
+		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
+	}
+
 	status.ClearError()
-	if recoveringFromCredentialFailure {
+	if recoveringFromCredentialFailure && application.Status.ActionStatus != nil &&
+		application.Status.ActionStatus.Phase == helm_deployer.ActionFailed {
 		status.ResetAction()
 	}
 
@@ -243,9 +254,8 @@ func (c *ApplicationController) reconcileHelmDeployment(ctx context.Context, app
 			// the worker's final status write was lost to concurrent K8s status-update conflicts.
 			// Since the release is already deployed and matches the desired spec, it is safe to
 			// mark the action as completed here so the application does not remain stuck.
-			if isNonTerminalActionPhase(application) {
-				log.Warn().Msgf("recovering stuck action status for %s (was %q), marking as completed",
-					appKey.String(), application.Status.ActionStatus.Phase)
+			if isNonTerminalActionPhase(application) || recoveringFromCredentialFailure {
+				log.Info().Msgf("recovering application status for %s, marking as completed", appKey.String())
 				c.updateHelmStatus(ctx, appKey, status.RecoveryCompleted())
 			} else {
 				c.updateHelmStatus(ctx, appKey, status)
@@ -269,9 +279,10 @@ func (c *ApplicationController) reconcileHelmDeployment(ctx context.Context, app
 	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 }
 
-func isPersonalCredentialFailure(application *v1alpha1.Application) bool {
+func isCredentialFailure(application *v1alpha1.Application) bool {
 	return application.Status.HelmStatus != nil &&
-		application.Status.HelmStatus.Error == errPersonalCredentialsUnavailable.Error()
+		(application.Status.HelmStatus.Error == errPersonalCredentialsUnavailable.Error() ||
+			application.Status.HelmStatus.Error == errCredentialBindingsUnavailable.Error())
 }
 
 // submitTask reserves a worker slot, writes "queued" status, then dispatches the task to the
