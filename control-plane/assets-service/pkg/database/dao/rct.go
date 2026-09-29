@@ -181,11 +181,16 @@ func updateRctInTransaction(ctx context.Context, tx orm.DB, id string, request a
 		return nil, assetMeta, database.ErrorWithCode(database.UPDATE, api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE, http.StatusBadRequest).WithDetails(marshalErr)
 	}
 
-	recId := dbmodel.AssetSpecRec{AssetId: id, TenantId: auth.TenantIdOf(ctx)}
-	update := dbmodel.AssetSpecUpdate{Spec: specMap}
+	recId := dbmodel.AssetSpecRec{
+		AssetId:  id,
+		TenantId: auth.TenantIdOf(ctx),
+	}
+	update := dbmodel.AssetSpecUpdate{
+		Spec: specMap,
+	}
 
 	saveRows, saveErr := tx.Where(recId).Save(&update)
-	if saveErr != nil {
+	if saveErr != nil || saveRows != 1 {
 		return nil, assetMeta, database.Error(database.UPDATE, api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE).WithDetailsFromDbResult(saveRows, saveErr)
 	}
 
@@ -237,7 +242,11 @@ func deleteRctInTransaction(ctx context.Context, tx orm.DB, id string, deletionT
 		return nil
 	}
 
-	recId := dbmodel.AssetSpecRec{AssetId: id, TenantId: auth.TenantIdOf(ctx)}
+	recId := dbmodel.AssetSpecRec{
+		AssetId:  id,
+		TenantId: auth.TenantIdOf(ctx),
+	}
+
 	delRows, delErr := tx.Where(&recId).Delete(&recId)
 	if delErr != nil || delRows == 0 {
 		return database.Error(database.DELETE, api.ASSETKIND_RESOURCE_CLAIM_TEMPLATE).WithDetailsFromDbResult(delRows, delErr)

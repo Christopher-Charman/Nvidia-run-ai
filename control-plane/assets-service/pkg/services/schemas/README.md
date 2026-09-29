@@ -23,24 +23,23 @@ Static (not runtime-fetched) so:
 
 When Kubernetes ships a change to `resource.k8s.io/v1` (rare — the API group
 went GA at 1.34 and is expected to be stable), regenerate the bundle from a
-live cluster running the minimum supported K8s version. Either shape works —
-the loader (`extractComponentSchemas` in `api_rct_service.go`) accepts the
-full OpenAPI v3 document or just the schemas dictionary:
+live cluster running the minimum supported K8s version.
+
+The loader (`initRctObjectSpecValidator` in `api_rct_service.go`) compiles
+the target schema at the JSON-pointer path `#/components/schemas/<key>`
+against the embedded document, so **the document must be the full OpenAPI
+v3 response** — the `components.schemas` dictionary alone will not work
+(the `components/schemas` path prefix wouldn't resolve).
 
 ```bash
-# Simplest — the whole document (a few hundred KB):
 kubectl get --raw '/openapi/v3/apis/resource.k8s.io/v1' \
-  > control-plane/assets-service/pkg/services/schemas/rct_object_spec.schema.json
-
-# Or the schemas dictionary only (a bit smaller):
-kubectl get --raw '/openapi/v3/apis/resource.k8s.io/v1' \
-  | jq '.components.schemas' \
   > control-plane/assets-service/pkg/services/schemas/rct_object_spec.schema.json
 ```
 
 Do NOT slice down to only `ResourceClaimSpec` — its `$ref`s
 (`DeviceClaim`, `DeviceRequest`, `DeviceSelector`, ...) need to resolve
-locally, so the whole `components.schemas` dictionary must stay together.
+locally, so the whole `components.schemas` dictionary must stay together
+inside the full OpenAPI document.
 
 Commit the file with a note in the commit message identifying the K8s server
 version it came from (`kubectl version -o json | jq .serverVersion`).

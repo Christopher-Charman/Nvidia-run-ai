@@ -107,16 +107,18 @@ func ValidateAssetCreateRequestMeta(ctx context.Context, meta *api.AssetCreation
 
 			// and we need k8s version that fully supports DRA
 			platformInfo := clusterInfo.Platform.Get()
-			if platformInfo != nil {
-				kubeVer := platformInfo.KubeVersion.Get()
+			if platformInfo == nil {
+				return api.NewError(http.StatusServiceUnavailable, "cluster did not report platform information", nil)
+			}
 
-				parsed, err := version.ParseGeneric(*kubeVer)
-				if err != nil {
-					return api.NewError(http.StatusServiceUnavailable, fmt.Sprintf("unrecognized kubernetes version %q reported by cluster: %v", *kubeVer, err), nil)
-				}
-				if parsed.LessThan(MinDraK8sVersion) {
-					return api.NewError(http.StatusBadRequest, fmt.Sprintf("resource claim templates require kubernetes >= %s; cluster reports %s", MinDraK8sVersion, *kubeVer), nil)
-				}
+			kubeVer := platformInfo.KubeVersion.Get()
+
+			parsed, err := version.ParseGeneric(*kubeVer)
+			if err != nil {
+				return api.NewError(http.StatusServiceUnavailable, fmt.Sprintf("unrecognized kubernetes version %q reported by cluster: %v", *kubeVer, err), nil)
+			}
+			if parsed.LessThan(MinDraK8sVersion) {
+				return api.NewError(http.StatusBadRequest, fmt.Sprintf("resource claim templates require kubernetes >= %s; cluster reports %s", MinDraK8sVersion, *kubeVer), nil)
 			}
 		}
 	}

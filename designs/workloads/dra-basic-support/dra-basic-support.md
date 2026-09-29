@@ -49,9 +49,9 @@ The feature designed here serves two purposes:
 
    
 
-   1. Support only 3.0.1 clusters (in which the agent/cluster-sync syncs the `ResourceClaimTemplates`). 🟢
+   1. Support only >= 3.1.0 clusters (in which the agent/cluster-sync syncs the `ResourceClaimTemplates`). 🟢
 
-   2. Support only 1.34+ clusters (in which the feature is enabled by default). 🟢
+   2. Support only >= 1.34+ clusters (in which the feature is enabled by default). 🟢
 
    3. Spec compatible with  k8s `ResourceClaimTeamplte` spec. 🟢
 
