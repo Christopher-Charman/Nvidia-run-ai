@@ -251,6 +251,33 @@ func (wc *WorkloadsClient) ProcessSyncReport(ctx context.Context, clusterId stri
 	return openapi.NewError(http.StatusServiceUnavailable, formattedErr)
 }
 
+func (wc *WorkloadsClient) InternalGetWorkloadsTelemetry(ctx context.Context, telemetryType openapi.WorkloadTelemetryType, clusterId string, groupBy []string, filterBy []string) (*openapi.TelemetryResponse, *openapi.Error) {
+	response, httpResponse, err := wc.ApiClient.WorkloadsAPI.GetInternalWorkloadsTelemetry(ctx).
+		TelemetryType(telemetryType).
+		ClusterId(clusterId).
+		GroupBy(groupBy).
+		FilterBy(filterBy).Execute()
+	if httpResponse != nil {
+		defer httpResponse.Body.Close()
+
+		if httpResponse.StatusCode == http.StatusOK && response != nil {
+			return response, nil
+		}
+
+		data, _ := io.ReadAll(httpResponse.Body)
+
+		formattedErr := fmt.Sprintf("failed to get internal workloads telemetry: [%d] %s", httpResponse.StatusCode, data)
+
+		logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("%s", formattedErr)
+		return nil, openapi.NewError(int32(httpResponse.StatusCode), formattedErr)
+	}
+
+	formattedErr := fmt.Sprintf("failed to request workloads service for internal telemetry: %v", err)
+
+	logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("%s", formattedErr)
+	return nil, openapi.NewError(int32(http.StatusServiceUnavailable), formattedErr)
+}
+
 func (wc *WorkloadsClient) CountWorkloads(ctx context.Context, filter []string, search string, includeDeleted bool, precise bool) (int64, *openapi.Error) {
 	response, httpResponse, err := wc.ApiClient.WorkloadsAPI.CountWorkloads(ctx).
 		FilterBy(filter).
