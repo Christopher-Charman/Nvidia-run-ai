@@ -25,6 +25,7 @@ import { ScopeType } from "@/swagger-models/policy-service-client";
 import { resourceUtil } from "@/utils/resource.util";
 import { errorMessages } from "@/common/error-message.constant";
 import { HttpErrorResponse } from "@/models/http-response.model";
+import type { OrgUnit } from "@/swagger-models/org-unit-service-client";
 
 const GVK_KEY_PREFIX = "gvk:";
 
@@ -592,6 +593,22 @@ function policyViewRules(
   }
   // Effective rules contain only the winners; retain blocked local rules as separate, marked rows.
   return [...effectiveRules, ...inactiveRules];
+}
+
+function ruleSourceDisplayName(source: SourceOfRule | null | undefined, orgUnits: OrgUnit[], tenantName = ""): string {
+  if (!source) return "";
+  if (source.scope === ScopeType.Tenant) return `organization ${tenantName}`.trim();
+  const id =
+    source.scope === ScopeType.Cluster
+      ? source.clusterId
+      : source.scope === ScopeType.Department
+        ? source.departmentId
+        : source.projectId;
+  const unit =
+    id == null
+      ? undefined
+      : orgUnits.find((candidate) => String(candidate.id) === String(id) && candidate.type === source.scope);
+  return `${source.scope} ${unit?.name || id || ""}`.trim();
 }
 
 function inactiveRuleTooltip(source: SourceOfRule | null | undefined, orgUnits: OrgUnit[], tenantName = ""): string {
