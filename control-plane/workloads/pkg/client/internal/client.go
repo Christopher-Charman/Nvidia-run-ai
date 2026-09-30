@@ -251,12 +251,18 @@ func (wc *WorkloadsClient) ProcessSyncReport(ctx context.Context, clusterId stri
 	return openapi.NewError(http.StatusServiceUnavailable, formattedErr)
 }
 
-func (wc *WorkloadsClient) InternalGetWorkloadsTelemetry(ctx context.Context, telemetryType openapi.WorkloadTelemetryType, clusterId string, groupBy []string, filterBy []string) (*openapi.TelemetryResponse, *openapi.Error) {
-	response, httpResponse, err := wc.ApiClient.WorkloadsAPI.GetInternalWorkloadsTelemetry(ctx).
+func (wc *WorkloadsClient) InternalGetWorkloadsTelemetry(ctx context.Context, telemetryType openapi.WorkloadTelemetryType, clusterId *string, filterByPhases []openapi.Phase, groupBy []string, filterBy []string) (*openapi.TelemetryResponse, *openapi.Error) {
+	request := wc.ApiClient.WorkloadsAPI.GetInternalWorkloadsTelemetry(ctx).
 		TelemetryType(telemetryType).
-		ClusterId(clusterId).
 		GroupBy(groupBy).
-		FilterBy(filterBy).Execute()
+		FilterBy(filterBy).
+		FilterByPhases(filterByPhases)
+
+	if clusterId != nil {
+		request = request.ClusterId(*clusterId)
+	}
+
+	response, httpResponse, err := request.Execute()
 	if httpResponse != nil {
 		defer httpResponse.Body.Close()
 
