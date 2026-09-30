@@ -62,8 +62,9 @@ The scoped GitHub workflow adds the Kind smoke test.
 
 `test/testdata/golden/` contains the hand-authored rendering fixtures.
 `test/acceptance/` and `hack/e2e.sh` retain the standalone lab acceptance checks;
-run them only against a prepared test cluster. Product E2E scenarios belong in the
-separate `runai-e2e-internal` repository.
+run them only against a prepared test cluster. `hack/e2e.sh` requires Python 3 with
+PyYAML (`python3 -m pip install PyYAML`) to compare embedded YAML by value.
+Product E2E scenarios belong in the separate `runai-e2e-internal` repository.
 
 ## Current limits
 

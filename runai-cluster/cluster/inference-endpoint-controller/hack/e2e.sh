@@ -14,6 +14,8 @@
 # The traffic test is test/acceptance/08-smoke-test.sh, run it after step 1 with the same KUBECONFIG.
 set -euo pipefail
 
+python3 -c 'import yaml' 2>/dev/null || { echo "PyYAML is required: python3 -m pip install PyYAML" >&2; exit 1; }
+
 NS="${NS:-model-serving}"
 GOLDEN_NS="${GOLDEN_NS:-golden}"
 GW="${GW:-inference-agw}"
@@ -70,11 +72,9 @@ if obj.get("kind") == "Deployment":         # the controller stamps a config has
     ann.pop("kubectl.kubernetes.io/restartedAt", None)
     if ann: tmeta["annotations"] = ann
     else: tmeta.pop("annotations", None)
-if obj.get("kind") == "ConfigMap":          # the golden file carries comments; compare the document without them
-    import re
-    for k, v in list(obj.get("data", {}).items()):
-        lines = [re.sub(r"\s+#.*$", "", l).rstrip() for l in v.splitlines()]
-        obj["data"][k] = "\n".join(l for l in lines if l.strip() and not l.lstrip().startswith("#")) + "\n"
+if obj.get("kind") == "ConfigMap":          # compare YAML values, ignoring comments and scalar quoting
+    import yaml
+    obj["data"]["default-plugins.yaml"] = yaml.safe_load(obj["data"]["default-plugins.yaml"])
 if obj.get("kind") == "Service":            # allocated by the cluster, never equal between two Services
     obj["spec"].pop("clusterIP", None)
     obj["spec"].pop("clusterIPs", None)
@@ -200,8 +200,20 @@ while (( SECONDS < deadline )) && [[ "$hash_after" == "$hash_before" ]]; do
   sleep 2; hash_after=$(kubectl get deployment "${EP}-epp" -n "$NS" -o jsonpath='{.spec.template.metadata.annotations.inference\.platform\.run\.ai/config-hash}')
 done
 [[ "$hash_after" != "$hash_before" ]] && ok "config hash changed (${hash_after:0:12}…)" || bad "config hash did not change within 60s"
-kubectl get configmap "${EP}-epp" -n "$NS" -o jsonpath='{.data.default-plugins\.yaml}' | grep -q -E 'pluginRef: prefix-cache-scorer' && ok "ConfigMap now lists the prefix-cache-scorer" || bad "ConfigMap not updated"
-kubectl get configmap "${EP}-epp" -n "$NS" -o jsonpath='{.data.default-plugins\.yaml}' | grep -q -E 'queue-scorer' && bad "ConfigMap still lists queue-scorer" || ok "ConfigMap no longer lists queue-scorer"
+config=$(kubectl get configmap "${EP}-epp" -n "$NS" -o jsonpath='{.data.default-plugins\.yaml}')
+python3 -c '
+import sys, yaml
+config = yaml.safe_load(sys.stdin)
+profile = next(p for p in config["schedulingProfiles"] if p["name"] == "default")
+sys.exit(0 if {"pluginRef": "prefix-cache-scorer", "weight": 100} in profile["plugins"] else 1)
+' <<<"$config" && ok "ConfigMap now lists prefix-cache-scorer with weight 100" || bad "ConfigMap not updated"
+python3 -c '
+import sys, yaml
+config = yaml.safe_load(sys.stdin)
+present = any(p["type"] == "queue-scorer" for p in config["plugins"]) or any(
+    p["pluginRef"] == "queue-scorer" for profile in config["schedulingProfiles"] for p in profile["plugins"])
+sys.exit(1 if present else 0)
+' <<<"$config" && ok "ConfigMap no longer lists queue-scorer" || bad "ConfigMap still lists queue-scorer or could not be parsed"
 kubectl rollout status deployment "${EP}-epp" -n "$NS" --timeout=180s >/dev/null 2>&1 && ok "EPP Deployment rolled out" || bad "EPP rollout did not finish within 180s"
 pod_after=$(newest_epp_pod)
 [[ -n "$pod_after" && "$pod_after" != "$pod_before" ]] && ok "new EPP pod ${pod_after#pod/}" || bad "EPP pod did not change ($pod_before → $pod_after)"
