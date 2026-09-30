@@ -298,3 +298,9 @@ control-plane/infra/openapi/scripts/openapi-scanner @dsx-ai-factory/appsec-guild
 # Build folders
 /build @dsx-ai-factory/infra
 **/Makefile  @dsx-ai-factory/infra 
+
+# Inference networking (Viper)
+/runai-cluster/cluster/inference-networking-controller/ @dsx-ai-factory/workloads
+/runai-cluster/cluster/sdk/apis/run/v1/inference-networking-controller/ @dsx-ai-factory/workloads
+/runai-cluster/cluster/go-operator/internal/run/operands/inference-networking-controller/ @dsx-ai-factory/workloads
+/runai-cluster/cluster/runai-chart/templates/clusterroles/inference-networking-controller.yaml @dsx-ai-factory/workloads

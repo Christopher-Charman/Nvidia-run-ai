@@ -24,6 +24,7 @@ import (
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/engine"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/external-workload-integrator"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/global"
+	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/inference-networking-controller"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/init-ca"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/kai-operator"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/knative"
@@ -1114,6 +1115,11 @@ func (in *RunaiConfigSpec) DeepCopyInto(out *RunaiConfigSpec) {
 	if in.AdviceRestartController != nil {
 		in, out := &in.AdviceRestartController, &out.AdviceRestartController
 		*out = new(advice_restart_controller.AdviceRestartController)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.InferenceNetworkingController != nil {
+		in, out := &in.InferenceNetworkingController, &out.InferenceNetworkingController
+		*out = new(inference_networking_controller.InferenceNetworkingController)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.AnyworkloadController != nil {

@@ -187,6 +187,7 @@ RC_GO_SERVICES=(
   accessrule-controller
   admission-controller
   advice-restart-controller
+  inference-networking-controller
   agent
   anyworkload-controller
   application-controller
