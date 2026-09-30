@@ -2045,7 +2045,7 @@
       },
       "type": "object"
     },
-    "InferenceNetworkingController": {
+    "InferenceEndpointController": {
       "properties": {
         "enabled": {
           "type": "boolean"
@@ -4416,8 +4416,8 @@
         "advice-restart-controller": {
           "$ref": "#/$defs/AdviceRestartController"
         },
-        "inference-networking-controller": {
-          "$ref": "#/$defs/InferenceNetworkingController"
+        "inference-endpoint-controller": {
+          "$ref": "#/$defs/InferenceEndpointController"
         },
         "anyworkload-controller": {
           "$ref": "#/$defs/AnyworkloadController"

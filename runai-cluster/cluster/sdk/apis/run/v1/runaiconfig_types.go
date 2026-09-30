@@ -18,7 +18,7 @@ import (
 	device_plugin "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/device-plugin"
 	engine "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/engine"
 	external_workload_integrator "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/external-workload-integrator"
-	inference_networking_controller "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/inference-networking-controller"
+	inference_endpoint_controller "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/inference-endpoint-controller"
 	kai_operator "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/kai-operator"
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/knative"
 	krm_operator "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/krm-operator"
@@ -310,9 +310,9 @@ type RunaiConfigSpec struct {
 	// +kubebuilder:validation:Optional
 	AdviceRestartController *advice_restart_controller.AdviceRestartController `json:"advice-restart-controller,omitempty"`
 
-	// InferenceNetworkingController configures inference routing on the workload cluster.
+	// InferenceEndpointController configures inference routing on the workload cluster.
 	// +kubebuilder:validation:Optional
-	InferenceNetworkingController *inference_networking_controller.InferenceNetworkingController `json:"inference-networking-controller,omitempty"`
+	InferenceEndpointController *inference_endpoint_controller.InferenceEndpointController `json:"inference-endpoint-controller,omitempty"`
 
 	// AnyworkloadController specifies configuration for the anyworkload-controller
 	// +kubebuilder:validation:Optional
@@ -494,10 +494,10 @@ func (runaiConfig *RunaiConfig) SetDefaultsWhereNeeded() {
 	spec.MetricsExporter.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.StatusUpdater.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.ExternalWorkloadIntegrator.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
-	if spec.InferenceNetworkingController == nil {
-		spec.InferenceNetworkingController = &inference_networking_controller.InferenceNetworkingController{}
+	if spec.InferenceEndpointController == nil {
+		spec.InferenceEndpointController = &inference_endpoint_controller.InferenceEndpointController{}
 	}
-	spec.InferenceNetworkingController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
+	spec.InferenceEndpointController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.AdviceRestartController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry)
 	spec.AnyworkloadController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry)
 	spec.ApplicationController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)

@@ -5099,8 +5099,8 @@ spec:
                       "20Gi", "30Gi")
                     type: string
                 type: object
-              inference-networking-controller:
-                description: InferenceNetworkingController configures inference routing
+              inference-endpoint-controller:
+                description: InferenceEndpointController configures inference routing
                   on the workload cluster.
                 properties:
                   affinity:
