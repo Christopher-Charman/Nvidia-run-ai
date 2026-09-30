@@ -7,6 +7,7 @@ package inference_endpoint_controller
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator/internal/run/operands/inference-endpoint-controller/resources"
@@ -14,6 +15,7 @@ import (
 	runv1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +36,7 @@ func (c discoveryClient) NewDiscoveryClient() (discovery.DiscoveryInterface, err
 	return c.discovery, nil
 }
 
-func TestInferenceNetworking(t *testing.T) {
+func TestInferenceEndpoint(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Inference endpoint operand")
 }
@@ -48,6 +50,7 @@ var _ = Describe("Inference endpoint operand", func() {
 		scheme := runtime.NewScheme()
 		Expect(appsv1.AddToScheme(scheme)).To(Succeed())
 		Expect(corev1.AddToScheme(scheme)).To(Succeed())
+		Expect(monitorv1.AddToScheme(scheme)).To(Succeed())
 		client := fake.NewClientBuilder().WithScheme(scheme).Build()
 		reader = discoveryClient{HybridClient: kc.New(client, client, nil), discovery: &discoveryfake.FakeDiscovery{Fake: &clienttesting.Fake{}}}
 	})
@@ -76,5 +79,26 @@ var _ = Describe("Inference endpoint operand", func() {
 		Expect(container.ReadinessProbe.HTTPGet.Path).To(Equal("/readyz"))
 		Expect(container.LivenessProbe.HTTPGet.Path).To(Equal("/healthz"))
 		Expect(container.Resources).To(Equal(corev1.ResourceRequirements(*settings.Resources)))
+	})
+
+	It("connects the metrics monitor to the controller without sending a service account token", func() {
+		deploymentObject, err := resources.NewDeploymentResource(Name, reader, config).Object(context.Background())
+		Expect(err).NotTo(HaveOccurred())
+		serviceObject, err := resources.NewServiceResource(Name, reader, config).Object(context.Background())
+		Expect(err).NotTo(HaveOccurred())
+		monitorObject, err := resources.NewServiceMonitorResource(Name, reader, config).Object(context.Background())
+		Expect(err).NotTo(HaveOccurred())
+		deployment := deploymentObject.(*appsv1.Deployment)
+		service := serviceObject.(*corev1.Service)
+		monitor := monitorObject.(*monitorv1.ServiceMonitor)
+		Expect(service.Spec.Selector).To(Equal(deployment.Spec.Selector.MatchLabels))
+		Expect(monitor.Spec.Selector.MatchLabels).To(Equal(service.Labels))
+		Expect(monitor.Spec.Endpoints).To(HaveLen(1))
+		Expect(monitor.Spec.Endpoints[0].Port).To(Equal(service.Spec.Ports[0].Name))
+		endpointJSON, err := json.Marshal(monitor.Spec.Endpoints[0])
+		Expect(err).NotTo(HaveOccurred())
+		Expect(string(endpointJSON)).NotTo(ContainSubstring("bearerTokenFile"))
+		Expect(monitor.Spec.Endpoints[0].Authorization).To(BeNil())
+		Expect(deployment.Spec.Template.Spec.Containers[0].Args).To(ContainElement("--metrics-secure=false"))
 	})
 })

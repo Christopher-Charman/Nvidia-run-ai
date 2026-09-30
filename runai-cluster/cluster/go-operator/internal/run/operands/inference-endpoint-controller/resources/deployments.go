@@ -25,6 +25,7 @@ import (
 
 const (
 	DeploymentName = operands.RunaiInferenceEndpointControllerName
+	appLabelKey    = "app"
 )
 
 type DeploymentResource struct {
@@ -64,18 +65,18 @@ func (d *DeploymentResource) Object(ctx context.Context) (client.Object, error) 
 	deployment.Namespace = deploymentNamespace
 
 	deployment.Labels = outils.InitMapIfNil(deployment.Labels)
-	deployment.Labels["app"] = DeploymentName
+	deployment.Labels[appLabelKey] = DeploymentName
 
 	deployment.Spec.Replicas = config.Replicas
 	deployment.Spec.Selector = &metav1.LabelSelector{
 		MatchLabels: map[string]string{
-			"app": DeploymentName,
+			appLabelKey: DeploymentName,
 		},
 	}
 
 	deployment.Spec.Template.Name = DeploymentName
 	deployment.Spec.Template.Labels = outils.InitMapIfNil(deployment.Spec.Template.Labels)
-	deployment.Spec.Template.Labels["app"] = DeploymentName
+	deployment.Spec.Template.Labels[appLabelKey] = DeploymentName
 
 	deployment.Spec.Template.Spec = v1.PodSpec{
 		ServiceAccountName: DeploymentName,

@@ -53,7 +53,7 @@ func (s *ServiceMonitorResource) Object(ctx context.Context) (client.Object, err
 	serviceMonitor.Name = name
 	serviceMonitor.Namespace = namespace
 	serviceMonitor.Labels = map[string]string{
-		"app": name,
+		appLabelKey: name,
 	}
 	serviceMonitor.Spec.JobLabel = name
 	serviceMonitor.Spec.NamespaceSelector = monitorv1.NamespaceSelector{
@@ -61,13 +61,12 @@ func (s *ServiceMonitorResource) Object(ctx context.Context) (client.Object, err
 	}
 	serviceMonitor.Spec.Selector = v1.LabelSelector{
 		MatchLabels: map[string]string{
-			"app": name,
+			appLabelKey: name,
 		},
 	}
 	serviceMonitor.Spec.Endpoints = []monitorv1.Endpoint{
 		{
-			Port:            s.runaiConfig.Spec.InferenceEndpointController.Metrics.PortName,
-			BearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+			Port: s.runaiConfig.Spec.InferenceEndpointController.Metrics.PortName,
 			MetricRelabelConfigs: []monitorv1.RelabelConfig{
 				{
 					Replacement: ptr.To("stats"),

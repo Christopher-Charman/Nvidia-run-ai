@@ -57,7 +57,7 @@ func (s *ServiceResource) Object(ctx context.Context) (client.Object, error) {
 		service.Labels = map[string]string{}
 	}
 
-	service.Labels["app"] = DeploymentName
+	service.Labels[appLabelKey] = DeploymentName
 	service.Spec.Type = v1.ServiceTypeClusterIP
 	service.Spec.Ports = []v1.ServicePort{
 		{
@@ -68,7 +68,7 @@ func (s *ServiceResource) Object(ctx context.Context) (client.Object, error) {
 		},
 	}
 	service.Spec.Selector = map[string]string{
-		"app": DeploymentName,
+		appLabelKey: DeploymentName,
 	}
 
 	return service, nil
