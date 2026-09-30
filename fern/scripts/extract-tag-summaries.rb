@@ -7,7 +7,7 @@
 require "yaml"; require "fileutils"
 spec, product, api_name, out = ARGV
 tags = YAML.load_file(spec)["tags"].select { |t| t["description"].to_s.strip != "" }
-id_of = ->(n) { w = n.split(/[^A-Za-z0-9]+/).reject(&:empty?); w[0][0].downcase + w[0][1..] + w[1..].map { |x| x[0].upcase + x[1..] }.join }
+id_of = ->(n) { w = n.split(/[^A-Za-z0-9]+/).reject(&:empty?).map { |x| x =~ /^[A-Z0-9]+$/ ? x.downcase : x }; w[0][0].downcase + w[0][1..] + w[1..].map { |x| x[0].upcase + x[1..] }.join }
 slug_of = ->(n) { n.gsub(/([a-z])([A-Z])/, '\1-\2').downcase.gsub(/[^a-z0-9]+/, "-").gsub(/^-|-$/, "") }
 by_id = tags.to_h { |t| [id_of.(t["name"]), t] }
 lines = File.readlines(product); in_api = false; done = []; n = 0
