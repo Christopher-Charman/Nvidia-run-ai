@@ -57,7 +57,7 @@ jobs:
         with:
           workflow: pr.yaml
           repo: run-ai/saas-configuration
-          ref: ${{ (env.BASE_REF == 'main' || env.BASE_REF == 'master' || env.BASE_REF == '') && 'master' || env.BASE_REF }}
+          ref: ci/check-e2e-ref
           token: ${{ secrets.GIT_HUB_OSS }}
           inputs: |
             {
