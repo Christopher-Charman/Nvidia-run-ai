@@ -7342,7 +7342,7 @@ export interface Inference {
      */
     'spec': SpecificRunInfoFields;
     /**
-     * An inference workload ready for submission at the cluster. Further details at https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd\"
+     * An inference workload ready for submission at the cluster.
      * @type {object}
      * @memberof Inference
      */
@@ -8441,7 +8441,7 @@ export interface ModelInference {
      */
     'spec': SpecificRunInfoFields;
     /**
-     * An inference workload ready for submission at the cluster. Further details at https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd\"
+     * An inference workload ready for submission at the cluster.
      * @type {object}
      * @memberof ModelInference
      */
@@ -13769,7 +13769,7 @@ export interface Training {
      */
     'spec': SpecificRunInfoFields;
     /**
-     * A training workload ready for submission at the cluster. Further details at https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd\"
+     * A training workload ready for submission at the cluster.
      * @type {object}
      * @memberof Training
      */
@@ -14540,7 +14540,7 @@ export interface Workspace {
      */
     'spec': SpecificRunInfoFields;
     /**
-     * An interactive workload ready for submission at the cluster. Further details at https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd\"
+     * An interactive workload ready for submission at the cluster.
      * @type {object}
      * @memberof Workspace
      */

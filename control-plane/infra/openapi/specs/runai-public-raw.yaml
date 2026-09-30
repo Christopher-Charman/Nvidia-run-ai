@@ -164,9 +164,6 @@ tags:
   - name: Subscriptions
     x-parent: Notifications
   - name: Synchronization
-    description: >-
-      Internal interface for synchronizing assets between the clusters and the
-      control plane.
 paths:
   '/internal/clusters/{clusterUuid}/ancestors':
     x-internal: true
@@ -38164,10 +38161,7 @@ components:
           type: string
           minLength: 1
     InteractiveWorkload:
-      description: >-
-        An interactive workload ready for submission at the cluster. Further
-        details at
-        https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd"
+      description: An interactive workload ready for submission at the cluster.
       type: object
     DisplayedJob:
       type: object
@@ -38297,10 +38291,7 @@ components:
           items:
             $ref: '#/components/schemas/Workspace'
     TrainingWorkload:
-      description: >-
-        A training workload ready for submission at the cluster. Further details
-        at
-        https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd"
+      description: A training workload ready for submission at the cluster.
       type: object
     Training:
       required:
@@ -39689,10 +39680,7 @@ components:
         distributed:
           $ref: '#/components/schemas/DistributedParams'
     InferenceWorkload:
-      description: >-
-        An inference workload ready for submission at the cluster. Further
-        details at
-        https://github.com/dsx-ai-factory/run-ai/runai-cluster/tree/master/workload-controller/config/crd"
+      description: An inference workload ready for submission at the cluster.
       type: object
     Inference:
       required:

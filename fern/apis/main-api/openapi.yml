@@ -147,7 +147,6 @@ tags:
   - name: Subscriptions
     x-parent: Notifications
   - name: Synchronization
-    description: Internal interface for synchronizing assets between the clusters and the control plane.
 paths:
   /api/v1/clusters/{clusterUuid}/nodes/count:
     get:

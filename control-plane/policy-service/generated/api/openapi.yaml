@@ -10,10 +10,8 @@ servers:
 security:
 - bearerAuth: []
 tags:
-- description: Administrator applied workload policies.
-  name: Policy
-- description: Policy synchronization from the control panel to the cluster.
-  name: Synchronization
+- name: Policy
+- name: Synchronization
 paths:
   /:
     get:
