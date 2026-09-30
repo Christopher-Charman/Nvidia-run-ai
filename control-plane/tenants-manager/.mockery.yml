@@ -36,3 +36,26 @@ packages:
   github.com/dsx-ai-factory/run-ai/control-plane/tenants-manager/pkg/client:
     interfaces:
       ITenantsManager:
+  # The generated OpenAPI client. Consumers use the names the client's mocks have
+  # always had (InternalApi, not InternalAPI), so keep them.
+  github.com/dsx-ai-factory/run-ai/control-plane/tenants-manager/pkg/client/generated:
+    config:
+      dir: '{{.InterfaceDir}}/../mocks'
+      include-auto-generated: true
+    interfaces:
+      HealthAPI:
+        config:
+          structname: HealthApi
+          filename: HealthApi.go
+      InternalAPI:
+        config:
+          structname: InternalApi
+          filename: InternalApi.go
+      LogoAPI:
+        config:
+          structname: LogoApi
+          filename: LogoApi.go
+      TenantsAPI:
+        config:
+          structname: TenantsApi
+          filename: TenantsApi.go
