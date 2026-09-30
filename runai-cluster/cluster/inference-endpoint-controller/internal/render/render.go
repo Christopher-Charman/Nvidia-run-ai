@@ -44,7 +44,13 @@ const (
 var templateFS embed.FS
 
 var templates = template.Must(
-	template.New("").Option("missingkey=error").ParseFS(templateFS, "templates/*.yaml"),
+	template.New("").Option("missingkey=error").Funcs(template.FuncMap{
+		// JSON strings are valid YAML scalars and cannot introduce another document.
+		"toJSON": func(value string) (string, error) {
+			encoded, err := json.Marshal(value)
+			return string(encoded), err
+		},
+	}).ParseFS(templateFS, "templates/*.yaml"),
 )
 
 // templateOrder is the apply order: the pool first so the EPP can find it, the

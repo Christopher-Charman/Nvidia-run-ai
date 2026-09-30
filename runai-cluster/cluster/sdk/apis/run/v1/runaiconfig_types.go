@@ -153,14 +153,15 @@ var ServiceGroupMapping = map[string]ServiceGroup{
 	"ClusterSync": SyncServicesGroup,
 
 	// Workload Services
-	"RuntimeRules":               WorkloadServicesGroup,
-	"AnyworkloadController":      WorkloadServicesGroup,
-	"ExternalWorkloadIntegrator": WorkloadServicesGroup,
-	"ClusterRedis":               WorkloadServicesGroup,
-	"ClusterApi":                 WorkloadServicesGroup,
-	"ResearcherService":          WorkloadServicesGroup,
-	"SharedObjectsController":    WorkloadServicesGroup,
-	"WorkloadExporter":           WorkloadServicesGroup,
+	"RuntimeRules":                WorkloadServicesGroup,
+	"AnyworkloadController":       WorkloadServicesGroup,
+	"ExternalWorkloadIntegrator":  WorkloadServicesGroup,
+	"InferenceEndpointController": WorkloadServicesGroup,
+	"ClusterRedis":                WorkloadServicesGroup,
+	"ClusterApi":                  WorkloadServicesGroup,
+	"ResearcherService":           WorkloadServicesGroup,
+	"SharedObjectsController":     WorkloadServicesGroup,
+	"WorkloadExporter":            WorkloadServicesGroup,
 }
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -437,6 +438,9 @@ func (runaiConfig *RunaiConfig) SetDefaultsWhereNeeded() {
 	if spec.ExternalWorkloadIntegrator == nil {
 		spec.ExternalWorkloadIntegrator = &external_workload_integrator.ExternalWorkloadIntegrator{}
 	}
+	if spec.InferenceEndpointController == nil {
+		spec.InferenceEndpointController = &inference_endpoint_controller.InferenceEndpointController{}
+	}
 	if spec.AdviceRestartController == nil {
 		spec.AdviceRestartController = &advice_restart_controller.AdviceRestartController{}
 	}
@@ -494,9 +498,6 @@ func (runaiConfig *RunaiConfig) SetDefaultsWhereNeeded() {
 	spec.MetricsExporter.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.StatusUpdater.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.ExternalWorkloadIntegrator.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
-	if spec.InferenceEndpointController == nil {
-		spec.InferenceEndpointController = &inference_endpoint_controller.InferenceEndpointController{}
-	}
 	spec.InferenceEndpointController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry, spec.Global.ReplicaCount)
 	spec.AdviceRestartController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry)
 	spec.AnyworkloadController.SetDefaultsWhereNeeded(spec.Internal.Global.ImageRegistry)

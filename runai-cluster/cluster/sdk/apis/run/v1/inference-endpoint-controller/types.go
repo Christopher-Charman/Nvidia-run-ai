@@ -66,11 +66,17 @@ func (c *InferenceEndpointController) SetDefaultsWhereNeeded(globalRegistry stri
 	}
 	for key, value := range (v1.ResourceList{v1.ResourceCPU: resource.MustParse("100m"), v1.ResourceMemory: resource.MustParse("128Mi")}) {
 		if _, exists := c.Resources.Requests[key]; !exists {
+			if limit, exists := c.Resources.Limits[key]; exists && value.Cmp(limit) > 0 {
+				value = limit.DeepCopy()
+			}
 			c.Resources.Requests[key] = value
 		}
 	}
 	for key, value := range (v1.ResourceList{v1.ResourceCPU: resource.MustParse("500m"), v1.ResourceMemory: resource.MustParse("256Mi")}) {
 		if _, exists := c.Resources.Limits[key]; !exists {
+			if request := c.Resources.Requests[key]; request.Cmp(value) > 0 {
+				value = request.DeepCopy()
+			}
 			c.Resources.Limits[key] = value
 		}
 	}

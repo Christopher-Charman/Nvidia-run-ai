@@ -68,6 +68,54 @@ func llama3Canary() []render.Rewrite {
 }
 
 var _ = Describe("Render", func() {
+	DescribeTable("keeps YAML document markers inside user-provided strings", func(field string) {
+		in := llama3Input()
+		payload := "value\n---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: injected\n  namespace: model-serving\n"
+		expectedCount := 10
+		switch field {
+		case "hostname":
+			in.Hostnames = []string{payload}
+		case "image":
+			in.EppImage = payload
+		case "rewrite":
+			in.Rewrites = []render.Rewrite{{Model: payload, Targets: []render.RewriteTarget{{Model: payload, Weight: 1}}}}
+			expectedCount++
+		}
+		objects, err := render.Render(in)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(objects).To(HaveLen(expectedCount))
+		for _, object := range objects {
+			Expect(object.GetName()).NotTo(Equal("injected"))
+			Expect(object.GetNamespace()).To(Equal(in.Namespace))
+		}
+	}, Entry("hostname", "hostname"), Entry("image", "image"), Entry("rewrite models", "rewrite"))
+
+	It("preserves scalar-looking strings in routes, images, and rewrites", func() {
+		in := llama3Input()
+		in.Hostnames = []string{"yes", "123"}
+		in.GatewayName = "yes"
+		in.EppImage = "123"
+		in.Rewrites = []render.Rewrite{{Model: "true", Targets: []render.RewriteTarget{{Model: "123", Weight: 1}}}}
+		objects, err := render.Render(in)
+		Expect(err).NotTo(HaveOccurred())
+		indexed := byKey(objects)
+		route := indexed["HTTPRoute/llama3-route"]
+		hostnames, _, err := unstructured.NestedStringSlice(route.Object, "spec", "hostnames")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(hostnames).To(Equal(in.Hostnames))
+		parents, _, err := unstructured.NestedSlice(route.Object, "spec", "parentRefs")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(parents[0].(map[string]interface{})["name"]).To(Equal("yes"))
+		containers, _, err := unstructured.NestedSlice(indexed["Deployment/llama3-epp"].Object, "spec", "template", "spec", "containers")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(containers[0].(map[string]interface{})["image"]).To(Equal("123"))
+		rules, _, err := unstructured.NestedSlice(indexed["InferenceModelRewrite/llama3-rewrite"].Object, "spec", "rules")
+		Expect(err).NotTo(HaveOccurred())
+		rule := rules[0].(map[string]interface{})
+		Expect(rule["matches"].([]interface{})[0].(map[string]interface{})["model"].(map[string]interface{})["value"]).To(Equal("true"))
+		Expect(rule["targets"].([]interface{})[0].(map[string]interface{})["modelRewrite"]).To(Equal("123"))
+	})
+
 	Context("for the Track A llama3 endpoint", func() {
 		var rendered map[string]*unstructured.Unstructured
 

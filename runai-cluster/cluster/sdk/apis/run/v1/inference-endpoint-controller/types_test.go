@@ -11,6 +11,8 @@ import (
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/common"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/ptr"
 )
 
@@ -20,6 +22,26 @@ func TestInferenceEndpointController(t *testing.T) {
 }
 
 var _ = Describe("Defaults", func() {
+	DescribeTable("keeps defaults compatible with partial resource overrides", func(resources Resources) {
+		config := &InferenceEndpointController{Resources: &resources}
+		requirements := v1.ResourceRequirements(resources)
+		original := requirements.DeepCopy()
+		config.SetDefaultsWhereNeeded("registry.example/runai", nil)
+		for key, request := range config.Resources.Requests {
+			limit := config.Resources.Limits[key]
+			Expect(request.Cmp(limit)).To(BeNumerically("<=", 0))
+		}
+		for key, value := range original.Requests {
+			got := config.Resources.Requests[key]
+			Expect(got.Cmp(value)).To(BeZero())
+		}
+		for key, value := range original.Limits {
+			got := config.Resources.Limits[key]
+			Expect(got.Cmp(value)).To(BeZero())
+		}
+	}, Entry("CPU request above the default limit", Resources{Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("1")}}),
+		Entry("memory limit below the default request", Resources{Limits: v1.ResourceList{v1.ResourceMemory: resource.MustParse("64Mi")}}))
+
 	It("enables the controller and inherits global replicas and image registry", func() {
 		config := &InferenceEndpointController{}
 		config.SetDefaultsWhereNeeded("registry.example/runai", ptr.To[int32](3))

@@ -6,14 +6,14 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 data:
   default-plugins.yaml: |
 {{- if .RuntimeProfiles }}
@@ -23,17 +23,17 @@ data:
     - type: header-profile-handler
       parameters:
         headerName: EPP-Profile
-        defaultProfile: {{ printf "%q" .DefaultProfile }}
+        defaultProfile: {{ .DefaultProfile | toJSON }}
     - type: max-score-picker
 {{- range .ProfilePlugins }}
-    - type: {{ . }}
+    - type: {{ . | toJSON }}
 {{- end }}
 {{- else }}
     apiVersion: inference.networking.x-k8s.io/v1alpha1
     kind: EndpointPickerConfig
     plugins:
 {{- range .Scorers }}
-    - type: {{ .Plugin }}
+    - type: {{ .Plugin | toJSON }}
 {{- end }}
 {{- end }}
     - type: metrics-data-source
@@ -45,10 +45,10 @@ data:
     schedulingProfiles:
 {{- if .RuntimeProfiles }}
 {{- range .Profiles }}
-    - name: {{ printf "%q" .Name }}
+    - name: {{ .Name | toJSON }}
       plugins:
 {{- range .Scorers }}
-      - pluginRef: {{ .Plugin }}
+      - pluginRef: {{ .Plugin | toJSON }}
         weight: {{ .Weight }}
 {{- end }}
       - pluginRef: max-score-picker
@@ -57,7 +57,7 @@ data:
     - name: default
       plugins:
 {{- range .Scorers }}
-      - pluginRef: {{ .Plugin }}
+      - pluginRef: {{ .Plugin | toJSON }}
         weight: {{ .Weight }}
 {{- end }}
 {{- end }}
@@ -65,8 +65,8 @@ data:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Name }}-epp-non-sa
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp-non-sa" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 rules:
 - apiGroups: ["inference.networking.x-k8s.io"]
   resources: ["inferenceobjectives", "inferencemodelrewrites"]
@@ -78,8 +78,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ .Name }}-epp-sa
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp-sa" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 rules:
 - apiGroups: [""]
   resources: ["pods"]
@@ -88,39 +88,39 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Name }}-epp-non-sa
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp-non-sa" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Name }}-epp-non-sa
+  name: {{ printf "%s-epp-non-sa" .Name | toJSON }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ .Name }}-epp-sa
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp-sa" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Name }}-epp-sa
+  name: {{ printf "%s-epp-sa" .Name | toJSON }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 spec:
   selector:
-    inferencepool: {{ .Name }}-epp
+    inferencepool: {{ printf "%s-epp" .Name | toJSON }}
   ports:
   - name: grpc-ext-proc
     protocol: TCP
@@ -133,8 +133,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Name }}-epp
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-epp" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
   labels:
     inference.networking.k8s.io/igw-mode: inferencepool
 spec:
@@ -143,24 +143,24 @@ spec:
     type: Recreate                   # single active replica; prefix-cache state is in memory
   selector:
     matchLabels:
-      inferencepool: {{ .Name }}-epp
+      inferencepool: {{ printf "%s-epp" .Name | toJSON }}
   template:
     metadata:
       labels:
-        inferencepool: {{ .Name }}-epp
+        inferencepool: {{ printf "%s-epp" .Name | toJSON }}
         inference.networking.k8s.io/igw-mode: inferencepool
     spec:
-      serviceAccountName: {{ .Name }}-epp
+      serviceAccountName: {{ printf "%s-epp" .Name | toJSON }}
       terminationGracePeriodSeconds: 130
       containers:
       - name: epp
-        image: {{ .EppImage }}
+        image: {{ .EppImage | toJSON }}
         imagePullPolicy: IfNotPresent
         args:
         - --pool-name
-        - {{ .Name }}-pool
+        - {{ printf "%s-pool" .Name | toJSON }}
         - --pool-namespace
-        - {{ .Namespace }}
+        - {{ .Namespace | toJSON }}
         - --pool-group
         - inference.networking.k8s.io
         - --zap-encoder
@@ -212,4 +212,4 @@ spec:
       volumes:
       - name: plugins-config-volume
         configMap:
-          name: {{ .Name }}-epp
+          name: {{ printf "%s-epp" .Name | toJSON }}

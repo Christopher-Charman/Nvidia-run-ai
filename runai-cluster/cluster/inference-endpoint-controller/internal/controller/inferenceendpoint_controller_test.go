@@ -293,7 +293,7 @@ var _ = Describe("InferenceEndpoint Controller", func() {
 
 		cm := &corev1.ConfigMap{}
 		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: eppName, Namespace: ns}, cm)).To(Succeed())
-		Expect(cm.Data["default-plugins.yaml"]).To(MatchRegexp(`pluginRef: prefix-cache-scorer\n\s+weight: 100\n`))
+		Expect(cm.Data["default-plugins.yaml"]).To(MatchRegexp(`pluginRef: "?prefix-cache-scorer"?\n\s+weight: 100\n`))
 		Expect(cm.Data["default-plugins.yaml"]).NotTo(ContainSubstring("queue-scorer"))
 
 		Expect(k8sClient.Get(ctx, types.NamespacedName{Name: eppName, Namespace: ns}, dep)).To(Succeed())

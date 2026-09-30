@@ -2,19 +2,19 @@
 apiVersion: inference.networking.k8s.io/v1
 kind: InferencePool
 metadata:
-  name: {{ .Name }}-pool
-  namespace: {{ .Namespace }}
+  name: {{ printf "%s-pool" .Name | toJSON }}
+  namespace: {{ .Namespace | toJSON }}
 spec:
   selector:
     matchLabels:
 {{- range $k, $v := .Selector }}
-      {{ printf "%q" $k }}: {{ printf "%q" $v }}
+      {{ $k | toJSON }}: {{ $v | toJSON }}
 {{- end }}
   targetPorts:
   - number: {{ .Port }}
   appProtocol: http
   endpointPickerRef:
-    name: {{ .Name }}-epp
+    name: {{ printf "%s-epp" .Name | toJSON }}
     port:
       number: 9002                    # agentgateway requires the port to be explicit
 {{- if .RuntimeProfiles }}
