@@ -15,8 +15,11 @@ krm_version="${1:?usage: $0 <KRM chart version, for example v0.1.0>}"
 krm_chart="oci://ghcr.io/kai-scheduler/kai-resource-management/kai-resource-management"
 module="github.com/kai-scheduler/KAI-scheduler"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-repo_root="$(cd "${script_dir}/../.." && pwd)"
+# The nightly workflow runs main's copy of this script against a release branch
+# checkout, whose own copy may be older or missing.
+repo_root="$(cd "${RUNAI_REPO_ROOT:-${script_dir}/../..}" && pwd)"
 chart_dir="${repo_root}/runai-cluster/cluster/runai-chart"
+version_file="${repo_root}/runai-cluster/kai-scheduler/kai-version.yaml"
 
 krm_metadata="$(helm show chart "${krm_chart}" --version "${krm_version}")"
 kai_version="$(yq '.dependencies[] | select(.name == "kai-scheduler").version' - <<<"${krm_metadata}")"
@@ -55,7 +58,7 @@ yq -i '(.dependencies[] | select(.name == "kai-resource-management").version) = 
 yq -i '.krm.chart-version = strenv(krm_version) |
   .kai.human-readable-version = strenv(kai_version) |
   .kai.commit-hash = strenv(commit_hash) |
-  .kai.go-module-version = strenv(kai_version)' "${script_dir}/kai-version.yaml"
+  .kai.go-module-version = strenv(kai_version)' "${version_file}"
 
 (cd "${chart_dir}" && helm dependency update)
 echo "Updated KRM to ${krm_version} (KAI ${kai_version})"

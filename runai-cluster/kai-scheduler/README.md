@@ -21,5 +21,9 @@ There is deliberately no way to bump KAI on its own: doing so would move our Go
 types ahead of the scheduler KRM actually deploys, with nothing to catch it. To
 take a newer KAI, release it in KRM first.
 
-The nightly `Nightly KRM Update` workflow runs the same script against the
-latest published KRM release.
+The nightly `Nightly KRM Update` workflow runs the same script on every
+`release-X.Y` branch, taking the newest published KRM patch of the line each
+branch already pins, and opens a pull request for review. Like a manual run,
+that pull request also re-pins the KAI Go module in every `go.mod` that uses
+it to the scheduler version the new KRM release bundles. `main`, and moving
+any branch to a new KRM minor, stay manual runs of the script.
