@@ -384,3 +384,28 @@ func (client *OrgUnitClient) GetInternalDeletedOrgUnits(ctx context.Context, del
 	}
 	return response.OrgUnits, nil
 }
+
+func (client *OrgUnitClient) CountInternalProjects(ctx context.Context, filterBy []string) (int64, *openapi.Error) {
+	response, h, err := client.ApiClient.ProjectsAPI.CountInternalProjects(ctx).FilterBy(filterBy).Execute()
+	if err != nil {
+		return 0, openapi.NewError(http.StatusServiceUnavailable, err.Error())
+	}
+	if h != nil && h.StatusCode != http.StatusOK {
+		return 0, openapi.NewError(int32(h.StatusCode), fmt.Sprintf("failed to get projects: %v", response))
+	}
+	return response.Count, nil
+}
+
+func (client *OrgUnitClient) GetInternalProjectsTelemetry(ctx context.Context, telemetryType openapi.OrgUnitTelemetryTypeInternal, groupBy []string) (*openapi.TelemetryResponse, *openapi.Error) {
+	response, h, err := client.ApiClient.ProjectsAPI.GetInternalProjectsTelemetry(ctx).TelemetryType(telemetryType).GroupBy(groupBy).Execute()
+	if err != nil {
+		return nil, openapi.NewError(http.StatusServiceUnavailable, err.Error())
+	}
+	if h != nil && h.StatusCode != http.StatusOK {
+		return nil, openapi.NewError(int32(h.StatusCode), fmt.Sprintf("failed to get projects telemetry: %v", response))
+	}
+	if response == nil {
+		return nil, openapi.NewError(http.StatusServiceUnavailable, "failed to get response of get projects telemetry")
+	}
+	return response, nil
+}
