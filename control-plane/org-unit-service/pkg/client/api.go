@@ -46,6 +46,8 @@ type IOrgUnitClient interface {
 	GetInternalDeletedOrgUnits(ctx context.Context, deletedAfter time.Time) ([]openapi.DeletedOrgUnit, *openapi.Error)
 	GetOrgTree(ctx context.Context) ([]openapi.OrgUnit, *openapi.Error)
 	UpdateOrgUnitSettings(ctx context.Context, name string, value string) error
+	CountInternalProjects(ctx context.Context, filterBy []string) (int64, *openapi.Error)
+	GetInternalProjectsTelemetry(ctx context.Context, telemetryType openapi.OrgUnitTelemetryTypeInternal, groupBy []string) (*openapi.TelemetryResponse, *openapi.Error)
 }
 
 func NewOrgUnitClient(baseURL string) IOrgUnitClient {
