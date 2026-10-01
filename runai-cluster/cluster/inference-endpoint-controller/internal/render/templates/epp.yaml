@@ -151,11 +151,22 @@ spec:
         inference.networking.k8s.io/igw-mode: inferencepool
     spec:
       serviceAccountName: {{ printf "%s-epp" .Name | toJSON }}
+      # EPP watches Pods, InferencePools, and model-routing resources.
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       terminationGracePeriodSeconds: 130
       containers:
       - name: epp
         image: {{ .EppImage | toJSON }}
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         args:
         - --pool-name
         - {{ printf "%s-pool" .Name | toJSON }}

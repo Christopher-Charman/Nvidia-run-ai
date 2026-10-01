@@ -168,11 +168,22 @@ spec:
         inference.networking.k8s.io/igw-mode: inferencepool
     spec:
       serviceAccountName: llama3-epp
+      # EPP watches Pods, InferencePools, and model-routing resources.
+      automountServiceAccountToken: true
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       terminationGracePeriodSeconds: 130
       containers:
       - name: epp
         image: registry.k8s.io/gateway-api-inference-extension/epp:v1.5.0   # GIE reference EPP, the page's default
         imagePullPolicy: IfNotPresent
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
         args:
         - --pool-name
         - llama3-pool

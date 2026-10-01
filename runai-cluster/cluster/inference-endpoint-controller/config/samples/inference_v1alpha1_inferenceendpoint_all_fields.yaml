@@ -1,4 +1,5 @@
-# Every implemented InferenceEndpoint spec field, including optional fields.
+# GIE v1.5 InferenceEndpoint field reference, including its optional fields.
+# Experimental llm-d-v0.10 profile scheduling is in inference_v1alpha1_inferenceendpoint_profiles.yaml.
 # This is a field reference, not a minimal configuration.
 # Prerequisites: the namespace, Gateway, and matching model-serving Pods exist;
 # the Pods serve both llama3 and llama3-v2 on port 8000.
@@ -23,10 +24,10 @@ spec:
     - llama3-all-fields-alias.test
 
   epp: # Required. At least one of profile or image must be present.
-    profile: gie-v1.5 # Optional. The only supported profile; pins the GIE v1.5.0 contract.
+    profile: gie-v1.5 # Optional. Pins the GIE v1.5.0 contract; llm-d-v0.10 is experimental.
     # Optional with a profile; included here to show every field.
     # When both are set, image must exactly equal the profile's pinned image.
-    # Without a profile, image is required and still receives GIE v1.5 config/flags.
+    # Without a profile, only this approved GIE v1.5.0 image is allowed.
     image: registry.k8s.io/gateway-api-inference-extension/epp:v1.5.0
     scheduling: # Optional. Config changes replace EPP Pods (Recreate strategy).
       scorers: # Omitted/empty = defaults below; a nonempty list selects exactly these scorers.

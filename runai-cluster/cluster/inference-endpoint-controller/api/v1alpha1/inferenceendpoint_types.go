@@ -198,6 +198,7 @@ const (
 )
 
 // EppSpec configures the endpoint picker the controller deploys.
+// +kubebuilder:validation:XValidation:rule="has(self.profile) || (has(self.image) && self.image == 'registry.k8s.io/gateway-api-inference-extension/epp:v1.5.0')",message="image-only EPP requires the approved GIE v1.5.0 image; otherwise select a supported profile"
 // +kubebuilder:validation:XValidation:rule="has(self.profile) || has(self.image)",message="epp.profile or epp.image is required"
 // +kubebuilder:validation:XValidation:rule="!has(self.profile) || !has(self.image) || (self.profile == 'gie-v1.5' && self.image == 'registry.k8s.io/gateway-api-inference-extension/epp:v1.5.0') || (self.profile == 'llm-d-v0.10' && self.image == 'ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.10.0@sha256:2e516fa1310da7be59b82beb1445362139597d6d553ef04d546716abe3aaaa70')",message="epp.image must match the selected profile's pinned image"
 // +kubebuilder:validation:XValidation:rule="!(has(self.profile) && self.profile == 'llm-d-v0.10') || (has(self.scheduling) && has(self.scheduling.profiles))",message="llm-d-v0.10 requires scheduling.profiles"
@@ -210,8 +211,8 @@ type EppSpec struct {
 	Profile EppProfile `json:"profile,omitempty"`
 
 	// image overrides the profile image only when it matches the supported image.
-	// Without a profile, image is required and preserves the legacy behavior:
-	// the supplied image receives the GIE v1.5 configuration and startup flags.
+	// Without a profile, only EppImageGIEV15 is allowed; it receives the
+	// GIE v1.5 configuration and startup flags.
 	// +optional
 	// +kubebuilder:validation:MinLength=1
 	Image string `json:"image,omitempty"`
