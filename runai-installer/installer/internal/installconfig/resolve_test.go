@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/dsx-ai-factory/run-ai/runai-installer/installer/internal/orchestrator2/spec"
+	"github.com/dsx-ai-factory/run-ai/runai-installer/installer/internal/step"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -88,9 +89,42 @@ func TestResolveRegistry_FlagCarriesConfigHostAndCA(t *testing.T) {
 }
 
 func TestResolveRegistry_NoSource(t *testing.T) {
-	_, err := ResolveRegistry(&Config{}, "", "")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no registry credentials")
+	connected := Install{Mode: "full_installation", Connectivity: "connected"}
+	full := func(cpVersion, clusterVersion string) *Config {
+		return &Config{
+			Install:      connected,
+			ControlPlane: &ControlPlane{Enabled: true, Version: cpVersion},
+			Cluster:      &Cluster{Enabled: true, Version: clusterVersion},
+		}
+	}
+
+	for _, tc := range []struct {
+		name    string
+		cfg     *Config
+		wantOSS bool
+	}{
+		{name: "connected, versions unset", cfg: full("", ""), wantOSS: true},
+		{name: "connected, 3.0 release", cfg: full("3.0.17", "3.0.17"), wantOSS: true},
+		{name: "connected, v-prefixed 3.x", cfg: full("v3.1.0", ""), wantOSS: true},
+		{name: "connected, cluster only 3.x", cfg: &Config{Install: connected, Cluster: &Cluster{Enabled: true, Version: "3.0.15"}}, wantOSS: true},
+		{name: "connected, 2.x release", cfg: full("2.26.1", "2.26.1"), wantOSS: false},
+		{name: "connected, mixed 3.x control plane and 2.x cluster", cfg: full("3.0.17", "2.26.1"), wantOSS: false},
+		{name: "connected, main build", cfg: full("0.0.0-30003864.main-c227486", ""), wantOSS: false},
+		{name: "air-gapped", cfg: &Config{Install: Install{Connectivity: "air_gapped"}, ControlPlane: &ControlPlane{Enabled: true, Version: "3.0.17"}}, wantOSS: false},
+		{name: "empty config", cfg: &Config{}, wantOSS: false},
+		{name: "nil config", cfg: nil, wantOSS: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			reg, err := ResolveRegistry(tc.cfg, "", "")
+			if !tc.wantOSS {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "no registry credentials")
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, &spec.Registry{Type: spec.RegistryTypeNGC, ChartRepository: step.NGCOSSChartRepo}, reg)
+		})
+	}
 }
 
 func TestResolveRegistry_UnknownConfigType(t *testing.T) {

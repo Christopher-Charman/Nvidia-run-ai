@@ -99,6 +99,43 @@ func TestNGCInstall_TokenFree(t *testing.T) {
 	assert.False(t, hasPipelineEvent(evs, "pipeline_failed", ""))
 }
 
+func TestNGCInstall_OSSDefaultWithoutRegistry(t *testing.T) {
+	helm := harness.NewFakeHelmWithReleases()
+	k8s := &harness.FakeK8sExecutor{}
+	_, provider := harness.NewFakeRunAIClientProvider(helm)
+	deps := orchestrator2.Deps{K8sExecutor: k8s, HelmInstaller: helm, RunAIClientProvider: provider, ClusterProbe: okProbe()}
+
+	eventsPath := filepath.Join(t.TempDir(), "events.ndjson")
+	cfg, opts := connectedConfig(t, eventsPath, false)
+	cfg.ControlPlane.Version = ""
+	cfg.Cluster.Version = ""
+	registry, err := installconfig.ResolveRegistry(cfg, "", "")
+	require.NoError(t, err)
+	opts.Registry = registry
+	term, _, _ := newTestTerminal()
+
+	require.NoError(t, specrun.Execute(context.Background(), cfg.ToSpec(opts), deps, term, execOpts()))
+
+	cp := helm.CallsByRelease("runai-backend")
+	require.Len(t, cp, 1)
+	assert.Equal(t, step.NGCOSSChartRepo, cp[0].RepoUrl)
+	assert.Equal(t, "control-plane", cp[0].ChartName)
+	assert.Empty(t, cp[0].Version, "unset version installs the repository's latest release")
+	assert.True(t, cp[0].Auth.IsZero(), "the OSS control-plane chart pulls anonymously")
+
+	cl := helm.CallsByRelease("runai-cluster")
+	require.Len(t, cl, 1)
+	assert.Equal(t, step.NGCOSSChartRepo, cl[0].RepoUrl)
+	assert.Equal(t, "runai-cluster", cl[0].ChartName)
+	assert.True(t, cl[0].Auth.IsZero(), "the OSS cluster chart pulls anonymously")
+
+	assert.False(t, appliedNames(k8s)["runai-reg-creds"], "no image pull secret for the public OSS images")
+
+	evs := readEvents(t, eventsPath)
+	assert.True(t, hasPipelineEvent(evs, "pipeline_succeeded", "runai"))
+	assert.False(t, hasPipelineEvent(evs, "pipeline_failed", ""))
+}
+
 func TestNGCInstall_ChartRepositoryOverride(t *testing.T) {
 	helm := harness.NewFakeHelmWithReleases()
 	k8s := &harness.FakeK8sExecutor{}

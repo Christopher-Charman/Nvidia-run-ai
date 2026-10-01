@@ -43,6 +43,10 @@ const (
 	ngcChartOrgTeamNonProd = "nvstaging/runai"
 )
 
+// NGCOSSChartRepo is the public Run:ai OSS chart repository. Its charts and
+// images pull anonymously, so installing from it needs no registry credentials.
+const NGCOSSChartRepo = "https://" + ngcChartHost + "/nvidia/runai-oss"
+
 const (
 	CPReleaseName      = "runai-backend"
 	CPChartName        = "control-plane"

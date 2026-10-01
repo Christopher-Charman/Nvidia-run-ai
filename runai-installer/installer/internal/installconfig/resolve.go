@@ -11,7 +11,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/dsx-ai-factory/run-ai/runai-installer/installer/internal/orchestrator2/spec"
+	"github.com/dsx-ai-factory/run-ai/runai-installer/installer/internal/step"
 )
 
 // registryAuthMode is the credential scheme a registry config resolves to.
@@ -52,9 +54,38 @@ func ResolveRegistry(cfg *Config, registryTokenPath, ngcTokenPath string) (*spec
 	}
 
 	if cfg == nil || cfg.Registry == nil {
+		if installsOSS(cfg) {
+			return &spec.Registry{Type: spec.RegistryTypeNGC, ChartRepository: step.NGCOSSChartRepo}, nil
+		}
 		return nil, errors.New("no registry credentials: set --registry-token-path, --ngc-token-path, or registry in the config")
 	}
 	return resolveRegistryFromConfig(cfg.Registry)
+}
+
+// installsOSS reports whether a config with no registry defaults to the public
+// Run:ai OSS charts: a connected install whose versions are all 3.0 or later,
+// or unset (the repository's latest release).
+func installsOSS(cfg *Config) bool {
+	if cfg == nil || cfg.Install.Connectivity != string(spec.ConnectivityConnected) {
+		return false
+	}
+	var versions []string
+	if cfg.ControlPlane != nil && cfg.ControlPlane.Enabled {
+		versions = append(versions, cfg.ControlPlane.Version)
+	}
+	if cfg.Cluster != nil && cfg.Cluster.Enabled {
+		versions = append(versions, cfg.Cluster.Version)
+	}
+	for _, v := range versions {
+		if v == "" {
+			continue
+		}
+		parsed, err := semver.NewVersion(strings.TrimSpace(v))
+		if err != nil || parsed.Major() < 3 {
+			return false
+		}
+	}
+	return true
 }
 
 // resolveRegistryFromConfig validates the credential combination and reads any
