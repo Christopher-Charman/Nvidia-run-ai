@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var _ = Describe("cluster-api routes", func() {
+var _ = Describe("researcher-service routes", func() {
 	var (
 		kubeClient client.Client
 	)
@@ -29,7 +29,7 @@ var _ = Describe("cluster-api routes", func() {
 	})
 
 	Context("cluster api route", func() {
-		It("should create cluster-api route when running in openshift", func() {
+		It("should create researcher route when running in openshift", func() {
 			runaiConfig := utils.GetDefaultRunaiConfig()
 			runaiConfig.Spec.Internal.Global.Platform.KubernetesFlavor = runv1_internal.KubernetesFlavorOpenShift
 
@@ -39,7 +39,7 @@ var _ = Describe("cluster-api routes", func() {
 			Expect(route).NotTo(BeNil())
 		})
 
-		It("should propagate tls secret to cluster-api route", func() {
+		It("should propagate tls secret to researcher route", func() {
 			runaiConfig := utils.GetDefaultRunaiConfig()
 			runaiConfig.Spec.Internal.Global.Platform.KubernetesFlavor = runv1_internal.KubernetesFlavorOpenShift
 			runaiConfig.Spec.ClusterApi.Route.TlsSecret = "tls-secret"
@@ -62,34 +62,6 @@ var _ = Describe("cluster-api routes", func() {
 			Expect(route.Spec.TLS).NotTo(BeNil())
 			Expect(route.Spec.TLS.Certificate).To(Equal("tls-cert"))
 			Expect(route.Spec.TLS.Key).To(Equal("tls-key"))
-		})
-	})
-
-	Context("getTlsSecretCertAndKey", func() {
-		It("should return tls secret cert and key", func() {
-			secret := &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "secret",
-					Namespace: "namespace",
-				},
-				Data: map[string][]byte{
-					"tls.crt": []byte("cert"),
-					"tls.key": []byte("key"),
-				},
-			}
-			k8sReader := fake.NewClientBuilder().WithObjects(secret).Build()
-
-			cert, key, err := getTlsSecretCertAndKey(context.Background(), k8sReader, "secret", "namespace")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(cert).To(Equal("cert"))
-			Expect(key).To(Equal("key"))
-		})
-
-		It("should return error if secret not found", func() {
-			cert, key, err := getTlsSecretCertAndKey(context.Background(), kubeClient, "secret", "namespace")
-			Expect(err).To(HaveOccurred())
-			Expect(cert).To(BeEmpty())
-			Expect(key).To(BeEmpty())
 		})
 	})
 })

@@ -16,7 +16,6 @@ import (
 	runv1_internal "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/runai-internal"
 	osv1 "github.com/openshift/api/route/v1"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -137,26 +136,10 @@ func getTlsSecretDataIfNeeded(ctx context.Context, runaiConfig *runv1.RunaiConfi
 	var certificate, key string
 	var err error
 	if runaiConfig.Spec.ClusterApi.Route.TlsSecret != "" {
-		certificate, key, err = getTlsSecretCertAndKey(ctx, k8sReader, runaiConfig.Spec.ClusterApi.Route.TlsSecret, runaiConfig.Namespace)
+		certificate, key, err = GetTlsSecretCertAndKey(ctx, k8sReader, runaiConfig.Spec.ClusterApi.Route.TlsSecret, runaiConfig.Namespace)
 		if err != nil {
 			return "", "", fmt.Errorf("failed to get tls secret for cluster-api route: %w", err)
 		}
 	}
-	return certificate, key, nil
-}
-
-func getTlsSecretCertAndKey(ctx context.Context, k8sReader client.Reader, secretName string, namespace string) (string, string, error) {
-	secret := &corev1.Secret{}
-	err := k8sReader.Get(ctx, types.NamespacedName{
-		Name:      secretName,
-		Namespace: namespace,
-	}, secret)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to get secret %s/%s: %w", secretName, namespace, err)
-	}
-
-	certificate := string(secret.Data["tls.crt"])
-	key := string(secret.Data["tls.key"])
-
 	return certificate, key, nil
 }

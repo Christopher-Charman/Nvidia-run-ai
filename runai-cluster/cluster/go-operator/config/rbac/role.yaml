@@ -338,7 +338,7 @@ rules:
 - apiGroups:
   - networking.k8s.io
   resources:
-  - ingresses
+  - ingress
   verbs:
   - create
   - delete

@@ -206,6 +206,10 @@ func TestManagedOperands_HeadlessMode(t *testing.T) {
 
 	remoteEnabled := mo.GetRemoteClusterEnabled()
 
+	// ResearcherService should not be enabled in headless mode
+	researcherService := findOperandByName(remoteEnabled, "researcher-service")
+	assert.Nil(t, researcherService, "ResearcherService should not be enabled in headless mode")
+
 	// ClusterApi should not be enabled in headless mode
 	clusterApi := findOperandByName(remoteEnabled, "cluster-api")
 	assert.Nil(t, clusterApi, "ClusterApi should not be enabled in headless mode")
