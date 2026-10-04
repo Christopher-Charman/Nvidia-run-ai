@@ -48557,10 +48557,6 @@ components:
 
         all-authenticated-users subject, which applies to every authenticated
         user and service account.
-
-
-        Note: The 'app' subject type is DEPRECATED. Please use 'service-account'
-        instead for service accounts.
       enum:
         - user
         - app
@@ -48662,15 +48658,10 @@ components:
       x-schema-name: AccessRules
     SubjectType:
       type: string
-      description: >
+      description: |
         Subject type enum for access rules.
-
-
-        Note: The 'app' subject type is DEPRECATED. Please use 'service-account'
-        instead for service accounts.
       enum:
         - user
-        - app
         - service-account
         - group
     AccessRuleCreationFields:

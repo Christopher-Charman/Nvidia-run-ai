@@ -134,7 +134,7 @@ func (a *AuthorizationClient) GetGroupsForTenant(ctx context.Context, tenantId s
 func (a *AuthorizationClient) SetAppPermissions(ctx context.Context, tenantId, clientId string, scope authorization_api.InternalCreateAccessRuleRequestScope, role authorization_api.AllowedInternalCreateRoles) error {
 	ctxForRequest := context.WithValue(ctx, runaictx.CfTenantId, tenantId)
 	request := a.CreateInternalAccessRule(ctxForRequest)
-	reqBody := authorization_api.NewInternalCreateAccessRuleRequest(clientId, authorization_api.SUBJECTTYPE_APP, role)
+	reqBody := authorization_api.NewInternalCreateAccessRuleRequest(clientId, authorization_api.SUBJECTTYPE_SERVICE_ACCOUNT, role)
 	reqBody.SetScope(scope)
 
 	_, resp, err := request.InternalCreateAccessRuleRequest(*reqBody).Execute()

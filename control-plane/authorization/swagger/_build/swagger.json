@@ -3284,7 +3284,7 @@
       },
       "SubjectTypeExtended": {
         "type": "string",
-        "description": "Subject type enum for access rule responses. Extends SubjectType with the built-in\nall-authenticated-users subject, which applies to every authenticated user and service account.\n\nNote: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts.\n",
+        "description": "Subject type enum for access rule responses. Extends SubjectType with the built-in\nall-authenticated-users subject, which applies to every authenticated user and service account.\n",
         "enum": [
           "user",
           "app",
@@ -3435,10 +3435,9 @@
       },
       "SubjectType": {
         "type": "string",
-        "description": "Subject type enum for access rules.\n\nNote: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts.\n",
+        "description": "Subject type enum for access rules.\n",
         "enum": [
           "user",
-          "app",
           "service-account",
           "group"
         ]

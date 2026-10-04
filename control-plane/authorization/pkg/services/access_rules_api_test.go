@@ -35,6 +35,7 @@ import (
 	cluster_service_client "github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/client/generated"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/config"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
+	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaidb"
 	"golang.org/x/exp/slices"
 )
 
@@ -257,10 +258,10 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 				ScopeId:     ProjectId,
 				ScopeType:   api.SCOPETYPE_PROJECT,
 				SubjectId:   "test-app-id",
-				SubjectType: api.SUBJECTTYPE_APP,
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
 				RoleId:      createdRoles[0].Id,
 			}
-			createTestAccessRule(ctx, accessRulesApiService, appAccessRuleBody, &createdAccessRules, false, http.StatusCreated)
+			createLegacyAppAccessRule(ctx, accessRulesApiService, appAccessRuleBody, &createdAccessRules)
 
 			// Create an access rule with service-account subject type
 			serviceAccountAccessRuleBody := api.AccessRuleCreationFields{
@@ -323,10 +324,10 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 				ScopeId:     ProjectId,
 				ScopeType:   api.SCOPETYPE_PROJECT,
 				SubjectId:   "test-filterby-app-id",
-				SubjectType: api.SUBJECTTYPE_APP,
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
 				RoleId:      createdRoles[0].Id,
 			}
-			createTestAccessRule(ctx, accessRulesApiService, appAccessRuleBody, &createdAccessRules, false, http.StatusCreated)
+			createLegacyAppAccessRule(ctx, accessRulesApiService, appAccessRuleBody, &createdAccessRules)
 
 			serviceAccountAccessRuleBody := api.AccessRuleCreationFields{
 				ScopeId:     ProjectId,
@@ -679,7 +680,7 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 		})
 
 		It("Wrong subject type no deletion", func() {
-			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, string(api.SUBJECTTYPE_APP), createdAccessRules[0].SubjectId, false)
+			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, string(api.SUBJECTTYPE_SERVICE_ACCOUNT), createdAccessRules[0].SubjectId, false)
 			Expect(err).To(BeNil())
 			Expect(deletionResponse.Code).To(Equal(http.StatusNoContent))
 
@@ -786,7 +787,7 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 				ScopeId:     createdAccessRules[0].ScopeId,
 				ScopeType:   createdAccessRules[0].ScopeType,
 				SubjectId:   TestAppId,
-				SubjectType: api.SUBJECTTYPE_APP,
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
 				RoleId:      createdAccessRules[0].RoleId,
 			}
 			createTestAccessRule(ctx, accessRulesApiService, accessRuleToCreate2, &createdAccessRules, false, http.StatusCreated)
@@ -1454,12 +1455,12 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 				ScopeId:     createdAccessRules[0].ScopeId,
 				ScopeType:   createdAccessRules[0].ScopeType,
 				SubjectId:   TestGroupId,
-				SubjectType: api.SUBJECTTYPE_APP,
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
 				RoleId:      createdAccessRules[0].RoleId,
 			}
 			createdAccessRule = createTestAccessRule(ctx, accessRulesApiService, accessRuleToCreate, &createdAccessRules, false, http.StatusCreated)
 
-			getCountAccessRulesResponse, err := accessRulesApiService.CountAccessRules(ctx, false, []string{fmt.Sprintf("subjectType==%s", api.SUBJECTTYPE_APP)}, "")
+			getCountAccessRulesResponse, err := accessRulesApiService.CountAccessRules(ctx, false, []string{fmt.Sprintf("subjectType==%s", api.SUBJECTTYPE_SERVICE_ACCOUNT)}, "")
 			Expect(err).To(BeNil())
 			Expect(getCountAccessRulesResponse.Code).To(Equal(http.StatusOK))
 
@@ -1472,7 +1473,7 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 				ScopeId:     createdAccessRules[0].ScopeId,
 				ScopeType:   createdAccessRules[0].ScopeType,
 				SubjectId:   TestGroupId,
-				SubjectType: api.SUBJECTTYPE_APP,
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
 				RoleId:      createdAccessRules[0].RoleId,
 			}
 			createdAccessRule = createTestAccessRule(ctx, accessRulesApiService, accessRuleToCreate, &createdAccessRules, false, http.StatusCreated)
@@ -1793,6 +1794,15 @@ func createTestAccessRule(ctx context.Context, accessRulesApiService api.AccessR
 
 	*createdAccessRules = append(*createdAccessRules, accessRule)
 	return &accessRule
+}
+
+// createLegacyAppAccessRule simulates a pre-migration row: 'app' can no longer be created through the API,
+// so the rule is created as service-account and its subject_type is rewritten directly in the DB.
+func createLegacyAppAccessRule(ctx context.Context, accessRulesApiService api.AccessRulesAPIServicer, creationRequest api.AccessRuleCreationFields, createdAccessRules *[]api.AccessRule) {
+	creationRequest.SubjectType = api.SUBJECTTYPE_SERVICE_ACCOUNT
+	accessRule := createTestAccessRule(ctx, accessRulesApiService, creationRequest, createdAccessRules, false, http.StatusCreated)
+	_, err := runaidb.DB().Exec("UPDATE access_rules SET subject_type = 'app' WHERE id = ?", accessRule.Id)
+	Expect(err).To(BeNil())
 }
 
 func CleanupAccessRules(accessRulesApiService api.AccessRulesAPIServicer, ctx context.Context, accessRules []api.AccessRule) {
