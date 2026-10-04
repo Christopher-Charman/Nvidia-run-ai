@@ -71,9 +71,9 @@ Built with Go (see [`go.mod`](go.mod) — module `github.com/dsx-ai-factory/run-
 | `make build_arm` | Same for `GOOS=linux GOARCH=arm64` → `bin/notifications-service-arm64`. |
 | `make lint` | Runs the Go linter (`lint-go`). |
 | `make openapi-lint` | Lints the OpenAPI bundle (`openapi-lint-generic`). |
-| `make validate` | No-op (kept for control-plane target parity). |
+| `make validate` | Regenerates mocks with mockery v3 and fails if that leaves uncommitted changes (`validate-mockery`). |
 | `make purify` | Auto-fix formatting and imports (`purify-go`). |
-| `make mockery` / `make generate_mocks` | (Re)generate mocks per `.mockery.yaml` (installs pinned mockery `v2.53.5`). |
+| `make generate-mocks-all` | Regenerates mocks from `.mockery.yaml` and `pkg/client/.mockery.yaml` (mockery v3). |
 | `make local-deploy` | `openapi-generate-code build-go docker-build-generic docker-push-generic` (amd64) — build and push the image. |
 
 ### Local build (local-dev.sh)
