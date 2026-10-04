@@ -19,9 +19,9 @@ The installer does not support installing prerequisites or features in air-gappe
 | Network Operator | Prerequisite | RDMA or Multi-Node NVLink (MNNVL)-capable nodes |
 | DRA Driver | Prerequisite | Multi-Node NVLink (e.g. GB200) |
 | Prometheus | Prerequisite | Every installation |
-| Knative Serving | Feature | Standard (single-node) inference |
 | Kubeflow Training Operator | Feature | Distributed training |
 | MPI Operator | Feature | MPI-based distributed training |
+| Knative Serving | Feature | Standard (single-node) inference |
 | LeaderWorkerSet (LWS) | Feature | Distributed (multi-node) inference |
 | NIM Operator | Feature | NVIDIA Inference Microservices |
 | Grove | Feature | Multi-component, gang-scheduled workload orchestration (for example, disaggregated Dynamo deployments) |
@@ -47,7 +47,7 @@ Each prerequisite or feature's `customHelmValues` accepts keys from that compone
 Each prerequisite is configured under `prerequisites` in the configuration file, with a `mode` field controlling how the installer handles it.
 
 * `install` (default) - Installs and configures the component for you.
-* `skip` - Does not install or check for the component. Use this when the component is already installed on your cluster, or when the prerequisite doesn't apply to your environment (for example, the Network Operator on a cluster without RDMA or Multi-Node NVLink nodes).
+* `skip` - Does not install or check for the component. Use this when the component is already installed on your cluster, or when the prerequisite does not apply to your environment (for example, the Network Operator on a cluster without RDMA or Multi-Node NVLink nodes).
 
 <Note>
 
@@ -63,8 +63,6 @@ Each prerequisite also accepts its own `version` field - omit it to install the 
 
 The [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html) provisions and manages GPUs on worker nodes, and is required for the NVIDIA Run:ai cluster to run AI workloads.
 
-For air-gapped installation, follow the instructions in [Install NVIDIA GPU Operator in Air-Gapped Environments](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/install-gpu-operator-air-gapped.html).
-
 <Note>
 
 **Note**
@@ -73,7 +71,22 @@ For [Multi-Node NVLink](../../../platform-management/aiinitiatives/resources/usi
 
 </Note>
 
-* Use the default `gpu-operator` namespace. Otherwise, you must specify the target namespace using the flag `runai-operator.config.nvidiaDcgmExporter.namespace` as described in [Advanced cluster configurations](../../configuration/cluster-config.md).
+<Note>
+
+**Note**
+
+To use GPU fractions (memory fractions, dynamic memory fractions, or compute modes), the following are required:
+
+* GPU Operator 26.7.1 or later is required. The installer installs this version automatically, so `prerequisites.gpuOperator.version` does not need to be set.
+* CUDA driver r615 or later is required. GPU Operator 26.7.1 does not default to it, so set the driver version explicitly rather than relying on the default - via `prerequisites.gpuOperator.customHelmValues.driver.version` on Kubernetes, or `prerequisites.gpuOperator.openshift.customResource.driver.version` on OpenShift.
+* The NRI plugin must be disabled. Set `cdi.nriPluginEnabled` to `false` - via `prerequisites.gpuOperator.customHelmValues.cdi.nriPluginEnabled` on Kubernetes, or `prerequisites.gpuOperator.openshift.customResource.cdi.nriPluginEnabled` on OpenShift. GPU memory fractions do not function while the NRI plugin is enabled.
+
+See [GPU Memory Fractions](../../../platform-management/runai-scheduler/resource-optimization/memory-fractions.md#prerequisites) for the full requirement set.
+
+</Note>
+
+* For air-gapped installation, follow the instructions in [Install NVIDIA GPU Operator in Air-Gapped Environments](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/install-gpu-operator-air-gapped.html).
+* The installer uses the default namespace for your platform - `gpu-operator` on Kubernetes, `nvidia-gpu-operator` on OpenShift. Otherwise, you must specify the target namespace using the flag `clusterConfig.global.nvidiaDcgmExporter.namespace` as described in [Advanced cluster configurations](../../configuration/cluster-config.md).
 * NVIDIA drivers may already be installed on the nodes. In such cases, use the NVIDIA GPU Operator flags `--set driver.enabled=false`. [DGX OS](https://docs.nvidia.com/dgx/dgx-os-6-user-guide/release_notes.html) is one such example as it comes bundled with NVIDIA Drivers.
 * For distribution-specific requirements and additional instructions, see the sections below:
 
@@ -81,7 +94,9 @@ For [Multi-Node NVLink](../../../platform-management/aiinitiatives/resources/usi
 
 **OpenShift Container Platform (OCP)**
 
-The Node Feature Discovery (NFD) Operator is a prerequisite for the NVIDIA GPU Operator in OpenShift. Install the NFD Operator using the Red Hat OperatorHub catalog in the OpenShift Container Platform web console. For more information, see [Installing the Node Feature Discovery (NFD) Operator](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/install-nfd.html).
+The Node Feature Discovery (NFD) Operator is a prerequisite for the NVIDIA GPU Operator in OpenShift. For connected installs, `runai-installer` installs the NFD Operator automatically as part of the GPU Operator prerequisite. For air-gapped installs, install the NFD Operator yourself beforehand, using the Red Hat OperatorHub catalog in the OpenShift Container Platform web console. For more information, see [Installing the Node Feature Discovery (NFD) Operator](https://docs.nvidia.com/datacenter/cloud-native/openshift/latest/install-nfd.html).
+
+The installer installs the GPU Operator into the `nvidia-gpu-operator` namespace via OperatorHub (OLM), rather than the `gpu-operator` namespace used on Kubernetes.
 
 </Accordion>
 
@@ -186,11 +201,16 @@ The Network Operator works alongside the NVIDIA GPU Operator to provide:
 * Kubernetes device plugins to expose high-speed network hardware to workloads.
 * Secondary network components to support network-intensive applications.
 
-To configure SR-IOV InfiniBand support, set the required values via `customHelmValues` - see [Network Operator Deployment with an SR-IOV InfiniBand Network](https://docs.nvidia.com/networking/display/kubernetes2440/getting-started-kubernetes.html#network-operator-deployment-with-an-sr-iov-infiniband-network) for which values to set.
+Setting `prerequisites.networkOperator.mode: install` installs the Network Operator:
+
+- **Kubernetes** - Installs the Network Operator Helm chart.
+- **OpenShift** - Installs the Network Operator via OperatorHub (OLM), along with the SR-IOV Network Operator and the Node Feature Discovery (NFD) Operator, if not already present.
+
+To configure SR-IOV InfiniBand support on Kubernetes, set the required values via `customHelmValues` - see [Network Operator Deployment with an SR-IOV InfiniBand Network](https://docs.nvidia.com/networking/display/kubernetes2440/getting-started-kubernetes.html#network-operator-deployment-with-an-sr-iov-infiniband-network) for which values to set. This does not apply to OpenShift - configure SR-IOV support via the SR-IOV Network Operator directly.
 
 ### NVIDIA Dynamic Resource Allocation (DRA) Driver
 
-When deploying on clusters with Multi-Node NVLink (e.g. GB200), the [NVIDIA DRA driver](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/dra-intro-install.html) is required to enable Dynamic Resource Allocation at the Kubernetes level. The DRA driver is installed with the GPU Operator, for both connected and air-gapped installations.
+When deploying on clusters with Multi-Node NVLink (e.g. GB200), the [NVIDIA DRA driver](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/dra-intro-install.html) is required to enable Dynamic Resource Allocation at the Kubernetes level. The DRA driver is installed with the GPU Operator. For air-gapped installations, follow the air-gapped instructions in the [NVIDIA GPU Operator](#nvidia-gpu-operator) section.
 
 After the DRA driver is installed, update the cluster configuration using the `anyworkload-controller.GPUNetworkAccelerationEnabled` flag to enable GPU network acceleration. This triggers an update of the NVIDIA Run:ai `anyworkload-controller` deployment and restarts the controller. Set it via `cluster.customHelmValues` in the installer's configuration file - see [Custom Helm Values](#custom-helm-values) above - or, outside the guided installer, via Helm or `runaiconfig` as described in [Advanced cluster configurations](../../configuration/cluster-config.md).
 
@@ -216,7 +236,7 @@ For air-gapped installation instructions, see [Prometheus](../install-using-helm
 Each feature is configured under `features` in the configuration file, and only needs to be enabled for the workload types you plan to run, with a `mode` field controlling how the installer handles it.
 
 * `install` - Installs and configures the component for you.
-* `skip` (default) - Does not install or check for the component. Use this when the component is already installed on your cluster, or when the feature doesn't apply to the workload types you plan to run.
+* `skip` (default) - Does not install or check for the component. Use this when the component is already installed on your cluster, or when the feature does not apply to the workload types you plan to run.
 
 <Note>
 
@@ -228,24 +248,6 @@ Features already default to `mode: skip`, so air-gapped installations need no ch
 
 Each feature also accepts its own `version` field - omit it to install the latest version, or see [Support Matrix](../../support-matrix.md) for the supported version range if you want to set it explicitly.
 
-### Standard Inference
-
-NVIDIA Run:ai uses [Knative Serving](https://knative.dev/docs/serving/) to enable standard (single-node) inference. Knative Serving lets you serve AI models as production workloads, using NVIDIA NIM, vLLM, or custom inference servers. It provides serverless, dynamic autoscaling (including scale to zero when idle), rolling updates without disrupting served traffic, and endpoints reachable via external access (a wildcard FQDN) or internal, cluster-local access.
-
-Setting `features.knative.mode: install` installs the Knative operator and applies a `KnativeServing` custom resource that configures scale-to-zero autoscaling, the wildcard inference domain, Kourier as the ingress class, and the Kubernetes pod-spec features NVIDIA Run:ai workloads require.
-
-For air-gapped installation instructions, see [Standard Inference](../install-using-helm/prerequisites-and-features.md#standard-inference) in the Manual Helm path.
-
-<Warning>
-
-**TODO**
-
-NVIDIA Run:ai also supports autoscaling on Latency, Throughput, or Concurrency metrics. Using a custom metric like Latency requires separately installing the Knative Horizontal Pod Autoscaler (HPA) extension. Per the 2026-08-30 sync, this is planned to become a native installer capability rather than a manual step - not yet implemented, so this section will need updating once that lands.
-
-Exporting inference request metrics to the NVIDIA Run:ai Prometheus instance via OTLP is also not yet configured automatically - the `KnativeServing` CR the installer applies has no `observability` block. This is in the works; until it lands, configure it manually as described in [Inference Request Metrics (OTLP)](../install-using-helm/prerequisites-and-features.md#inference-request-metrics-otlp) in the Manual Helm path.
-
-</Warning>
-
 ### Distributed Training
 
 NVIDIA Run:ai supports distributed training - training AI models across multiple nodes - using the [Kubeflow Training Operator](https://www.kubeflow.org/docs/components/training/installation/) for [TensorFlow](https://www.tensorflow.org/), [PyTorch](https://pytorch.org/), [XGBoost](https://xgboost.readthedocs.io/), and [JAX](https://docs.jax.dev/en/latest/index.html) workloads, and the [MPI Operator](https://github.com/kubeflow/mpi-operator) for [MPI v2](https://docs.open-mpi.org/)-based workloads. Both are required for compatibility with advanced workload capabilities such as [stopping a workload](../../../workloads-in-nvidia-run-ai/workloads.md) and [scheduling rules](../../../platform-management/policies/scheduling-rules.md).
@@ -254,21 +256,41 @@ The Kubeflow Training Operator ships with MPI v1 support built in, which conflic
 
 For air-gapped installation instructions, see [Distributed Training](../install-using-helm/prerequisites-and-features.md#distributed-training) in the Manual Helm path.
 
+### Standard Inference
+
+NVIDIA Run:ai uses [Knative Serving](https://knative.dev/docs/serving/) to enable standard (single-node) inference. Knative Serving lets you serve AI models as production workloads, using NVIDIA NIM, vLLM, or custom inference servers. It provides serverless, dynamic autoscaling (including scale to zero when idle), rolling updates without disrupting served traffic, and endpoints reachable via external access (a wildcard FQDN) or internal, cluster-local access. For an overview of the request flow, see [Workload Architecture](../../../workloads-in-nvidia-run-ai/using-inference/nvidia-run-ai-inference-overview.md#workload-architecture).
+
+Setting `features.knative.mode: install` installs the Knative operator and applies a `KnativeServing` custom resource:
+
+- **Kubernetes** - Installs Knative Serving via the Knative Operator, and configures scale-to-zero autoscaling, the wildcard inference domain, Kourier as the ingress class, and the Kubernetes pod-spec features NVIDIA Run:ai workloads require.
+- **OpenShift** - Installs Knative Serving via the OpenShift Serverless operator (OperatorHub), and configures the wildcard inference domain and the Kubernetes pod-spec features NVIDIA Run:ai workloads require. External access goes through OpenShift Routes instead of Kourier, and scale-to-zero uses the operator's default.
+
+For air-gapped installation instructions, see [Standard Inference](../install-using-helm/prerequisites-and-features.md#standard-inference) in the Manual Helm path.
+
+#### Autoscaling
+
+NVIDIA Run:ai allows for autoscaling a deployment according to the metrics below:
+
+* Latency (milliseconds)
+* Throughput (requests/sec)
+* Concurrency (requests)
+
+Using a custom metric (for example, Latency) requires the Knative Horizontal Pod Autoscaler (HPA) extension. Setting `features.knative.mode: install` installs this extension automatically alongside Knative Serving, so no additional step is needed.
+
+For air-gapped installation instructions, see [Autoscaling](../install-using-helm/prerequisites-and-features.md#autoscaling) in the Manual Helm path.
+
 ### Distributed Inference
 
 NVIDIA Run:ai uses [LeaderWorkerSet (LWS)](https://lws.sigs.k8s.io/) to enable distributed (multi-node) inference - serving large language models that do not fit on a single node by distributing them across multiple nodes.
 
-Setting `features.lws.mode: install` installs the LWS Helm chart into the `lws-system` namespace.
+Setting `features.lws.mode: install` installs LWS:
+
+- **Kubernetes** - Installs the LWS Helm chart into the `lws-system` namespace.
+- **OpenShift** - Installs the OpenShift LWS Operator (via OperatorHub) into the `openshift-lws-operator` namespace.
+
+Either way, the installer automatically points NVIDIA Run:ai (`clusterConfig.lws.namespace`) at the namespace LWS runs in, so no manual configuration is needed for NVIDIA Run:ai to detect it.
 
 For air-gapped installation instructions, see [Distributed Inference](../install-using-helm/prerequisites-and-features.md#distributed-inference) in the Manual Helm path.
-
-<Warning>
-
-**TODO**
-
-The Manual Helm path notes that on OpenShift, LWS installs via the OpenShift LWS Operator into the `openshift-lws-operator` namespace by default - not the namespace NVIDIA Run:ai expects - so `clusterConfig.lws.namespace` must be set for NVIDIA Run:ai to detect it. See [Distributed Inference](https://run-ai-docs.nvidia.com/self-hosted/getting-started/installation/install-using-helm/system-requirements#distributed-inference). Need to confirm whether the guided installer sets this automatically when `features.lws.mode: install` on OpenShift, or whether users still need to set it themselves (and if so, through which field).
-
-</Warning>
 
 ### NIM Operator
 
@@ -284,6 +306,6 @@ For air-gapped installation instructions, see [Installation](https://github.com/
 
 ### Dynamo
 
-The [Dynamo Operator](https://docs.nvidia.com/dynamo/latest/kubernetes/dynamo_operator.html) is a Kubernetes operator that simplifies the deployment, configuration, and lifecycle management of DynamoGraphs. NVIDIA Run:ai provides out-of-the-box support for submitting Dynamo workloads [via YAML](../../../workloads-in-nvidia-run-ai/submit-via-yaml.md).
+The [Dynamo Operator](https://docs.nvidia.com/dynamo) is a Kubernetes operator that simplifies the deployment, configuration, and lifecycle management of DynamoGraphs. NVIDIA Run:ai provides out-of-the-box support for submitting Dynamo workloads [via YAML](../../../workloads-in-nvidia-run-ai/submit-via-yaml.md).
 
-For air-gapped installation instructions, see the [Installation Guide for Dynamo Kubernetes Platform](https://docs.nvidia.com/dynamo/latest/kubernetes/installation_guide.html).
+For air-gapped installation instructions, see the [Installation Guide for Dynamo Kubernetes Platform](https://docs.nvidia.com/dynamo/kubernetes/getting-started/introduction).

@@ -5,37 +5,48 @@
 
 This page describes how to prepare for installing NVIDIA Run:ai using the `runai-installer` CLI over an internet-connected environment. For environments without outbound internet access, see [Air-Gapped Installation](../air-gapped/preparations.md).
 
-NVIDIA Run:ai supports two deployment models - see [Same-Cluster Installation](same-cluster.md) to install the control plane and cluster together on one Kubernetes cluster, or [Multi-Cluster Installation](multi-cluster.md) to install the control plane and one or more clusters on separate Kubernetes clusters. For a complete list of configuration fields, see the [Configuration Reference](../configuration-reference.md).
-
 ## System Requirements
 
-Complete [System Requirements](../../../system-requirements/README.md) before running the installer, for each Kubernetes cluster you install onto. It covers the infrastructure you must provision yourself beforehand - hardware and Kubernetes distribution, networking and DNS, TLS certificates, and outbound firewall/registry access - as well as the third-party services the installation deploys for you. The installer deploys and configures NVIDIA Run:ai itself; it does not provision this underlying infrastructure for you.
+Complete the [System Requirements](../../../system-requirements/README.md) section before starting. It covers:
 
-Have the following at hand for the installation:
+* [Infrastructure Requirements](../../../system-requirements/infrastructure-requirements.md) - Hardware, operating system, Kubernetes distribution, storage, and permissions required in your Kubernetes environment.
+* [Networking Setup](../../../system-requirements/networking-setup.md) - Load balancer and ingress requirements, FQDNs, TLS certificates and private keys, and a local CA chain if your certificates are privately signed. The exact requirements depend on your deployment model, routing configuration, and the workload types you plan to support.
+* [Third-Party Services](../../../system-requirements/third-party-services.md) - The third-party services deployed as part of the installation.
+* [External Access to Critical Services](../../../system-requirements/external-access-to-critical-services.md) - The inbound and outbound connectivity required to reach those services and NVIDIA registries.
 
-| Requirement | Details |
-|---|---|
-| Kubernetes access | `kubectl` configured with cluster-admin or equivalent permissions on the target cluster - on the control plane cluster and on each NVIDIA Run:ai cluster, in a multi-cluster deployment |
-| FQDNs | A resolvable domain name for the NVIDIA Run:ai control plane, and a wildcard FQDN for externally exposed workloads - per cluster, in a multi-cluster deployment. See [FQDN and DNS](../../../system-requirements/networking-setup.md#fqdn-and-dns) |
-| TLS certificates | A certificate and private key for each of your FQDNs, or set `tls.generateSelfSigned: true` to have the installer generate self-signed certificates automatically (non-production environments only). See [TLS Certificates](../../../system-requirements/networking-setup.md#tls-certificates) |
+Your [deployment model](../../../system-requirements/deployment-model.md) determines how the installation steps are applied. In a same-cluster deployment, the control plane and NVIDIA Run:ai cluster are installed on the same Kubernetes cluster. In a multi-cluster deployment, control plane setup is completed once, and cluster setup is repeated for each NVIDIA Run:ai cluster.
 
-Multi-cluster deployments also need:
+## Prerequisites and Features
 
-| Requirement | Details |
-|---|---|
-| Control plane access | The control plane's FQDN (`cluster.controlPlaneUrl`), reachable over HTTPS from each NVIDIA Run:ai cluster, and a way to identify the cluster to the control plane - see below |
-| Network connectivity | Outbound HTTPS (port 443) from the nodes of each NVIDIA Run:ai cluster to the control plane FQDN. See [Control Plane and Cluster Sync](../../../system-requirements/external-access-to-critical-services.md#control-plane-and-cluster-sync) |
+GPU Operator and Prometheus are required for every installation. Network Operator, and features such as Knative and Kubeflow, apply only if your environment or planned workload types need them. Your planned workload types may also affect the networking configuration required for the installation, including wildcard domains and TLS certificates. See [Prerequisites and Features](../prerequisites-and-features.md) to determine which prerequisites and features you need and how to configure them.
 
-Identify the NVIDIA Run:ai cluster to the control plane using one of two methods:
+In connected environments, the installer can install supported prerequisites and features for you. By default, it installs the latest supported version; to use a different supported version, specify the `version` field for that component according to the versions listed in the [Support Matrix](../../../support-matrix.md).
 
-- Let the installer add the cluster - The default for a new installation. Provide a control plane login, and the installer creates the cluster in the control plane for you (or reuses it, if a cluster with that name already exists there). Set `cluster.controlPlaneCredentials` to either a username and password (`username`, plus `passwordPath` or inline `password`) or a token (`tokenPath` or inline `token`). The control plane's own admin login works here - the installer prints it after installing the control plane. See [Install the Control Plane](multi-cluster.md#install-the-control-plane).
-- Cluster already added in the control plane - Use this method if someone already added the cluster in the control plane UI or API beforehand, where it now shows status **Waiting to connect**. Provide the identity the control plane issued for it: `cluster.uid`, plus one of `cluster.bootstrapTokenPath` or `cluster.clientSecretPath`.
+## Domains and TLS Certificates
+
+Each domain and certificate you prepared in [FQDN and DNS](../../../system-requirements/networking-setup.md#fqdn-and-dns) and [TLS Certificates](../../../system-requirements/networking-setup.md#tls-certificates) maps to a specific `config.yaml` field under `controlPlane` or `cluster`. Which ones you need depends on your deployment model (same-cluster or multi-cluster), your workload routing, and the workload types you plan to support - use this section as a reference for where each one goes. You supply the actual values when you write your `config.yaml` in [Same-Cluster Installation](same-cluster.md) or [Multi-Cluster Installation](multi-cluster.md).
+
+| Domain | Config Fields | Required When | Certificate |
+| --- | --- | --- | --- |
+| Control plane domain (for example, `runai.mycorp.local`) | `controlPlane.domain`, `controlPlane.tls` | Always | The exact domain |
+| Cluster domain (for example, `runai-a.mycorp.local`) | `cluster.domain`, `cluster.tls` | `cluster.domain`: multi-cluster only. In same-cluster, omit it and the cluster reuses the control plane domain. `cluster.tls`: always. | Covered by `cluster.tls`, see the next row |
+| Workspaces, training, and distributed inference (for example, `*.runai-a.mycorp.local`) | None. Do not set a separate domain field. The wildcard is `*.` plus your cluster domain. | Host-based routing (the default). Not needed with path-based routing. | The same `cluster.tls` certificate, which must list both `runai-a.mycorp.local` and `*.runai-a.mycorp.local` as Subject Alternative Names |
+| Standard inference (Knative), for example `*.runai-inference.mycorp.local` | `cluster.inference.wildcardDomain`, `cluster.inference.wildcardTls` | Standard inference exposed externally only | The wildcard, in `cluster.inference.wildcardTls` |
+| Local Certificate Authority (CA) | `tls.caChainPath` (or `controlPlane.tls.caChainPath` / `cluster.tls.caChainPath` per component) | If your certificates are signed by a private or local CA | Set once at the top level, or override per component if different components use different CAs |
 
 ## Registry Credentials
 
-Open Source installations set `registry.type: ngc` in the configuration, with no credentials needed. NVIDIA Run:ai Support-Entitled Release installations set the same field, plus an NGC Personal Key to authenticate to the NVIDIA Run:ai container registry (`nvcr.io`) and Helm registry (`helm.ngc.nvidia.com/nvidia/runai`) for pulling NVIDIA Run:ai container images and charts. Generate a Personal Key from the [NGC Personal Keys](https://org.ngc.nvidia.com/setup/personal-keys) page.
+Open Source installations set `registry.type: ngc` in the configuration, with no credentials needed. NVIDIA Run:ai Support-Entitled Release installations set the same field, plus an NGC Personal Key to authenticate to the NVIDIA Run:ai container registry (`nvcr.io`) for pulling NVIDIA Run:ai container images. Generate a Personal Key from the [NGC Personal Keys](https://org.ngc.nvidia.com/setup/personal-keys) page.
 
 Personal Keys begin with `nvapi-`. NGC authenticates using the literal username `$oauthtoken` with the key as the password.
+
+For connected installs, NVIDIA Run:ai's telemetry for Support-Entitled Release installations is not associated with your organization by default. To associate it with your NCA ID, generate an [NGC Service API Key](https://docs.nvidia.com/ngc/latest/ngc-catalog-user-guide.html#generating-a-service-api-key). In the **Service** field, select both **NVIDIA Run:ai Self-Hosted** and **NGC Catalog**. Provide the resulting key in `telemetryService.telemetryAuth` during installation, either directly as `token`, or by referencing a secret you create yourself beforehand:
+
+```bash
+kubectl create secret generic <SECRET_NAME> \
+  --namespace runai-backend \
+  --from-literal=<KEY_NAME>=<SERVICE_API_KEY>
+```
 
 ## Download the Installer
 
@@ -69,6 +80,7 @@ chmod +x runai-installer-darwin-arm64
 
 ## Next Steps
 
-* [Same-Cluster Installation](same-cluster.md) - Install the control plane and cluster together, on one Kubernetes cluster.
-* [Multi-Cluster Installation](multi-cluster.md) - Install the control plane and one or more clusters on separate Kubernetes clusters.
-* [Configuration Templates](templates.md) - Complete, ready-to-use configurations for specific use cases.
+* [Same-Cluster Installation](same-cluster.md) - The minimum configuration to install the control plane and cluster together, on one Kubernetes cluster.
+* [Multi-Cluster Installation](multi-cluster.md) - The minimum configuration to install the control plane and one or more clusters on separate Kubernetes clusters.
+* [Configuration Templates](templates.md) - Complete, ready-to-use configurations for specific use cases - use one instead of the minimum configuration if it matches yours.
+* [Configuration Reference](../configuration-reference.md) - All supported configuration fields, for building a configuration from scratch.

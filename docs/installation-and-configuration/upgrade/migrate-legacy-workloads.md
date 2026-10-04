@@ -1,6 +1,6 @@
 # Migrate Legacy Workloads
 
-The controllers and CRDs behind native workload types (workspace, training, distributed training, standard inference, distributed inference) are removed in v3.0 and replaced by a single, unified controller and CRD. Native workloads submitted before upgrading through a legacy workload type continue running after the upgrade, but lose some capabilities until resubmitted.
+The controllers and CRDs behind native workload types (workspace, training, distributed training, standard inference, distributed inference) are removed in v3.0 and replaced by a single, unified controller and CRD. Running native workloads that were submitted through a legacy workload type before upgrading continue running after the upgrade, but lose some capabilities until resubmitted.
 
 Resolving an affected workload is not required immediately after upgrading; each workload can be resubmitted independently at any time. To restore full functionality, resubmit an affected workload either [manually](#submit-workload-via-ui-api-cli) through the NVIDIA Run:ai UI, API, or CLI, or, to reuse each workload's existing configuration instead of re-entering it by hand, [using the migration script](#submit-workload-via-migration-script) against the control plane API.
 
@@ -12,7 +12,7 @@ NVIDIA Run:ai recommends resubmitting an affected workload if you want it fully 
 | --- | --- |
 | Suspend / Resume | Not functional |
 | Error handling / auto-restart | Not functional. A workload backed by a third-party controller, such as Knative, keeps running, but NVIDIA Run:ai no longer tracks its status |
-| Fractional GPU support | Not functional. Fractional workloads should also be migrated, following [Migrate GPU Fractions](migrate-gpu-fractions.md), since fractions are now CUDA-based |
+| Fractional GPU support | Not functional. Workloads using GPU fractions should also be migrated, following [Migrate GPU Fractions](migrate-gpu-fractions.md), since fractions are now CUDA-based |
 | Events / status visibility | Partially functional. Pods are still detected and their status is still updated |
 | Update (modify spec in place) | Not functional. Applies to standard inference and distributed inference workloads |
 | Make a Copy, metrics and monitoring, log streaming, port forwarding, CLI operations (`runai get`/`describe`/`logs`), delete | Unaffected |

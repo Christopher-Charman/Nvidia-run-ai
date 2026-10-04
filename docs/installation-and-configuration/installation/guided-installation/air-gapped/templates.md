@@ -3,19 +3,25 @@
 
 # Configuration Templates
 
-Ready-to-use configuration YAMLs for air-gapped environments. Each template is a complete, standalone `config.yaml` for a same-cluster installation (`install.mode: full_installation`) - copy the one that matches your use case. For a multi-cluster deployment, split the template into two configs - see [Splitting a Template for Multi-Cluster](#splitting-a-template-for-multi-cluster) below for a worked example.
+Use these templates to start with a complete `config.yaml` instead of building one from scratch. Choose the template that best matches your Kubernetes environment, workloads, and networking setup, then replace the example values with those prepared for your environment.
 
-<Note>
+The templates below are for same-cluster installations. For a multi-cluster installation, see [Use a Template for Multi-Cluster](#use-a-template-for-multi-cluster).
 
-**Note**
+| Template | Use this when |
+|---|---|
+| [Full Installation](#full-installation) | You want both training and inference capabilities and all supported prerequisites/features included. |
+| [Gateway API Installation](#gateway-api-installation) | Your environment uses Kubernetes Gateway API instead of an Ingress controller. |
+| [OpenShift Installation](#openshift-installation) | You are installing NVIDIA Run:ai on OpenShift. |
 
-See the [Configuration Reference](../configuration-reference.md) for what every field accepts.
+## Before You Use a Template
 
-</Note>
+Complete [Preparations](preparations.md) before using a template. This includes completing the applicable [System Requirements](../../../system-requirements/README.md) and having the required domains, TLS certificates, networking values, registry credentials, and other installation inputs ready.
 
-## Full Install (Same-Cluster)
+* See [Same-Cluster Installation](same-cluster.md#create-a-configuration-file) or [Multi-Cluster Installation](multi-cluster.md), whichever matches your deployment model, to understand the minimum configuration needed before adapting a template.
+* See [Prerequisites and Features](../prerequisites-and-features.md) to understand the components required, depending on the workload types you plan to enable, and how to install them yourself in air-gapped environments.
+* See [Configuration Reference](../configuration-reference.md) for the full set of supported fields and descriptions.
 
-Deploys the control plane and cluster on the same Kubernetes cluster, pulling images from your private mirror registry and routing external traffic through an Ingress controller (`haproxy`). Replace the domain, TLS certificate paths, mirror registry, and bundle working directory before applying.
+## Full Installation
 
 ```yaml
 install:
@@ -23,8 +29,8 @@ install:
   connectivity: air_gapped
 
 registry:
-  host: registry.mycorp.local
-  username: admin
+  host: <REGISTRY_HOST>
+  username: <REGISTRY_USERNAME>
   passwordPath: /path/to/registry-password
 
 airgap:
@@ -34,7 +40,7 @@ airgap:
 
 controlPlane:
   enabled: true
-  domain: runai.mycorp.local
+  domain: <DOMAIN>
   tls:
     certPath: /path/to/cp-cert.pem
     keyPath: /path/to/cp-key.pem
@@ -42,10 +48,10 @@ controlPlane:
 
 cluster:
   enabled: true
-  name: my-cluster
+  name: <CLUSTER_NAME>
   tls:
-    certPath: /path/to/cluster-wildcard-cert.pem
-    keyPath: /path/to/cluster-wildcard-key.pem
+    certPath: /path/to/cluster-cert.pem
+    keyPath: /path/to/cluster-key.pem
   customHelmValues: {}
 
 prerequisites:
@@ -62,15 +68,12 @@ prerequisites:
 externalConnection:
   type: ingress
   ingress:
-    className: haproxy
+    className: <YOUR_INGRESS_CLASS>
 ```
 
-## Splitting a Template for Multi-Cluster
+## Use a Template for Multi-Cluster
 
-To use a template above in a multi-cluster deployment, split it into two config files instead of copying it as-is. The example below splits the [Full Install (Same-Cluster)](#full-install-same-cluster) template into a control plane config and a cluster config:
-
-- The control plane config keeps `install`, `registry`, `airgap`, `controlPlane`, and `externalConnection`, and drops `cluster` and `prerequisites` entirely - `cluster` belongs to the cluster config, and prerequisites are installed manually in air-gapped environments rather than through either config.
-- The cluster config keeps `install`, `registry`, `airgap`, and `cluster`. Its `cluster` block also needs `cluster.domain` and its own TLS certificate for that domain, since the cluster is now reachable at its own FQDN rather than sharing the control plane's Kubernetes cluster. Both configs point at the same air-gapped bundle.
+To use a template in a multi-cluster deployment, split it into two config files instead of copying it as-is. The example below splits the [Full Installation](#full-installation) template into a control plane config and a cluster config:
 
 `cp-config.yaml`:
 
@@ -80,8 +83,8 @@ install:
   connectivity: air_gapped
 
 registry:
-  host: registry.mycorp.local
-  username: admin
+  host: <REGISTRY_HOST>
+  username: <REGISTRY_USERNAME>
   passwordPath: /path/to/registry-password
 
 airgap:
@@ -91,7 +94,7 @@ airgap:
 
 controlPlane:
   enabled: true
-  domain: runai.mycorp.local
+  domain: <DOMAIN>
   tls:
     certPath: /path/to/cp-cert.pem
     keyPath: /path/to/cp-key.pem
@@ -100,7 +103,7 @@ controlPlane:
 externalConnection:
   type: ingress
   ingress:
-    className: haproxy
+    className: <YOUR_INGRESS_CLASS>
 ```
 
 `cluster-config.yaml`:
@@ -111,8 +114,8 @@ install:
   connectivity: air_gapped
 
 registry:
-  host: registry.mycorp.local
-  username: admin
+  host: <REGISTRY_HOST>
+  username: <REGISTRY_USERNAME>
   passwordPath: /path/to/registry-password
 
 airgap:
@@ -122,8 +125,12 @@ airgap:
 
 cluster:
   enabled: true
-  name: my-cluster
-  domain: runai-cluster.mycorp.local
+  name: <CLUSTER_NAME>
+  domain: <CLUSTER_DOMAIN>
+  controlPlaneUrl: https://<DOMAIN>
+  controlPlaneCredentials:
+    username: <ADMIN_EMAIL>
+    passwordPath: /path/to/cp-password
   tls:
     certPath: /path/to/cluster-cert.pem
     keyPath: /path/to/cluster-key.pem
@@ -132,14 +139,10 @@ cluster:
 externalConnection:
   type: ingress
   ingress:
-    className: haproxy
+    className: <YOUR_INGRESS_CLASS>
 ```
 
-Apply the same split to the Gateway API template below - move `cluster` into the cluster config, add `cluster.domain` and its TLS certificate, and keep `install`, `registry`, `airgap`, `controlPlane`, and `externalConnection` in the control plane config.
-
-## Gateway API
-
-Deploys the control plane and cluster on the same Kubernetes cluster, pulling images from your private mirror registry and routing external traffic through the Kubernetes Gateway API instead of Ingress. Replace the domain, TLS certificate paths, mirror registry, and bundle working directory before applying.
+## Gateway API Installation
 
 ```yaml
 install:
@@ -147,8 +150,8 @@ install:
   connectivity: air_gapped
 
 registry:
-  host: registry.mycorp.local
-  username: admin
+  host: <REGISTRY_HOST>
+  username: <REGISTRY_USERNAME>
   passwordPath: /path/to/registry-password
 
 airgap:
@@ -158,7 +161,7 @@ airgap:
 
 controlPlane:
   enabled: true
-  domain: runai.mycorp.local
+  domain: <DOMAIN>
   tls:
     certPath: /path/to/cp-cert.pem
     keyPath: /path/to/cp-key.pem
@@ -166,10 +169,10 @@ controlPlane:
 
 cluster:
   enabled: true
-  name: my-cluster
+  name: <CLUSTER_NAME>
   tls:
-    certPath: /path/to/cluster-wildcard-cert.pem
-    keyPath: /path/to/cluster-wildcard-key.pem
+    certPath: /path/to/cluster-cert.pem
+    keyPath: /path/to/cluster-key.pem
   customHelmValues: {}
 
 prerequisites:
@@ -183,13 +186,11 @@ prerequisites:
 externalConnection:
   type: gatewayApi
   gatewayApi:
-    name: my-gateway
-    namespace: gateway-system
+    name: <GATEWAY_NAME>
+    namespace: <GATEWAY_NAMESPACE>
 ```
 
-## OpenShift
-
-Deploys the control plane and cluster on the same OpenShift cluster (`install.kubernetesDistribution: openshift`) from an air-gapped bundle. Omits `externalConnection` - OpenShift Routes are configured automatically. Sets `openshift.olmCatalog` to point OLM-based operator installs at your mirrored OperatorHub catalog, since public catalogs aren't reachable air-gapped. GPU Operator, Prometheus, and the Node Feature Discovery (NFD) Operator (a GPU Operator prerequisite on OpenShift) are installed manually through your mirrored catalog - see [Prerequisites and Features](preparations.md#prerequisites-and-features). Replace the domain, TLS certificate paths, mirror registry, bundle working directory, and OperatorHub catalog source before applying.
+## OpenShift Installation
 
 ```yaml
 install:
@@ -198,8 +199,8 @@ install:
   kubernetesDistribution: openshift
 
 registry:
-  host: registry.mycorp.local
-  username: admin
+  host: <REGISTRY_HOST>
+  username: <REGISTRY_USERNAME>
   passwordPath: /path/to/registry-password
 
 airgap:
@@ -207,25 +208,14 @@ airgap:
   valuesDir: /data/runai-airgap
   skipPrepare: true
 
-openshift:
-  olmCatalog:
-    source: my-mirrored-catalog
-    sourceNamespace: openshift-marketplace
-
 controlPlane:
   enabled: true
-  domain: runai.mycorp.local
-  tls:
-    certPath: /path/to/cp-cert.pem
-    keyPath: /path/to/cp-key.pem
+  domain: <DOMAIN>
   customHelmValues: {}
 
 cluster:
   enabled: true
-  name: my-cluster
-  tls:
-    certPath: /path/to/cluster-wildcard-cert.pem
-    keyPath: /path/to/cluster-wildcard-key.pem
+  name: <CLUSTER_NAME>
   customHelmValues: {}
 
 prerequisites:
