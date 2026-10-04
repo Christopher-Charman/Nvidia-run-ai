@@ -881,6 +881,9 @@
         "enableNodeNvidiaComponentsReadiness": {
           "type": "boolean"
         },
+        "enableNodeGpuFractioningReadiness": {
+          "type": "boolean"
+        },
         "useNewWorkloadsApi": {
           "type": "boolean"
         },
