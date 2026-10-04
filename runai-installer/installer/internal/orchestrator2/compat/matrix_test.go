@@ -14,7 +14,7 @@ func TestThreeZeroMatrix(t *testing.T) {
 	expected := Locks{
 		Prometheus:          "76.2.0",
 		GPUOperator:         "v26.7.1",
-		GPUOperatorFake:     "v0.2.1",
+		GPUOperatorFake:     "0.2.1",
 		NetworkOperator:     "v26.7.0",
 		Knative:             "1.23.0",
 		Kubeflow:            "v1.9.4",
