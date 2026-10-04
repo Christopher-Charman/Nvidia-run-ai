@@ -24,6 +24,8 @@ const (
 //+kubebuilder:rbac:namespace=runai,groups=gateway.networking.k8s.io,resources=httproutes,verbs=get;create;update;watch;patch;delete;list
 //+kubebuilder:rbac:namespace=runai,groups=gateway.networking.k8s.io,resources=httproutes/status,verbs=get
 //+kubebuilder:rbac:namespace=runai,groups="autoscaling.k8s.io",resources=verticalpodautoscalers,verbs=get;create;update;watch;patch;delete;list
+//+kubebuilder:rbac:namespace=runai,groups=networking.k8s.io,resources=ingresses,verbs=get;create;update;watch;patch;delete;list
+//+kubebuilder:rbac:namespace=runai,groups=route.openshift.io,resources=routes,verbs=get;create;update;watch;patch;delete;list
 
 type operand struct {
 	runaiConfig *runv1.RunaiConfig
