@@ -274,7 +274,7 @@ func (c *ClusterSync) SetDefaultsWhereNeeded(internalSpec *runv1_internal.Intern
 	}
 
 	if c.EnableNodeGpuFractioningReadiness == nil {
-		c.EnableNodeGpuFractioningReadiness = ptr.To[bool](false)
+		c.EnableNodeGpuFractioningReadiness = ptr.To[bool](true)
 	}
 
 	if c.UseNewWorkloadsApi == nil {

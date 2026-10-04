@@ -30,17 +30,17 @@ var _ = Describe("handleEnvVars", func() {
 		return runaiConfig
 	}
 
-	It("defaults GPU fractioning readiness reporting to off", func() {
+	It("defaults GPU fractioning readiness reporting to on", func() {
 		value, found := envValue(handleEnvVars(buildConfig()), "ENABLE_NODE_GPU_FRACTIONING_READINESS")
 		Expect(found).To(BeTrue())
-		Expect(value).To(Equal("false"))
+		Expect(value).To(Equal("true"))
 	})
 
-	It("passes GPU fractioning readiness reporting through when enabled", func() {
+	It("honours an explicit opt-out", func() {
 		runaiConfig := buildConfig()
-		runaiConfig.Spec.ClusterSync.EnableNodeGpuFractioningReadiness = ptr.To(true)
+		runaiConfig.Spec.ClusterSync.EnableNodeGpuFractioningReadiness = ptr.To(false)
 
 		value, _ := envValue(handleEnvVars(runaiConfig), "ENABLE_NODE_GPU_FRACTIONING_READINESS")
-		Expect(value).To(Equal("true"))
+		Expect(value).To(Equal("false"))
 	})
 })
