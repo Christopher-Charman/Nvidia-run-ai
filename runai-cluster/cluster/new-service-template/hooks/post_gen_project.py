@@ -174,7 +174,7 @@ def add_app_to_go_operator_operands():
     if DEPLOY_TO_REMOTE_CLUSTER:
         print('Adding app to managed operands (REMOTE cluster) in go-operator/controllers/run/managed_operands.go')
         res = _insert_lines_to_file_after_line_with_str(MANAGED_OPERANDS_PATH, APP_ADD_TO_MANAGED_OPERANDS_REMOTE,
-                                                  'mo.addRemoteCluster(anyworkload_controller.Operand(remoteClusterClient, runaiConfig))')
+                                                  'mo.addOldRemoteCluster(researcher_service.Operand(), *spec.ResearcherService.Enabled && !spec.Internal.Development.Headless)')
         if not res:
             raise Exception('Failed to add app to managed operands in go-operator/controllers/run/managed_operands.go')
     else:
