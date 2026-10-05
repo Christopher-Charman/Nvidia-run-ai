@@ -245,7 +245,7 @@ func UrlsToWorkloadRunner(info *composer.ExposedUrlInfo, target any, cookie any)
 				urlSuffix = ""
 				noSuffixUrlGenerated = true
 			}
-			autoUrl, autoErr := init_containers.ComposeAutoExposedURL(
+			autoUrl, autoErr := composer.ComposeAutoExposedURL(
 				info.Config.ClusterDomain(),
 				info.ProjectName,
 				info.WorkloadName,
