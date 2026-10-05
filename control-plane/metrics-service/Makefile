@@ -64,7 +64,7 @@ build-for-test:
 	$(MAKE) -j2 $(BUILD_GO_FOR_TEST) generate-mocks-client build-integration-tests
 .PHONY: build-for-test
 
-build-integration-tests:
+build-integration-tests: $(BUILD_GO_FOR_TEST)
 	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
 
