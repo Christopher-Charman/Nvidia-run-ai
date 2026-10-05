@@ -46,7 +46,9 @@ build-integration-tests:
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
 
 #@ Integration tests
-integration-tests:
+# `make test` already requests build-for-test, and Make runs a target once per
+# invocation. A direct `make integration-tests` still builds first.
+integration-tests: build-for-test
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml down --volumes --remove-orphans
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml up --remove-orphans --force-recreate --abort-on-container-exit
 
