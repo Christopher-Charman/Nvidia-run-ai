@@ -19,6 +19,9 @@ import (
 
 const InferenceEndpointAnnotation = "run.ai/inference-endpoint"
 
+const InferenceEndpointPluginName = "inference-endpoint"
+const InferenceEndpointReadyCondition = "InferenceEndpointReady"
+
 var InferenceEndpointGVK = schema.GroupVersionKind{Group: "inference.platform.run.ai", Version: "v1alpha1", Kind: "InferenceEndpoint"}
 
 // InferenceEndpointConfig carries resolved routing intent. The spec remains JSON

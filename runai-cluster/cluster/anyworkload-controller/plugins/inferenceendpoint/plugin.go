@@ -22,8 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-const PluginName = "inference-endpoint"
-const ReadyCondition = "InferenceEndpointReady"
+const PluginName = ep.InferenceEndpointPluginName
+const ReadyCondition = ep.InferenceEndpointReadyCondition
 
 type Plugin struct {
 	reader client.Reader
