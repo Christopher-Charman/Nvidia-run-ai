@@ -37,14 +37,6 @@ build: openapi-build build-go generate-mocks-client ## Build the service.
 openapi-lint: openapi-lint-generic ## Lint the swagger bundle.
 .PHONY: openapi-lint
 
-build-integration-tests:
-	# Two independent Go builds; both images embed their output, so the compose
-	# build below has to follow them.
-	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
-	# Every service sits behind a profile, so an unfiltered `build` selects
-	# nothing and the images get built serially by `up` instead.
-	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
-
 #@ Integration tests
 integration-tests: _compose-pull build-for-test
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml down --volumes --remove-orphans
@@ -71,6 +63,10 @@ endif
 build-for-test:
 	$(MAKE) -j2 $(BUILD_GO_FOR_TEST) generate-mocks-client build-integration-tests
 .PHONY: build-for-test
+
+build-integration-tests:
+	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
+	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
 
 # The ginkgo recipe lives on these targets. Depending from `test-ginkgo` would
 # leave the recipe free to run beside `build-for-test` under `make -j`.
