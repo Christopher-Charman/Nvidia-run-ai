@@ -51,6 +51,8 @@ require (
 	k8s.io/api v0.36.2
 	k8s.io/apimachinery v0.36.2
 	k8s.io/utils v0.0.0-20260507154919-ff6756f316d2
+	sigs.k8s.io/gateway-api v1.5.0
+	sigs.k8s.io/lws v0.7.0
 )
 
 replace (
@@ -326,10 +328,8 @@ require (
 	knative.dev/pkg v0.0.0-20260120122510-4a022ed9999a // indirect
 	knative.dev/serving v0.48.1 // indirect
 	sigs.k8s.io/controller-runtime v0.23.3 // indirect
-	sigs.k8s.io/gateway-api v1.5.0 // indirect
 	sigs.k8s.io/gateway-api-inference-extension v1.3.0 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
-	sigs.k8s.io/lws v0.7.0 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
