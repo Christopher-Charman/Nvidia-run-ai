@@ -1671,12 +1671,12 @@ func (_m *IAuthorizationClient) RoleEnableExecute(r openapi.ApiRoleEnableRequest
 	return r0, r1
 }
 
-// SetAppPermissions provides a mock function with given fields: ctx, tenantId, clientId, scope, role
-func (_m *IAuthorizationClient) SetAppPermissions(ctx context.Context, tenantId string, clientId string, scope openapi.InternalCreateAccessRuleRequestScope, role openapi.AllowedInternalCreateRoles) error {
+// SetServiceAccountPermissions provides a mock function with given fields: ctx, tenantId, clientId, scope, role
+func (_m *IAuthorizationClient) SetServiceAccountPermissions(ctx context.Context, tenantId string, clientId string, scope openapi.InternalCreateAccessRuleRequestScope, role openapi.AllowedInternalCreateRoles) error {
 	ret := _m.Called(ctx, tenantId, clientId, scope, role)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetAppPermissions")
+		panic("no return value specified for SetServiceAccountPermissions")
 	}
 
 	var r0 error
