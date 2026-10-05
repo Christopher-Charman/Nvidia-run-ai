@@ -45,6 +45,7 @@ require (
 	github.com/jinzhu/copier v0.4.0
 	github.com/onsi/ginkgo/v2 v2.32.0
 	github.com/onsi/gomega v1.42.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.12.1
 	go.uber.org/zap v1.28.0
@@ -149,7 +150,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kai-scheduler/KAI-scheduler v0.18.1 // indirect
+	github.com/kai-scheduler/KAI-scheduler v0.18.2 // indirect
 	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/kubeflow/training-operator v1.9.3 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect

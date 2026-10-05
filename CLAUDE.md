@@ -112,7 +112,6 @@ service, run `/write-service-docs <path>` to document it and add it below.
 - [runai-cluster/cluster/init-ca](runai-cluster/cluster/init-ca)
 - [runai-cluster/cluster/karta-migrate](runai-cluster/cluster/karta-migrate)
 - [runai-cluster/cluster/metrics-exporter](runai-cluster/cluster/metrics-exporter)
-- [runai-cluster/cluster/oauth2-proxy](runai-cluster/cluster/oauth2-proxy)
 - [runai-cluster/cluster/runai-crd-upgrader](runai-cluster/cluster/runai-crd-upgrader)
 - [runai-cluster/cluster/runtime-rules](runai-cluster/cluster/runtime-rules)
 - [runai-cluster/cluster/shared-objects-controller](runai-cluster/cluster/shared-objects-controller)
@@ -180,3 +179,4 @@ service, run `/write-service-docs <path>` to document it and add it below.
 - `/list-services` — show all services grouped by type
 - `/write-service-docs` — generate README + CLAUDE.md for a service
 - `/validate-service-docs` — check a service's README against its Makefile
+- `/cel-validation-advisor` — assess CEL options before adding a Kubernetes webhook or changing admission validation

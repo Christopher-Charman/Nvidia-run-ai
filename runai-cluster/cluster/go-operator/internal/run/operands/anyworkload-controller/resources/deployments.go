@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/constants"
+	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/constants/oauth2proxy"
 	outils "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator/pkg/operands/utils"
 	runaiv1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1"
 	anyworkload_controller "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/anyworkload-controller"
@@ -257,6 +258,10 @@ func (d *DeploymentResource) buildEnvVars(config *anyworkload_controller.Anywork
 				*config.RunaiOauth2ProxyImage.Tag),
 		})
 	}
+	envVars = append(envVars, v1.EnvVar{
+		Name:  oauth2proxy.TemplatesEnabledEnvVar,
+		Value: "true",
+	})
 
 	if config.RunaiOauth2ProxyRedisFQDN != nil {
 		envVars = append(envVars, v1.EnvVar{
@@ -296,6 +301,17 @@ func (d *DeploymentResource) buildEnvVars(config *anyworkload_controller.Anywork
 				Value: d.runaiConfig.Spec.Global.Ingress.Class,
 			})
 		}
+	}
+
+	if gatewayAPIEnabled {
+		gateway := d.runaiConfig.Spec.Global.GatewayAPI
+		if gateway.Name == "" || gateway.Namespace == "" {
+			return nil, fmt.Errorf("gatewayAPI is enabled but name=%q or namespace=%q is empty", gateway.Name, gateway.Namespace)
+		}
+		envVars = append(envVars,
+			v1.EnvVar{Name: "GATEWAY_NAME", Value: gateway.Name},
+			v1.EnvVar{Name: "GATEWAY_NAMESPACE", Value: gateway.Namespace},
+		)
 	}
 
 	if config != nil {

@@ -11,6 +11,7 @@ require (
 	github.com/dsx-ai-factory/run-ai/control-plane/identity-manager/pkg/client v1.0.11
 	github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client v0.0.0
 	github.com/dsx-ai-factory/run-ai/control-plane/workloads/pkg/client v0.0.0
+	github.com/dsx-ai-factory/run-ai/runai-application-packages/convutils v1.0.5
 	github.com/dsx-ai-factory/run-ai/runai-clients/assets-service-client v0.0.0
 	github.com/dsx-ai-factory/run-ai/runai-clients/cli-exposer-client v0.0.0
 	github.com/dsx-ai-factory/run-ai/runai-clients/cluster-api-client v0.0.0
@@ -144,7 +145,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/mod v0.41.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect

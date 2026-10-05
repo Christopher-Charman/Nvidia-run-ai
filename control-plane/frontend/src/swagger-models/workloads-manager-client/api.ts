@@ -731,7 +731,7 @@ export interface NIMServiceMetadataCreateParams {
     'projectId': string;
 }
 /**
- * A single networking endpoint. An endpoint may create or reference one Service and may expose it externally.
+ * A single networking endpoint. Provide a Service, externalAccess containing an Ingress, Route, or HTTPRoute, or both. An endpoint may create or reference at most one Service. Authorization requires externalAccess.
  * @export
  * @interface NetworkingEndpoint
  */
@@ -750,7 +750,7 @@ export interface NetworkingEndpoint {
     'services'?: Array<NetworkingService> | null;
 }
 /**
- * Service configuration for routing traffic to the workload. Use \'spec\' or \'ref\' (not both).
+ * Service configuration for routing traffic to the workload. Provide exactly one of spec or ref.
  * @export
  * @interface NetworkingService
  */
@@ -952,7 +952,7 @@ export interface NimServiceServingPort {
      */
     'metricsPort'?: number | null;
     /**
-     * Indicates whether the inference serving endpoint should be accessible outside the cluster. If set to true, the endpoint will be exposed externally. To enable external access, your administrator must configure the cluster as described in the [inference requirements](https://run-ai-docs.nvidia.com/self-hosted/latest/getting-started/installation/system-requirements#inference). section.
+     * Indicates whether the inference serving endpoint should be accessible outside the cluster. If set to true, the endpoint will be exposed externally. To enable external access, your administrator must configure the cluster as described in the [inference requirements](/run-ai/self-hosted/documentation/installation-and-configuration/system-requirements/networking-setup#standard-inference-wildcard-certificate). section.
      * @type {boolean}
      * @memberof NimServiceServingPort
      */
@@ -1726,7 +1726,7 @@ export type ServiceProtocol = typeof ServiceProtocol[keyof typeof ServiceProtoco
 
 
 /**
- * Reference an existing Service.
+ * Reference an existing Service. Requires authorization on the service and externalAccess on the endpoint.
  * @export
  * @interface ServiceRef
  */
@@ -2037,7 +2037,7 @@ export interface WorkloadV2Configuration {
      */
     'mnnvl'?: MnnvlMode | null;
     /**
-     * Networking endpoint configurations for the workload (external access, services with auth). Supported for cluster version 2.25 and above. 
+     * Networking endpoint configurations for the workload (external access, services with auth). Requires cluster version 3.0.0 or later. 
      * @type {Array<NetworkingEndpoint>}
      * @memberof WorkloadV2Configuration
      */
@@ -2447,7 +2447,7 @@ export interface WorkloadV2MetadataUpdateParamsConfiguration {
      */
     'mnnvl'?: MnnvlMode | null;
     /**
-     * Networking endpoint configurations for the workload (external access, services with auth). Supported for cluster version 2.25 and above. 
+     * Networking endpoint configurations for the workload (external access, services with auth). Requires cluster version 3.0.0 or later. 
      * @type {Array<NetworkingEndpoint>}
      * @memberof WorkloadV2MetadataUpdateParamsConfiguration
      */
@@ -2924,7 +2924,7 @@ export interface WorkloadsV2Updates {
     'workloads'?: Array<WorkloadV2Update>;
 }
 /**
- * 
+ * Access control for this networking endpoint. Requires externalAccess. Only the access list selected by authorizationType may be nonempty; authenticatedUsers requires both lists to be empty.
  * @export
  * @interface Workloadv2Authorization
  */
