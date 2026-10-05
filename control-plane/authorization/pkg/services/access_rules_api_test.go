@@ -689,6 +689,51 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 			Expect(getAccessRuleResponse.Code).To(Equal(http.StatusOK))
 		})
 
+		It("Delete by service-account also deletes rules stored with the legacy app subject type", func() {
+			legacyRule := createLegacyAppAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
+				ScopeId:     ProjectId,
+				ScopeType:   api.SCOPETYPE_PROJECT,
+				SubjectId:   "legacy-app-delete-by-sa",
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
+				RoleId:      createdAccessRules[0].RoleId,
+			}, &createdAccessRules)
+			nativeRule := createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
+				ScopeId:     DepartmentId,
+				ScopeType:   api.SCOPETYPE_DEPARTMENT,
+				SubjectId:   "legacy-app-delete-by-sa",
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
+				RoleId:      createdAccessRules[0].RoleId,
+			}, &createdAccessRules, false, http.StatusCreated)
+
+			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, string(api.SUBJECTTYPE_SERVICE_ACCOUNT), "legacy-app-delete-by-sa", false)
+			Expect(err).To(BeNil())
+			Expect(deletionResponse.Code).To(Equal(http.StatusNoContent))
+
+			for _, rule := range []*api.AccessRule{legacyRule, nativeRule} {
+				getResponse, err := accessRulesApiService.GetAccessRule(ctx, rule.Id)
+				Expect(err).To(BeNil())
+				Expect(getResponse.Code).To(Equal(http.StatusNotFound))
+			}
+		})
+
+		It("Delete by the legacy app subject type also deletes service-account rules", func() {
+			rule := createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
+				ScopeId:     ProjectId,
+				ScopeType:   api.SCOPETYPE_PROJECT,
+				SubjectId:   "sa-delete-by-legacy-app",
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
+				RoleId:      createdAccessRules[0].RoleId,
+			}, &createdAccessRules, false, http.StatusCreated)
+
+			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, "app", "sa-delete-by-legacy-app", false)
+			Expect(err).To(BeNil())
+			Expect(deletionResponse.Code).To(Equal(http.StatusNoContent))
+
+			getResponse, err := accessRulesApiService.GetAccessRule(ctx, rule.Id)
+			Expect(err).To(BeNil())
+			Expect(getResponse.Code).To(Equal(http.StatusNotFound))
+		})
+
 		It("Delete subject access rules", func() {
 			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, string(createdAccessRules[0].SubjectType), createdAccessRules[0].SubjectId, false)
 			Expect(err).To(BeNil())
@@ -1796,13 +1841,14 @@ func createTestAccessRule(ctx context.Context, accessRulesApiService api.AccessR
 	return &accessRule
 }
 
-// createLegacyAppAccessRule simulates a pre-migration row: 'app' can no longer be created through the API,
-// so the rule is created as service-account and its subject_type is rewritten directly in the DB.
-func createLegacyAppAccessRule(ctx context.Context, accessRulesApiService api.AccessRulesAPIServicer, creationRequest api.AccessRuleCreationFields, createdAccessRules *[]api.AccessRule) {
+// createLegacyAppAccessRule simulates a pre-migration row stored with the legacy 'app' subject type: the rule is
+// created as service-account and its subject_type is rewritten directly in the DB.
+func createLegacyAppAccessRule(ctx context.Context, accessRulesApiService api.AccessRulesAPIServicer, creationRequest api.AccessRuleCreationFields, createdAccessRules *[]api.AccessRule) *api.AccessRule {
 	creationRequest.SubjectType = api.SUBJECTTYPE_SERVICE_ACCOUNT
 	accessRule := createTestAccessRule(ctx, accessRulesApiService, creationRequest, createdAccessRules, false, http.StatusCreated)
 	_, err := runaidb.DB().Exec("UPDATE access_rules SET subject_type = 'app' WHERE id = ?", accessRule.Id)
 	Expect(err).To(BeNil())
+	return accessRule
 }
 
 func CleanupAccessRules(accessRulesApiService api.AccessRulesAPIServicer, ctx context.Context, accessRules []api.AccessRule) {
