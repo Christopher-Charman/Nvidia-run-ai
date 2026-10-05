@@ -31,6 +31,7 @@ var (
 	enablePrintAuditLogsToStdout bool
 )
 
+//go:generate mockery --name Writer
 type Writer interface {
 	Write(log openapi.AuditLog) error
 }
