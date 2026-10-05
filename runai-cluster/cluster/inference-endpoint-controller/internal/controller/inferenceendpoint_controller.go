@@ -241,13 +241,16 @@ func inputFor(endpoint *inferencev1alpha1.InferenceEndpoint) (render.Input, erro
 }
 
 // eppImageFor resolves the EPP profile to its pinned image. Image-only input
-// remains supported for backward compatibility. The CRD schema enforces the same
+// remains supported for the approved GIE image. The CRD schema enforces the same
 // rules at admission; this keeps the controller correct for objects that bypass it.
 func eppImageFor(epp inferencev1alpha1.EppSpec) (string, error) {
 	switch epp.Profile {
 	case "":
 		if epp.Image == "" {
 			return "", errors.New("epp.profile or epp.image is required")
+		}
+		if epp.Image != inferencev1alpha1.EppImageGIEV15 {
+			return "", errors.New("image-only EPP requires the approved GIE v1.5.0 image; otherwise select a supported profile")
 		}
 		return epp.Image, nil
 	case inferencev1alpha1.EppProfileGIEV15:

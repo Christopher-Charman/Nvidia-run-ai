@@ -98,5 +98,7 @@ spec:
             memory: 64Mi
         volumeMounts: []
       volumes: []
+      # Watches InferenceEndpoints and manages their routing and EPP resources.
+      automountServiceAccountToken: true
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10

@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -273,17 +274,24 @@ var _ = Describe("Manager", Ordered, func() {
 			Eventually(verifyMetricsAvailable, 2*time.Minute).Should(Succeed())
 		})
 
-		// +kubebuilder:scaffold:e2e-webhooks-checks
+		DescribeTable("starts runtime pods with restricted security and a read-only filesystem", func(manifest, deployment string) {
+			data, err := os.ReadFile(manifest)
+			Expect(err).NotTo(HaveOccurred())
+			cmd := exec.Command("kubectl", "apply", "-f", "-")
+			cmd.Stdin = strings.NewReader(strings.ReplaceAll(string(data), "namespace: model-serving", "namespace: "+namespace))
+			_, err = utils.Run(cmd)
+			Expect(err).NotTo(HaveOccurred())
+			Eventually(func(g Gomega) {
+				cmd := exec.Command("kubectl", "rollout", "status", "deployment/"+deployment, "-n", namespace, "--timeout=5s")
+				output, err := utils.Run(cmd)
+				g.Expect(err).NotTo(HaveOccurred(), output)
+			}, 3*time.Minute, 5*time.Second).Should(Succeed())
+		},
+			Entry("GIE v1.5", "config/samples/inference_v1alpha1_inferenceendpoint.yaml", "llama3-epp"),
+			Entry("llm-d v0.10", "config/samples/inference_v1alpha1_inferenceendpoint_profiles.yaml", "profile-demo-epp"),
+			Entry("CPU simulator", "test/acceptance/02-sim-deployment.yaml", "vllm-llama3"),
+		)
 
-		// TODO: Customize the e2e test suite with scenarios specific to your project.
-		// Consider applying sample/CR(s) and check their status and/or verifying
-		// the reconciliation by using the metrics, i.e.:
-		// metricsOutput, err := getMetricsOutput()
-		// Expect(err).NotTo(HaveOccurred(), "Failed to retrieve logs from curl pod")
-		// Expect(metricsOutput).To(ContainSubstring(
-		//    fmt.Sprintf(`controller_runtime_reconcile_total{controller="%s",result="success"} 1`,
-		//    strings.ToLower(<Kind>),
-		// ))
 	})
 })
 

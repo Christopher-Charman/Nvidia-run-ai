@@ -93,7 +93,7 @@ Dependencies
 | `gomodules.xyz/jsonpatch/v2` | v2.4.0 | Apache-2.0 | https://github.com/gomodules/jsonpatch/blob/v2.4.0/v2/LICENSE |
 | `google.golang.org/genproto/googleapis/api` | v0.0.0-20260526163538-3dc84a4a5aaa | Apache-2.0 | https://github.com/googleapis/go-genproto/blob/3dc84a4a5aaa/googleapis/api/LICENSE |
 | `google.golang.org/genproto/googleapis/rpc` | v0.0.0-20260526163538-3dc84a4a5aaa | Apache-2.0 | https://github.com/googleapis/go-genproto/blob/3dc84a4a5aaa/googleapis/rpc/LICENSE |
-| `google.golang.org/grpc` | v1.83.1 | Apache-2.0 | https://github.com/grpc/grpc-go/blob/v1.83.1/LICENSE |
+| `google.golang.org/grpc` | v1.83.2 | Apache-2.0 | https://github.com/grpc/grpc-go/blob/v1.83.2/LICENSE |
 | `google.golang.org/protobuf` | v1.36.12-0.20260120151049-f2248ac996af | BSD-3-Clause | https://github.com/protocolbuffers/protobuf-go/blob/f2248ac996af/LICENSE |
 | `gopkg.in/evanphx/json-patch.v4` | v4.13.0 | BSD-3-Clause | https://github.com/evanphx/json-patch/blob/v4.13.0/LICENSE |
 | `gopkg.in/inf.v0` | v0.9.1 | BSD-3-Clause | https://github.com/go-inf/inf/blob/v0.9.1/LICENSE |

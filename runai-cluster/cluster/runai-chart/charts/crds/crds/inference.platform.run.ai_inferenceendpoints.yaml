@@ -65,8 +65,8 @@ spec:
                   image:
                     description: |-
                       image overrides the profile image only when it matches the supported image.
-                      Without a profile, image is required and preserves the legacy behavior:
-                      the supplied image receives the GIE v1.5 configuration and startup flags.
+                      Without a profile, only EppImageGIEV15 is allowed; it receives the
+                      GIE v1.5 configuration and startup flags.
                     minLength: 1
                     type: string
                   profile:
@@ -201,6 +201,9 @@ spec:
                         p.name == self.activeProfile))'
                 type: object
                 x-kubernetes-validations:
+                - message: image-only EPP requires the approved GIE v1.5.0 image;
+                    otherwise select a supported profile
+                  rule: has(self.profile) || (has(self.image) && self.image == 'registry.k8s.io/gateway-api-inference-extension/epp:v1.5.0')
                 - message: epp.profile or epp.image is required
                   rule: has(self.profile) || has(self.image)
                 - message: epp.image must match the selected profile's pinned image

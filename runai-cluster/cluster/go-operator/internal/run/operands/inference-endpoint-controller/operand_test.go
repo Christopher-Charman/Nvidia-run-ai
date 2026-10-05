@@ -13,6 +13,7 @@ import (
 	"github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator/internal/run/operands/inference-endpoint-controller/resources"
 	kc "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator/pkg/kube-client"
 	runv1 "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1"
+	runv1internal "github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk/apis/run/v1/runai-internal"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -79,6 +80,41 @@ var _ = Describe("Inference endpoint operand", func() {
 		Expect(container.ReadinessProbe.HTTPGet.Path).To(Equal("/readyz"))
 		Expect(container.LivenessProbe.HTTPGet.Path).To(Equal("/healthz"))
 		Expect(container.Resources).To(Equal(corev1.ResourceRequirements(*settings.Resources)))
+	})
+
+	DescribeTable("hardens the controller without assigning an OpenShift UID", func(openShift bool) {
+		if openShift {
+			config.Spec.Internal.Global.Platform.KubernetesFlavor = runv1internal.KubernetesFlavorOpenShift
+		}
+		object, err := resources.NewDeploymentResource(Name, reader, config).Object(context.Background())
+		Expect(err).NotTo(HaveOccurred())
+		pod := object.(*appsv1.Deployment).Spec.Template.Spec
+		Expect(pod.AutomountServiceAccountToken).To(Equal(ptr.To(true)))
+		security := pod.Containers[0].SecurityContext
+		Expect(security).NotTo(BeNil())
+		Expect(security.RunAsNonRoot).To(Equal(ptr.To(true)))
+		Expect(security.ReadOnlyRootFilesystem).To(Equal(ptr.To(true)))
+		Expect(security.AllowPrivilegeEscalation).To(Equal(ptr.To(false)))
+		Expect(security.Capabilities.Drop).To(ContainElement(corev1.Capability("ALL")))
+		Expect(security.SeccompProfile.Type).To(Equal(corev1.SeccompProfileTypeRuntimeDefault))
+		if openShift {
+			Expect(security.RunAsUser).To(BeNil())
+		}
+	}, Entry("Kubernetes", false), Entry("OpenShift", true))
+
+	It("preserves explicit global security settings without modifying them", func() {
+		global := config.Spec.Global.SecurityContext
+		global.RunAsUser = ptr.To[int64](12345)
+		global.ReadOnlyRootFilesystem = ptr.To(false)
+		global.Capabilities.Add = []corev1.Capability{"NET_BIND_SERVICE"}
+		before := *global
+		object, err := resources.NewDeploymentResource(Name, reader, config).Object(context.Background())
+		Expect(err).NotTo(HaveOccurred())
+		security := object.(*appsv1.Deployment).Spec.Template.Spec.Containers[0].SecurityContext
+		Expect(security.RunAsUser).To(Equal(ptr.To[int64](12345)))
+		Expect(security.ReadOnlyRootFilesystem).To(Equal(ptr.To(false)))
+		Expect(security.Capabilities.Add).To(Equal([]corev1.Capability{"NET_BIND_SERVICE"}))
+		Expect(*global).To(Equal(before))
 	})
 
 	It("connects the metrics monitor to the controller without sending a service account token", func() {
