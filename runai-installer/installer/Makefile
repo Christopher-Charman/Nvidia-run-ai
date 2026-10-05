@@ -21,6 +21,7 @@ INTERNAL_BIN_REL_PATH?=bin-internal
 # with a toolchain new enough for whatever go.mod currently requires.
 GO_VERSION_BASE?=$(shell awk '$$1=="go"{print $$2;exit}' go.mod)
 GOLANGCI_LINT_VERSION=v2.9.0
+MOCKERY_VERSION?=v3.8.0
 DOCKERHUB_PROXY?=
 
 # Ensure ~/.gitconfig exists before any container bind-mounts it. Docker creates a
@@ -33,6 +34,23 @@ ifdef GITHUB_TOKEN
 	git config --file $(HOME)/.gitconfig url.https://$(GITHUB_TOKEN)@github.com/.insteadOf https://github.com/
 endif
 .PHONY: git-config-command
+
+# Regenerate mocks from .mockery.yml. Same mockery v3 pin as build/makefile/golang.mk.
+generate-mocks: git-config-command
+	docker run --rm \
+		-u $(shell id -u):$(shell id -g) \
+		-v "$(abspath $(CURDIR)/..):/workspace" \
+		-v "$(HOME)/.gitconfig:/.gitconfig:ro" \
+		-w /workspace/installer \
+		-e HOME=/tmp \
+		-e GOPRIVATE=$(GOPRIVATE) \
+		-e GO111MODULE=on \
+		-e GIT_CONFIG_GLOBAL=/.gitconfig \
+		--entrypoint /bin/sh \
+		$(DOCKERHUB_PROXY)library/golang:$(GO_VERSION_BASE) \
+		-c 'go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION) && mockery'
+	sh ../../build/makefile/scripts/spdx-header-go.sh .
+.PHONY: generate-mocks
 
 test: git-config-command
 	go test -tags "$(BUILD_TAGS)" ./...
