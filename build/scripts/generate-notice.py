@@ -23,6 +23,7 @@ import subprocess
 import sys
 import tempfile
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 
 FIRST_PARTY = "github.com/dsx-ai-factory/run-ai/"
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -272,12 +273,74 @@ def collect_go_modules(component_dir):
     return rows, versions, texts
 
 
+# A proxy nothing listens on: connections to it are refused at once.
+UNREACHABLE_PROXY = "http://127.0.0.1:9"
+
+
+def offline_env():
+    """Environment for go-licenses with its HTTP lookups cut off.
+
+    `go-licenses report` resolves each license URL over the network: a HEAD per
+    /vN module and a go-get meta fetch per vanity import path, with a 20-second
+    timeout each. That was most of the runtime (about 60 of the 100 seconds the
+    report took for cluster-service), and the answer depended on which requests
+    happened to succeed, so two runs could disagree. Refused at once, every lookup
+    takes go-licenses' own offline path: a known host's URL is built from the
+    module path and version alone, and anything else comes back Unknown, which
+    pkg_go_dev_url() replaces. GOPROXY=off keeps the go command from waiting on
+    the same proxy; warm_module_cache() has already fetched what it needs.
+    """
+    env = dict(os.environ)
+    for key in ("HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy"):
+        env[key] = UNREACHABLE_PROXY
+    for key in ("NO_PROXY", "no_proxy"):
+        env.pop(key, None)
+    env["GOPROXY"] = "off"
+    return env
+
+
+def warm_module_cache(component_dir):
+    """Download every module the component's packages need, with the network on,
+    so the offline report below finds them all in the module cache."""
+    subprocess.run(
+        ["go", "list", "-deps", "-e", "./..."],
+        cwd=component_dir,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+MAJOR_SUFFIX = re.compile(r"/v[2-9][0-9]*$")
+
+
+def pkg_go_dev_url(pkg, url, versions):
+    """The license page of the module that holds pkg, where go-licenses offline
+    has no trustworthy URL: a function of the module path and version alone, so
+    it never changes between runs.
+
+    That is every Unknown, and every /vN module: go-licenses decides whether such
+    a module lives in a vN/ subdirectory of its repository by fetching go.mod from
+    it, and offline it always assumes not -- wrong for blang/semver/v4 and
+    evanphx/json-patch/v5, which do.
+    """
+    best = ""
+    for mod in versions:
+        if (pkg == mod or pkg.startswith(mod + "/")) and len(mod) > len(best):
+            best = mod
+    if not best or not versions[best]:
+        return url
+    if url != "Unknown" and not MAJOR_SUFFIX.search(best):
+        return url
+    return f"https://pkg.go.dev/{best}@{versions[best]}?tab=licenses"
+
+
 def run_report(bin_path, component_dir):
     proc = subprocess.run(
         [bin_path, "report", "./..."],
         cwd=component_dir,
         capture_output=True,
         text=True,
+        env=offline_env(),
     )
     rows = []
     for row in csv.reader(proc.stdout.splitlines()):
@@ -509,6 +572,9 @@ def main():
     args = parser.parse_args()
 
     bin_path = go_licenses_bin()
+    # A component that FAILs keeps its old NOTICE, so the run as a whole must
+    # fail: `make notice` exiting 0 here let a stale NOTICE pass for a fresh one.
+    failed = []
     for component_dir in args.components:
         abs_dir = os.path.abspath(component_dir)
         component = os.path.relpath(abs_dir, REPO_ROOT)
@@ -523,6 +589,7 @@ def main():
             rows, versions, texts = collect_npm(abs_dir)
             if not rows:
                 print(f"FAIL  {component}: npm ls returned no packages", flush=True)
+                failed.append(component)
                 continue
             texts = {pkg: strip_unfilled_appendix(t) for pkg, t in texts.items()}
             notice = build_notice(
@@ -539,7 +606,15 @@ def main():
             )
             continue
 
-        rows = run_report(bin_path, abs_dir)
+        # report and save each spend most of their time loading the same packages
+        # and never read each other's output, so they run side by side: half the
+        # wall time, the same NOTICE. save's result is only used when report
+        # found rows.
+        warm_module_cache(abs_dir)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            saving = pool.submit(run_save, bin_path, abs_dir)
+            rows = run_report(bin_path, abs_dir)
+            saved = saving.result()
         # A fork published under an upstream module path (goofys) is the main
         # module, not a dependency of itself.
         main_module = subprocess.run(
@@ -553,12 +628,13 @@ def main():
             ]
         if rows:
             versions = module_versions(abs_dir)
-            texts = run_save(bin_path, abs_dir)
+            texts = saved
         else:
             print(f"      {component}: go-licenses unusable, reading build graph")
             rows, versions, texts = collect_go_modules(abs_dir)
             if not rows and has_requirements(abs_dir):
                 print(f"FAIL  {component}: no third-party modules resolved", flush=True)
+                failed.append(component)
                 continue
             if not rows:
                 print(f"      {component}: module declares no dependencies")
@@ -571,6 +647,7 @@ def main():
                 if fallback:
                     license_name, url, text = fallback
                     texts.setdefault(pkg, text)
+            url = pkg_go_dev_url(pkg, url, versions)
             resolved.append((pkg, url, license_name))
         rows = resolved
         texts = {pkg: strip_unfilled_appendix(text) for pkg, text in texts.items()}
@@ -581,6 +658,7 @@ def main():
                 f"version (e.g. {unversioned[0]}) - NOTICE not written",
                 flush=True,
             )
+            failed.append(component)
             continue
 
         notice = build_notice(component, rows, versions, texts, read_preamble(abs_dir))
@@ -593,6 +671,11 @@ def main():
             flush=True,
         )
 
+    if failed:
+        print(f"\nNOTICE not regenerated for: {', '.join(failed)}", flush=True)
+        return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

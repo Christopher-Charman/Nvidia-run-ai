@@ -125,9 +125,15 @@ docker-push-generic:
 .PHONY: push
 
 # Regenerate this component's NOTICE from its resolved dependency graph.
-# Requires go-licenses for Go components: go install github.com/google/go-licenses@latest
+# go-licenses is pinned and installed on first use, outside the repository and
+# once per version, so every machine -- and the Renovate hook that regenerates
+# NOTICE after a dependency bump -- runs the same classifier and needs nothing
+# installed beforehand.
 BASE_MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+GO_LICENSES_VERSION ?= v1.6.0
+GO_LICENSES_DIR ?= $(shell go env GOPATH)/bin/go-licenses-$(GO_LICENSES_VERSION)
 
 notice:
-	@python3 ${BASE_MAKEFILE_DIR}../scripts/generate-notice.py ${CURDIR}
+	@test -x ${GO_LICENSES_DIR}/go-licenses || GOBIN=${GO_LICENSES_DIR} go install github.com/google/go-licenses@${GO_LICENSES_VERSION}
+	@GO_LICENSES=${GO_LICENSES_DIR}/go-licenses python3 ${BASE_MAKEFILE_DIR}../scripts/generate-notice.py ${CURDIR}
 .PHONY: notice
