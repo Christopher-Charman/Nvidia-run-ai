@@ -17,7 +17,7 @@ SHARED_PACKAGES_PATH=pkg
 OPENAPI_CLIENT_NAME_GO=client
 SHARED_PACKAGES_PATH_ABS=control-plane/metrics-service/pkg
 
-test: _compose-pull build-for-test test-ginkgo integration-tests ## Run unit and integration tests
+test: test-ginkgo integration-tests ## Run unit and integration tests
 .PHONY: test
 
 lint: lint-go ## Run linter.
@@ -46,9 +46,7 @@ build-integration-tests:
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
 
 #@ Integration tests
-# `make test` already requests build-for-test, and Make runs a target once per
-# invocation. A direct `make integration-tests` still builds first.
-integration-tests: build-for-test
+integration-tests: _compose-pull build-for-test
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml down --volumes --remove-orphans
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml up --remove-orphans --force-recreate --abort-on-container-exit
 
@@ -73,6 +71,10 @@ endif
 build-for-test:
 	$(MAKE) -j2 $(BUILD_GO_FOR_TEST) generate-mocks-client build-integration-tests
 .PHONY: build-for-test
+
+# The ginkgo recipe lives on these targets. Depending from `test-ginkgo` would
+# leave the recipe free to run beside `build-for-test` under `make -j`.
+test-ginkgo-local test-ginkgo-privileged: build-for-test
 
 # Purely an optimization — `up` pulls anything missing anyway, so a failure here
 # (an old compose without --ignore-buildable, a flaky registry) must not fail the build.
