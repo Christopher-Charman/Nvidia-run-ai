@@ -54,17 +54,15 @@ _build-promtool-agent:
 # Generates the same code as `build` but compiles a single binary: compose
 # builds the image for the host platform, so only that architecture is ever
 # copied in, and the second binary `build` produces is dead weight here.
-ifeq ($(ARCH),arm64)
-BUILD_GO_FOR_TEST=build-go-arm
-else
-BUILD_GO_FOR_TEST=build-go-amd
-endif
+build-async:
+	$(MAKE) -j2 build-go-amd build-go-arm
+.PHONY: build-async
 
 build-for-test:
-	$(MAKE) -j2 $(BUILD_GO_FOR_TEST) generate-mocks-client build-integration-tests
+	$(MAKE) -j2 build-async generate-mocks-client build-integration-tests
 .PHONY: build-for-test
 
-build-integration-tests: $(BUILD_GO_FOR_TEST)
+build-integration-tests: build-async
 	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
 
