@@ -59,14 +59,6 @@ _build-promtool-agent:
 	${DOCKER_GO_BASE_COMMAND} -e GOOS=linux -e GOARCH=amd64 ${DOCKERHUB_PROXY}library/golang:${GO_VERSION} go build -o ./integration-tests/prometheus-with-agent/bin/promtool-agent -buildvcs=false ./integration-tests/prometheus-with-agent/main/...
 	chmod +x ./integration-tests/prometheus-with-agent/bin/promtool-agent
 
-# Pulling the compose images is network-bound and the build is CPU-bound, so
-# they run together rather than back to back.
-test-prepare:
-	$(MAKE) -j2 _compose-pull build-for-test
-.PHONY: test-prepare
-
-# Purely an optimization — `up` pulls anything missing anyway, so a failure here
-# (an old compose without --ignore-buildable, a flaky registry) must not fail the build.
 # Generates the same code as `build` but compiles a single binary: compose
 # builds the image for the host platform, so only that architecture is ever
 # copied in, and the second binary `build` produces is dead weight here.
