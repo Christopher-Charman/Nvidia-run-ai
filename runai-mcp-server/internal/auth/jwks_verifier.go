@@ -82,7 +82,7 @@ func NewJWKSVerifier(ctx context.Context, cfg JWKSVerifierConfig) (*JWKSVerifier
 	}, nil
 }
 
-func (v *JWKSVerifier) Issuer() string { return v.cfg.IssuerURL }
+func (v *JWKSVerifier) Issuer() string { return v.issuer }
 
 func (v *JWKSVerifier) Verify(ctx context.Context, token string, req *http.Request) (*mcpauth.TokenInfo, error) {
 	claims := jwt.MapClaims{}

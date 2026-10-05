@@ -33,6 +33,7 @@ type testOIDC struct {
 	verifier *auth.JWKSVerifier
 	key      *rsa.PrivateKey
 	issuer   string
+	baseURL  string
 }
 
 func newTestOIDC(t *testing.T) *testOIDC {
@@ -45,13 +46,16 @@ func newTestOIDC(t *testing.T) *testOIDC {
 	oidcServer := httptest.NewServer(oidcMux)
 	t.Cleanup(oidcServer.Close)
 
-	issuer := oidcServer.URL
+	// Mirror Keycloak: discovery is served at the base URL, but the issuer it
+	// reports is realm-scoped.
+	baseURL := oidcServer.URL
+	issuer := baseURL + "/auth/realms/runai"
 
 	oidcMux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]string{
 			"issuer":   issuer,
-			"jwks_uri": issuer + "/jwks",
+			"jwks_uri": baseURL + "/jwks",
 		})
 	})
 	oidcMux.HandleFunc("/jwks", func(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +64,7 @@ func newTestOIDC(t *testing.T) *testOIDC {
 	})
 
 	verifier, err := auth.NewJWKSVerifier(context.Background(), auth.JWKSVerifierConfig{
-		IssuerURL:  issuer,
+		IssuerURL:  baseURL,
 		HTTPClient: oidcServer.Client(),
 		Logger:     zerolog.Nop(),
 	})
@@ -68,7 +72,7 @@ func newTestOIDC(t *testing.T) *testOIDC {
 
 	// Pre-warm the JWKS key cache. keyfunc fetches keys lazily on first use;
 	// without this, the first JWT validation may return 400 instead of 401.
-	o := &testOIDC{verifier: verifier, key: key, issuer: issuer}
+	o := &testOIDC{verifier: verifier, key: key, issuer: issuer, baseURL: baseURL}
 	_, _ = verifier.Verify(context.Background(), o.signToken(t, time.Now().Add(time.Hour)), nil)
 	return o
 }
@@ -156,6 +160,13 @@ func TestProtectedResourceMetadata(t *testing.T) {
 	defer resp.Body.Close()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Contains(t, resp.Header.Get("Content-Type"), "application/json")
+
+	var meta struct {
+		AuthorizationServers []string `json:"authorization_servers"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&meta))
+	assert.Equal(t, []string{env.issuer}, meta.AuthorizationServers)
+	assert.NotEqual(t, env.baseURL, meta.AuthorizationServers[0])
 }
 
 func TestMCPNoToken(t *testing.T) {
