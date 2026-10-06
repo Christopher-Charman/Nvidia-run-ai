@@ -1,0 +1,910 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "schemaMeta": {
+        "clientName": "RUNAI_TELEMETRY",
+        "schemaVersion": "2.1",
+        "definitionVersion": "2.0",
+        "clientId": "1246146531678882"
+    },
+    "description": "Schema for Run:ai events",
+    "definitions": {
+        "types": {
+            "customerId": {
+                "description": "The unique identifier for the customer.",
+                "type": "string"
+            },
+            "customerName": {
+                "description": "The name of the customer.",
+                "type": "string"
+            },
+            "version": {
+                "description": "Version of the software.",
+                "type": "string"
+            },
+            "kubeVersion": {
+                "description": "The version of Kubernetes.",
+                "type": "string"
+            },
+            "kubeType": {
+                "description": "The type of Kubernetes distribution.",
+                "type": "string"
+            },
+            "installationType": {
+                "description": "The type of installation.",
+                "type": "string"
+            },
+            "tenantId": {
+                "description": "The unique identifier for the tenant.",
+                "type": "string"
+            },
+            "clusterId": {
+                "description": "The unique identifier for the cluster.",
+                "type": "string"
+            },
+            "sampleStartTime": {
+                "description": "The start time of the sample.",
+                "type": "string"
+            },
+            "sampleDurationMin": {
+                "description": "The duration of the sample in minutes.",
+                "type": "integer"
+            },
+            "telemetryValue": {
+                "description": "The value of the telemetry (floating point number).",
+                "type": "number"
+            },
+            "nodepoolId": {
+                "description": "The unique identifier for the nodepool.",
+                "type": "string"
+            },
+            "modelName": {
+                "description": "The GPU model name. Empty for a CPU-only nodepool.",
+                "type": "string"
+            },
+            "component": {
+                "description": "The name of the Run:ai component.",
+                "type": "string"
+            },
+            "workloadType": {
+                "description": "The type of the workload.",
+                "type": "string"
+            },
+            "workloadSource": {
+                "description": "The submission source of the workload.",
+                "type": "string"
+            },
+            "preemptionAction": {
+                "description": "The preemption action performed by the Run:ai scheduler.",
+                "type": "string"
+            },
+            "clusterState": {
+                "description": "The connectivity state of the cluster.",
+                "type": "string"
+            }
+        },
+        "events": {
+            "runai_cp_info": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai CP version and environment."
+                    }
+                },
+                "description": "Event triggered to report Run:ai CP information.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "customerName": {
+                        "$ref": "#/definitions/types/customerName"
+                    },
+                    "version": {
+                        "$ref": "#/definitions/types/version"
+                    },
+                    "kubeVersion": {
+                        "$ref": "#/definitions/types/kubeVersion"
+                    },
+                    "kubeType": {
+                        "$ref": "#/definitions/types/kubeType"
+                    },
+                    "installationType": {
+                        "$ref": "#/definitions/types/installationType"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "customerName",
+                    "version",
+                    "kubeVersion",
+                    "kubeType",
+                    "installationType"
+                ],
+                "tasks": []
+            },
+            "runai_cluster_info": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai cluster version and environment."
+                    }
+                },
+                "description": "Event triggered to report Run:ai cluster information.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "tenantId": {
+                        "description": "The unique identifier for the tenant.",
+                        "type": "string"
+                    },
+                    "clusterId": {
+                        "description": "The unique identifier for the cluster.",
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "customerName": {
+                        "$ref": "#/definitions/types/customerName"
+                    },
+                    "version": {
+                        "$ref": "#/definitions/types/version"
+                    },
+                    "kubeVersion": {
+                        "$ref": "#/definitions/types/kubeVersion"
+                    },
+                    "kubeType": {
+                        "$ref": "#/definitions/types/kubeType"
+                    },
+                    "installationType": {
+                        "$ref": "#/definitions/types/installationType"
+                    }
+                },
+                "required": [
+                    "tenantId",
+                    "clusterId",
+                    "customerId",
+                    "customerName",
+                    "version",
+                    "kubeVersion",
+                    "kubeType",
+                    "installationType"
+                ],
+                "tasks": []
+            },
+            "runai_allocated_gpu_hours": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster allocated GPU hours."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster allocated GPU hours.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_in_quota_gpu_hours": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster in quota GPU hours."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster in quota GPU hours.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_over_quota_gpu_hours": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster over quota GPU hours."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster over quota GPU hours.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_total_gpu_hours": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster total GPU hours."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster total GPU hours.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_avg_gpu_utilization": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster average GPU utilization."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster average GPU utilization.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_idle_gpu_hours": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster GPU hours that were allocated but idle."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster idle GPU hours.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "sampleStartTime",
+                    "sampleDurationMin",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_gpu_count": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster GPU count per nodepool and GPU model."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster GPU count per nodepool.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "nodepoolId": {
+                        "$ref": "#/definitions/types/nodepoolId"
+                    },
+                    "modelName": {
+                        "$ref": "#/definitions/types/modelName"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "nodepoolId",
+                    "modelName",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_projects_with_non_default_rank_count": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster projects configured with a non-default rank."
+                    }
+                },
+                "description": "Event triggered to report the number of Run:ai Cluster projects with a non-default rank.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_projects_count": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster projects."
+                    }
+                },
+                "description": "Event triggered to report the number of Run:ai Cluster projects.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_preemption_count": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the preemptions performed by the Run:ai scheduler."
+                    }
+                },
+                "description": "Event triggered to report the number of Run:ai scheduler preemptions.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "action": {
+                        "$ref": "#/definitions/types/preemptionAction"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "action",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            },
+            "runai_workloads_by_type": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster workloads created, by workload type."
+                    }
+                },
+                "description": "Event triggered to report the number of created workloads by type.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "type": {
+                        "$ref": "#/definitions/types/workloadType"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "type",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            },
+            "runai_workloads_by_source": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster workloads created, by submission source."
+                    }
+                },
+                "description": "Event triggered to report the number of created workloads by source.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "source": {
+                        "$ref": "#/definitions/types/workloadSource"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "source",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            },
+            "runai_workload_failure_count": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster workloads that ended in a failed phase."
+                    }
+                },
+                "description": "Event triggered to report the number of failed workloads.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            },
+            "runai_cluster_last_liveness": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai Cluster connectivity state and last liveness time, in epoch seconds."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster connectivity and last liveness time.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "state": {
+                        "$ref": "#/definitions/types/clusterState"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "state",
+                    "value"
+                ],
+                "tasks": []
+            },
+            "runai_cluster_component_availability": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the availability of a Run:ai Cluster component, between 0 and 1."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster component availability.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "component": {
+                        "$ref": "#/definitions/types/component"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "component",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            },
+            "runai_cluster_component_restarts": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the restart count of a Run:ai Cluster component."
+                    }
+                },
+                "description": "Event triggered to report Run:ai Cluster component restarts.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "tenantId": {
+                        "$ref": "#/definitions/types/tenantId"
+                    },
+                    "clusterId": {
+                        "$ref": "#/definitions/types/clusterId"
+                    },
+                    "component": {
+                        "$ref": "#/definitions/types/component"
+                    },
+                    "value": {
+                        "$ref": "#/definitions/types/telemetryValue"
+                    },
+                    "sampleStartTime": {
+                        "$ref": "#/definitions/types/sampleStartTime"
+                    },
+                    "sampleDurationMin": {
+                        "$ref": "#/definitions/types/sampleDurationMin"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "tenantId",
+                    "clusterId",
+                    "component",
+                    "value",
+                    "sampleStartTime",
+                    "sampleDurationMin"
+                ],
+                "tasks": []
+            }
+        }
+    },
+    "oneOf": [
+        {
+            "$ref": "#/definitions/events/runai_cp_info"
+        },
+        {
+            "$ref": "#/definitions/events/runai_cluster_info"
+        },
+        {
+            "$ref": "#/definitions/events/runai_allocated_gpu_hours"
+        },
+        {
+            "$ref": "#/definitions/events/runai_in_quota_gpu_hours"
+        },
+        {
+            "$ref": "#/definitions/events/runai_over_quota_gpu_hours"
+        },
+        {
+            "$ref": "#/definitions/events/runai_total_gpu_hours"
+        },
+        {
+            "$ref": "#/definitions/events/runai_avg_gpu_utilization"
+        },
+        {
+            "$ref": "#/definitions/events/runai_idle_gpu_hours"
+        },
+        {
+            "$ref": "#/definitions/events/runai_gpu_count"
+        },
+        {
+            "$ref": "#/definitions/events/runai_projects_with_non_default_rank_count"
+        },
+        {
+            "$ref": "#/definitions/events/runai_projects_count"
+        },
+        {
+            "$ref": "#/definitions/events/runai_preemption_count"
+        },
+        {
+            "$ref": "#/definitions/events/runai_workloads_by_type"
+        },
+        {
+            "$ref": "#/definitions/events/runai_workloads_by_source"
+        },
+        {
+            "$ref": "#/definitions/events/runai_workload_failure_count"
+        },
+        {
+            "$ref": "#/definitions/events/runai_cluster_last_liveness"
+        },
+        {
+            "$ref": "#/definitions/events/runai_cluster_component_availability"
+        },
+        {
+            "$ref": "#/definitions/events/runai_cluster_component_restarts"
+        }
+    ]
+}

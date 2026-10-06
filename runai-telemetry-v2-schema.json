@@ -1,0 +1,146 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "schemaMeta": {
+        "clientName": "RUNAI_TELEMETRY",
+        "schemaVersion": "2.0",
+        "definitionVersion": "2.0",
+        "clientId": "1246146531678882"
+    },
+    "description": "Schema for Run:ai events",
+    "definitions": {
+        "types": {
+            "customerId": {
+                "description": "The unique identifier for the customer.",
+                "type": "string"
+            },
+            "customerName": {
+                "description": "The name of the customer.",
+                "type": "string"
+            },
+            "version": {
+                "description": "Version of the software.",
+                "type": "string"
+            },
+            "kubeVersion": {
+                "description": "The version of Kubernetes.",
+                "type": "string"
+            },
+            "kubeType": {
+                "description": "The type of Kubernetes distribution.",
+                "type": "string"
+            },
+            "installationType": {
+                "description": "The type of installation.",
+                "type": "string"
+            }
+        },
+        "events": {
+            "runai_cp_info": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai CP version and environment."
+                    }
+                },
+                "description": "Event triggered to report Run:ai CP information.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "customerName": {
+                        "$ref": "#/definitions/types/customerName"
+                    },
+                    "version": {
+                        "$ref": "#/definitions/types/version"
+                    },
+                    "kubeVersion": {
+                        "$ref": "#/definitions/types/kubeVersion"
+                    },
+                    "kubeType": {
+                        "$ref": "#/definitions/types/kubeType"
+                    },
+                    "installationType": {
+                        "$ref": "#/definitions/types/installationType"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "customerName",
+                    "version",
+                    "kubeVersion",
+                    "kubeType",
+                    "installationType"
+                ],
+                "tasks": [
+
+                ]
+            },
+            "runai_cluster_info": {
+                "eventMeta": {
+                    "service": "telemetry",
+                    "gdpr": {
+                        "category": "technical",
+                        "personalization": "anonymous",
+                        "description": "Information regarding the Run:ai cluster version and environment."
+                    }
+                },
+                "description": "Event triggered to report Run:ai cluster information.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "tenantId": {
+                        "description": "The unique identifier for the tenant.",
+                        "type": "string"
+                    },
+                    "clusterId": {
+                        "description": "The unique identifier for the cluster.",
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "$ref": "#/definitions/types/customerId"
+                    },
+                    "customerName": {
+                        "$ref": "#/definitions/types/customerName"
+                    },
+                    "version": {
+                        "$ref": "#/definitions/types/version"
+                    },
+                    "kubeVersion": {
+                        "$ref": "#/definitions/types/kubeVersion"
+                    },
+                    "kubeType": {
+                        "$ref": "#/definitions/types/kubeType"
+                    },
+                    "installationType": {
+                        "$ref": "#/definitions/types/installationType"
+                    }
+                },
+                "required": [
+                    "tenantId",
+                    "clusterId",
+                    "customerId",
+                    "customerName",
+                    "version",
+                    "kubeVersion",
+                    "kubeType",
+                    "installationType"
+                ],
+                "tasks": [
+
+                ]
+            }
+        }
+    },
+    "oneOf": [
+        {
+            "$ref": "#/definitions/events/runai_cp_info"
+        },
+        {
+            "$ref": "#/definitions/events/runai_cluster_info"
+        }
+    ]
+}
