@@ -36,7 +36,7 @@ export const rolesMock = [
     assignments: [
       {
         assignedTo: "424ab2d5-baaa-41ae-8b59-5fa2a159540a",
-        type: "app",
+        type: "service-account",
         scopeId: "1",
         assignedBy: "",
         lastUpdated: "2023-05-09T11:55:09.150455Z",

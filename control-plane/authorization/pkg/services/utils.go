@@ -21,7 +21,6 @@ import (
 	org_cache "github.com/dsx-ai-factory/run-ai/control-plane/authorization/pkg/cache"
 	"github.com/dsx-ai-factory/run-ai/control-plane/authorization/pkg/database/models"
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/dbmodels"
-	"github.com/dsx-ai-factory/run-ai/runai-cluster/common/cluster-capabilities/checker"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
 )
@@ -579,15 +578,4 @@ func (s *SyncSlice[T]) GetAll() []T {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return append([]T(nil), s.items...)
-}
-
-// shouldMapServiceAccountToApp returns true if service-account should be mapped to app for this cluster
-func shouldMapServiceAccountToApp(ctx context.Context, clusterId string) bool {
-	if clusterId == "" {
-		return false
-	}
-
-	capabilitiesChecker := checker.NewClusterCapabilitiesChecker(clusterId)
-	supported, _ := capabilitiesChecker.ValidateClusterCapability(ctx, checker.MinVersionOfServiceAccountInGetAccessRulesApi)
-	return !supported
 }

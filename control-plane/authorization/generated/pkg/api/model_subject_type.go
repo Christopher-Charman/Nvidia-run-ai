@@ -24,13 +24,12 @@ var dummySubjectType = runaihttp.AssertPattern
 
 ////////////////////////// RUNAI END ////////////////////////////
 
-// SubjectType : Subject type enum for access rules.  Note: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts.
+// SubjectType : Subject type enum for access rules.
 type SubjectType string
 
 // List of SubjectType
 const (
 	SUBJECTTYPE_USER            SubjectType = "user"
-	SUBJECTTYPE_APP             SubjectType = "app"
 	SUBJECTTYPE_SERVICE_ACCOUNT SubjectType = "service-account"
 	SUBJECTTYPE_GROUP           SubjectType = "group"
 )
@@ -38,7 +37,6 @@ const (
 // AllowedSubjectTypeEnumValues is all the allowed values of SubjectType enum
 var AllowedSubjectTypeEnumValues = []SubjectType{
 	"user",
-	"app",
 	"service-account",
 	"group",
 }
@@ -46,7 +44,6 @@ var AllowedSubjectTypeEnumValues = []SubjectType{
 // validSubjectTypeEnumValue provides a map of SubjectTypes for fast verification of use input
 var validSubjectTypeEnumValues = map[SubjectType]struct{}{
 	"user":            {},
-	"app":             {},
 	"service-account": {},
 	"group":           {},
 }

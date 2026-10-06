@@ -133,9 +133,7 @@ const subjectTypeFilterLabels = new Map<SubjectTypeExtended, string>([
   [SubjectTypeExtended.AllAuthenticatedUsers, ALL_AUTHENTICATED_USERS_LABEL],
 ]);
 
-export const accessRuleSubjectTypeFilterOptions: ISelectOption[] = Object.entries(SubjectTypeExtended)
-  .filter(([, value]) => value !== SubjectTypeExtended.App) // Hide deprecated App from filter
-  .map(([key, value]) => ({
+export const accessRuleSubjectTypeFilterOptions: ISelectOption[] = Object.entries(SubjectTypeExtended).map(([key, value]) => ({
     label: subjectTypeFilterLabels.get(value) ?? key,
     value: value,
   }));

@@ -14117,8 +14117,8 @@ paths:
     post:
       summary: Create an access rule.
       description: >-
-        Use to bind a predefined role to a subject (user, group or application)
-        in a scope.
+        Use to bind a predefined role to a subject (user, group or service
+        account) in a scope.
       operationId: create_access_rule
       x-service: authorization
       x-test-coverage:
@@ -48605,7 +48605,9 @@ components:
         subjectId:
           type: string
           example: user@run.ai
-          description: 'The unique identifier of the subject (e.g., user, group, or app).'
+          description: >-
+            The unique identifier of the subject (e.g., user, group, or service
+            account).
         roleId:
           type: integer
           format: int32
@@ -48631,13 +48633,8 @@ components:
 
         all-authenticated-users subject, which applies to every authenticated
         user and service account.
-
-
-        Note: The 'app' subject type is DEPRECATED. Please use 'service-account'
-        instead for service accounts.
       enum:
         - user
-        - app
         - service-account
         - group
         - all-authenticated-users
@@ -48736,15 +48733,10 @@ components:
       x-schema-name: AccessRules
     SubjectType:
       type: string
-      description: >
+      description: |
         Subject type enum for access rules.
-
-
-        Note: The 'app' subject type is DEPRECATED. Please use 'service-account'
-        instead for service accounts.
       enum:
         - user
-        - app
         - service-account
         - group
     AccessRuleCreationFields:
@@ -48924,14 +48916,16 @@ components:
         properties:
           subjectId:
             type: string
-            description: 'The unique identifier of the subject e.g., user, group, or app).'
+            description: >-
+              The unique identifier of the subject e.g., user, group, or service
+              account).
             example: user@run.ai
           subjectType:
             allOf:
               - $ref: '#/components/schemas/SubjectType'
               - description: >-
                   The subject assigned to the access rule. Valid values: user,
-                  group, app.
+                  group, service-account.
     AccessRuleScopes:
       type: array
       description: scopes for the access rules. must have at least one value
