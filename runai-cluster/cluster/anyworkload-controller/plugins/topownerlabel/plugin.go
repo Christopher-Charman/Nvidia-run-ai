@@ -48,10 +48,10 @@ func NewPlugin(reader client.Reader) *Plugin {
 }
 
 func New(_ context.Context, deps framework.PluginDeps) (framework.Plugin, error) {
-	if deps.Client == nil {
-		return nil, fmt.Errorf("top-owner-label plugin requires a non-nil Client in PluginDeps")
+	if deps.APIReader == nil {
+		return nil, fmt.Errorf("top-owner-label plugin requires a non-nil APIReader in PluginDeps")
 	}
-	return NewPlugin(deps.Client), nil
+	return NewPlugin(deps.APIReader), nil
 }
 
 func (p *Plugin) Name() string {
@@ -118,13 +118,10 @@ func (p *Plugin) workloadIdentity(ctx context.Context, runner *dromosv1alpha1.Wo
 		return "", false, fmt.Errorf("get attached resource: %w", err)
 	}
 
-	if existing.GetAnnotations()[podTemplatesLabeledAnnotation] != "true" {
-		return workloadID, false, nil
-	}
 	if persistedID, err := topowner.GetTopOwnerWorkloadIdFromLabels(existing.GetLabels()); err == nil {
 		workloadID = persistedID
 	}
-	return workloadID, true, nil
+	return workloadID, existing.GetAnnotations()[podTemplatesLabeledAnnotation] == "true", nil
 }
 
 func stampPodTemplateMarker(resource *unstructured.Unstructured) {
