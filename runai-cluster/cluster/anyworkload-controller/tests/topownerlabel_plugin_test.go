@@ -58,7 +58,7 @@ var _ = Describe("Top-owner label plugin upgrade safety", Serial, Ordered, func(
 		Expect(err).NotTo(HaveOccurred())
 		k8sClient = k8sManager.GetClient()
 
-		plugin := topownerlabel.NewPlugin(k8sClient)
+		plugin := topownerlabel.NewPlugin(k8sManager.GetAPIReader())
 		fw := framework.NewFramework(framework.NewRegistry(plugin), nil)
 		//nolint:staticcheck // SA1019: matches the other integration tests' recorder wiring
 		controller := dromoscontroller.NewWorkloadRunnerController(

@@ -100,6 +100,31 @@ var _ = Describe("Plugin", func() {
 		state = reconcile.New()
 	})
 
+	It("uses the API reader when an existing Job is absent from the cache", func() {
+		runner := &dromosv1alpha1.WorkloadRunner{ObjectMeta: metav1.ObjectMeta{UID: types.UID("runner-uid")}}
+		existing := toUnstructured(newJob())
+		resource := toUnstructured(newJob())
+		originalTemplate, _, err := unstructured.NestedMap(resource.Object, "spec", "template")
+		Expect(err).NotTo(HaveOccurred())
+		plugin, err := New(ctx, framework.PluginDeps{
+			Client:    fake.NewClientBuilder().Build(),
+			APIReader: fake.NewClientBuilder().WithObjects(existing).Build(),
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(plugin.(framework.ResourceMutatePlugin).MutateResource(ctx, runner, resource, newJobKarta(), state)).To(Succeed())
+
+		Expect(resource.GetAnnotations()).NotTo(HaveKey(podTemplatesLabeledAnnotation))
+		template, _, err := unstructured.NestedMap(resource.Object, "spec", "template")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(template).To(Equal(originalTemplate))
+	})
+
+	It("requires an API reader rather than falling back to the cache", func() {
+		_, err := New(ctx, framework.PluginDeps{Client: fake.NewClientBuilder().Build()})
+		Expect(err).To(MatchError("top-owner-label plugin requires a non-nil APIReader in PluginDeps"))
+	})
+
 	It("stamps the top-owner label when creating a workload", func() {
 		runner := &dromosv1alpha1.WorkloadRunner{
 			ObjectMeta: metav1.ObjectMeta{
@@ -213,6 +238,33 @@ var _ = Describe("Plugin", func() {
 		Expect(mutated.Labels).To(HaveKeyWithValue(legacyTopOwnerUIDLabel, "workload-id"))
 		Expect(mutated.Spec.Template.Labels).NotTo(HaveKey(legacyTopOwnerUIDLabel))
 	})
+
+	DescribeTable("preserves the stored identity of an existing unmarked Job",
+		func(labelKey string) {
+			runner := &dromosv1alpha1.WorkloadRunner{ObjectMeta: metav1.ObjectMeta{
+				UID: types.UID("replacement-runner-uid"),
+				Annotations: map[string]string{
+					commonconstants.ControlPlaneWorkloadIdAnnotationForWorkload: "changed-id",
+				},
+			}}
+			existing := toUnstructured(newJob())
+			existing.SetLabels(map[string]string{labelKey: "original-id"})
+			resource := toUnstructured(newJob())
+			originalTemplate, _, err := unstructured.NestedMap(resource.Object, "spec", "template")
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(newPlugin(existing).MutateResource(ctx, runner, resource, newJobKarta(), state)).To(Succeed())
+
+			Expect(resource.GetLabels()).To(HaveKeyWithValue(commonconstants.TopOwnerWorkloadIdLabel, "original-id"))
+			Expect(resource.GetLabels()).To(HaveKeyWithValue(legacyTopOwnerUIDLabel, "original-id"))
+			Expect(resource.GetAnnotations()).NotTo(HaveKey(podTemplatesLabeledAnnotation))
+			template, _, err := unstructured.NestedMap(resource.Object, "spec", "template")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(template).To(Equal(originalTemplate))
+		},
+		Entry("with the workload ID label", commonconstants.TopOwnerWorkloadIdLabel),
+		Entry("with the legacy UID label", legacyTopOwnerUIDLabel),
+	)
 
 	It("preserves pod-template labels on workloads created by the plugin", func() {
 		runner := &dromosv1alpha1.WorkloadRunner{
