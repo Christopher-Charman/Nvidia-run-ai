@@ -68,13 +68,13 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/google/s2a-go v0.1.11 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.22 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.23 // indirect
 	github.com/googleapis/gax-go/v2 v2.26.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-ieproxy v0.0.12 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -90,7 +90,7 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.8.2 // indirect
+	github.com/spiffe/go-spiffe/v2 v2.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.47.0 // indirect
@@ -107,9 +107,9 @@ require (
 	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	google.golang.org/genproto v0.0.0-20260928230214-8a89bd6388cc // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260928230214-8a89bd6388cc // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260928230214-8a89bd6388cc // indirect
+	google.golang.org/genproto v0.0.0-20261005182115-fad411399dd8 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
