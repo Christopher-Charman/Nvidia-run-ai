@@ -83,6 +83,7 @@ func (i *InternalApiService) GetSubjectAccessRules(ctx context.Context, subjectT
 }
 
 func (i *InternalApiService) DeleteSubjectAccessRules(ctx context.Context, subjectType string, subjectId string, dryRun bool) (api.ImplResponse, error) {
+	subjectType = normalizeSubjectType(subjectType)
 	tenantId, requesterId, groups, err := parseAuthData(ctx)
 	if err != nil {
 		return NewErrorResponse(err), nil
@@ -176,6 +177,7 @@ func (i *InternalApiService) GetScopeAccessRules(ctx context.Context, clusterId 
 }
 
 func (i *InternalApiService) createInternalAccessRule(ctx context.Context, request api.InternalCreateAccessRuleRequest, roleId uint) (api.ImplResponse, error) {
+	request.SubjectType = normalizeSubjectType(request.SubjectType)
 	tenantId, err := parseTenantId(ctx)
 	if err != nil {
 		return NewErrorResponse(err), nil

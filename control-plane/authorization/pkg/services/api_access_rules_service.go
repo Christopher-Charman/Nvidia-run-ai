@@ -216,6 +216,7 @@ func (s *AccessRulesApiService) CreateAccessRule(ctx context.Context, accessRule
 }
 
 func (s *AccessRulesApiService) createSingleAccessRule(ctx context.Context, accessRuleCreationRequest api.AccessRuleCreationFields, tenantId uint, subjectId string) (*models.AccessRule, *api.Error) {
+	accessRuleCreationRequest.SubjectType = normalizeSubjectType(accessRuleCreationRequest.SubjectType)
 	isAllAuthenticatedUsers := accessRuleCreationRequest.SubjectType == models.AllAuthenticatedUsers
 	if !isAllAuthenticatedUsers && !accessRuleCreationRequest.SubjectType.IsValid() {
 		return nil, api.NewError(http.StatusBadRequest,

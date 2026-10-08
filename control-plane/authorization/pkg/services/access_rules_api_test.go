@@ -252,16 +252,15 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 			Expect(response.TotalRecords).To(Equal(int32(0)))
 		})
 
-		It("Rejects the removed app subject type on create", func() {
-			createResponse, err := accessRulesApiService.CreateAccessRule(ctx, api.AccessRuleCreationFields{
+		It("Accepts the deprecated app subject type on create and stores service-account", func() {
+			createdRule := createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
 				ScopeId:     ProjectId,
 				ScopeType:   api.SCOPETYPE_PROJECT,
-				SubjectId:   "removed-app-subject-type",
+				SubjectId:   "deprecated-app-subject-type",
 				SubjectType: api.SubjectType("app"),
 				RoleId:      createdRoles[0].Id,
-			})
-			Expect(err).To(BeNil())
-			Expect(createResponse.Code).To(Equal(http.StatusBadRequest))
+			}, &createdAccessRules, false, http.StatusCreated)
+			Expect(createdRule.SubjectType).To(Equal(api.SUBJECTTYPEEXTENDED_SERVICE_ACCOUNT))
 		})
 
 		It("Get with filter subjectId", func() {
@@ -1832,5 +1831,19 @@ var _ = Describe("Legacy subjectType query parameter", func() {
 			result := filterByBackwardsCompatibility([]string{"subjectType!=group"}, "")
 			Expect(result).To(Equal([]string{"subjectType!=group"}))
 		})
+	})
+})
+
+var _ = Describe("normalizeSubjectType", func() {
+	It("maps the deprecated app subject type to service-account", func() {
+		Expect(normalizeSubjectType(api.SubjectType("app"))).To(Equal(api.SUBJECTTYPE_SERVICE_ACCOUNT))
+		Expect(normalizeSubjectType("app")).To(Equal(string(api.SUBJECTTYPE_SERVICE_ACCOUNT)))
+	})
+
+	It("leaves every other subject type untouched", func() {
+		for _, subjectType := range []api.SubjectType{api.SUBJECTTYPE_USER, api.SUBJECTTYPE_SERVICE_ACCOUNT, api.SUBJECTTYPE_GROUP} {
+			Expect(normalizeSubjectType(subjectType)).To(Equal(subjectType))
+		}
+		Expect(normalizeSubjectType("unknown")).To(Equal("unknown"))
 	})
 })

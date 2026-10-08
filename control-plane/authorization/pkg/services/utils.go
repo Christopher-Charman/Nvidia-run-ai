@@ -579,3 +579,15 @@ func (s *SyncSlice[T]) GetAll() []T {
 	defer s.mu.RUnlock()
 	return append([]T(nil), s.items...)
 }
+
+// deprecatedSubjectTypeApp is still part of the public request enum (removing an accepted request value is a breaking
+// API change) but it is no longer a stored subject type.
+const deprecatedSubjectTypeApp = "app"
+
+// normalizeSubjectType maps the deprecated 'app' subject type of a request to 'service-account'.
+func normalizeSubjectType[T ~string](subjectType T) T {
+	if string(subjectType) == deprecatedSubjectTypeApp {
+		return T(api.SUBJECTTYPE_SERVICE_ACCOUNT)
+	}
+	return subjectType
+}
