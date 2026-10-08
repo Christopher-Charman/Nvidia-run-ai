@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/auth"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads/pkg/database/dao_crud"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
@@ -78,7 +79,7 @@ func validatePolicyHelper(ctx context.Context, workloadType string, projectId st
 		}
 	}
 
-	validationErr := validateSpecAgainstPolicy(workloadType, effectivePolicy.RulesV2, effectivePolicy.DefaultsV2, values, &effectivePolicy.DefaultFromOrder)
+	validationErr := validateSpecAgainstPolicy(workloadType, effectivePolicy.RulesV2, effectivePolicy.DefaultsV2, values)
 	if validationErr != nil {
 		return nil, validationErr
 	}
@@ -95,13 +96,46 @@ func validateSpecAgainstPolicy(
 	rules map[string]interface{},
 	defaults map[string]interface{},
 	mutatedSpec map[string]interface{},
-	defaultFromOrder *policyApi.DefaultFromOrder,
 ) *workloadApi.SubmissionErrorV2 {
+	var aliasErr error
+	rules, aliasErr = gpucompat.NormalizeLegacyGPUPolicy(rules)
+	if aliasErr != nil {
+		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, aliasErr.Error())
+	}
+	defaults, aliasErr = gpucompat.NormalizeLegacyGPUFields(defaults)
+	if aliasErr != nil {
+		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, aliasErr.Error())
+	}
+	canonical, aliasErr := gpucompat.NormalizeLegacyGPUFields(mutatedSpec)
+	if aliasErr != nil {
+		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, aliasErr.Error())
+	}
+	for key := range mutatedSpec {
+		delete(mutatedSpec, key)
+	}
+	for key, value := range canonical {
+		mutatedSpec[key] = value
+	}
+
+	// Alias normalization can reveal dependencies or cycles that used different spellings.
+	workerRules := rules
+	if workloadType == Distributed {
+		workerRules = convutils.MapMe(rules[workerSection])
+	}
+	workerOrder, orderErr := policyCompliance.NewDefaultsFromOrder(workerRules)
+	if orderErr != nil {
+		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, orderErr.Error())
+	}
+	masterOrder, orderErr := policyCompliance.NewDefaultsFromOrder(convutils.MapMe(rules[masterSection]))
+	if orderErr != nil {
+		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, orderErr.Error())
+	}
+
 	fieldsWithCantEditRule := make([]string, 0)
 	complianceErrors := make(policyCompliance.ComplianceErrors, 0)
 
 	if workloadType != Distributed {
-		policyCompliance.ValidateCompliance("", rules, defaults, mutatedSpec, *defaultFromOrder.Worker,
+		policyCompliance.ValidateCompliance("", rules, defaults, mutatedSpec, workerOrder,
 			&fieldsWithCantEditRule, nil, &complianceErrors)
 	} else {
 		// check the workers spec VS the workers policy
@@ -109,7 +143,7 @@ func validateSpecAgainstPolicy(
 			convutils.MapMe(rules[workerSection]),
 			convutils.MapMe(defaults[workerSection]),
 			convutils.MapMe(mutatedSpec[workerSection]),
-			*defaultFromOrder.Worker,
+			workerOrder,
 			&fieldsWithCantEditRule, nil, &complianceErrors)
 
 		// if there is a master policy, we need to validate the master spec VS the master policy
@@ -121,7 +155,7 @@ func validateSpecAgainstPolicy(
 				convutils.MapMe(rules[masterSection]),
 				convutils.MapMe(defaults[masterSection]),
 				convutils.MapMe(mutatedSpec[masterSection]),
-				*defaultFromOrder.Master,
+				masterOrder,
 				&fieldsWithCantEditRule, nil, &masterComplianceErrors)
 
 			for _, err := range masterComplianceErrors {
@@ -271,6 +305,13 @@ func validateComplianceOfTemplate(ctx context.Context, task patchingTaskInfo) {
 		defaultFromOrder = task.effectivePolicy.DefaultFromOrder.Worker
 		payloadAsMap, _ = gojsonq.LoadJson(task.template.CombinedSpec)
 	}
+
+	canonicalPayload, aliasErr := gpucompat.NormalizeLegacyGPUFields(payloadAsMap)
+	if aliasErr != nil {
+		task.template.ComplianceIssues = append(task.template.ComplianceIssues, api.ComplianceInfoReason{Details: aliasErr.Error()})
+		return
+	}
+	payloadAsMap = canonicalPayload
 
 	fieldsWithCantEditRule := make([]string, 0)
 	complianceResults := policyCompliance.ComplianceErrors{}

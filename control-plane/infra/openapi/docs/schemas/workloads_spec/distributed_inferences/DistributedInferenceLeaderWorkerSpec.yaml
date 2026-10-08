@@ -26,12 +26,20 @@ properties:
         $ref: ../compute/GpuDevicesRequest.yaml
       gpuMemoryLimit:
         $ref: ../compute/GpuMemoryLimit.yaml
+      gpuMemoryPortionLimit:
+        $ref: ../compute/GpuMemoryPortionLimit.yaml
+      gpuMemoryPortionRequest:
+        $ref: ../compute/GpuMemoryPortionRequest.yaml
       gpuMemoryRequest:
         $ref: ../compute/GpuMemoryRequest.yaml
       gpuPortionLimit:
-        $ref: ../compute/GpuPortionLimit.yaml
+        allOf:
+        - $ref: ../compute/GpuPortionLimit.yaml
+        deprecated: true
       gpuPortionRequest:
-        $ref: ../compute/GpuPortionRequest.yaml
+        allOf:
+        - $ref: ../compute/GpuPortionRequest.yaml
+        deprecated: true
       gpuRequestType:
         $ref: ../compute/GpuRequestType.yaml
       largeShmRequest:

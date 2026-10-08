@@ -38,12 +38,20 @@ allOf:
           $ref: ../workloads_spec/compute/GpuDevicesRequest.yaml
         gpuMemoryLimit:
           $ref: ../workloads_spec/compute/GpuMemoryLimit.yaml
+        gpuMemoryPortionLimit:
+          $ref: ../workloads_spec/compute/GpuMemoryPortionLimit.yaml
+        gpuMemoryPortionRequest:
+          $ref: ../workloads_spec/compute/GpuMemoryPortionRequest.yaml
         gpuMemoryRequest:
           $ref: ../workloads_spec/compute/GpuMemoryRequest.yaml
         gpuPortionLimit:
-          $ref: ../workloads_spec/compute/GpuPortionLimit.yaml
+          allOf:
+          - $ref: ../workloads_spec/compute/GpuPortionLimit.yaml
+          deprecated: true
         gpuPortionRequest:
-          $ref: ../workloads_spec/compute/GpuPortionRequest.yaml
+          allOf:
+          - $ref: ../workloads_spec/compute/GpuPortionRequest.yaml
+          deprecated: true
         gpuRequestType:
           $ref: ../workloads_spec/compute/GpuRequestType.yaml
       type: object

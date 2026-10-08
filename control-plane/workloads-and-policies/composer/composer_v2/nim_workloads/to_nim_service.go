@@ -8,6 +8,7 @@ package nim_workloads
 import (
 	"context"
 	"fmt"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"net/http"
 	"strconv"
 
@@ -318,6 +319,15 @@ func (nsc *NimServiceComposer) processComputeFields(ctx context.Context, src *wo
 			return nil
 		}
 
+		portion, err := gpucompat.ResolveLegacyGPUMemory("Request", src.GpuPortionRequest.Get(), src.GpuMemoryPortionRequest.Get())
+		if err != nil {
+			return workloadsApi.NewError(http.StatusBadRequest, err.Error())
+		}
+		limit, err := gpucompat.ResolveLegacyGPUMemory("Limit", src.GpuPortionLimit.Get(), src.GpuMemoryPortionLimit.Get())
+		if err != nil {
+			return workloadsApi.NewError(http.StatusBadRequest, err.Error())
+		}
+
 		runner := &composer.StepRunner{}
 
 		if target.Resources == nil {
@@ -332,7 +342,7 @@ func (nsc *NimServiceComposer) processComputeFields(ctx context.Context, src *wo
 
 			nsc.fc.ComposeGpuRequestsAndLimits(ctx, src.GpuDevicesRequest.Get(),
 				composer.CastStruct[workloadsManagerApi.GpuRequestType, workloadsApi.GpuRequestType](src.GpuRequestType.Get()),
-				src.GpuPortionRequest.Get(), src.GpuPortionLimit.Get(),
+				portion, limit,
 				src.GpuMemoryRequest.Get(), src.GpuMemoryLimit.Get(), gpuSizingInfoSetter,
 				target.Resources, nil, gpuSizingInfo),
 		)

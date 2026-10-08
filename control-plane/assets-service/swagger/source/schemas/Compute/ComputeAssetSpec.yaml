@@ -17,12 +17,20 @@ properties:
     $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuDevicesRequest.yaml
   gpuMemoryLimit:
     $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuMemoryLimit.yaml
+  gpuMemoryPortionLimit:
+    $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuMemoryPortionLimit.yaml
+  gpuMemoryPortionRequest:
+    $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuMemoryPortionRequest.yaml
   gpuMemoryRequest:
     $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuMemoryRequest.yaml
   gpuPortionLimit:
-    $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuPortionLimit.yaml
+    allOf:
+    - $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuPortionLimit.yaml
+    deprecated: true
   gpuPortionRequest:
-    $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuPortionRequest.yaml
+    allOf:
+    - $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuPortionRequest.yaml
+    deprecated: true
   gpuRequestType:
     $ref: ../../../../../infra/openapi/docs/schemas/workloads_spec/compute/GpuRequestType.yaml
   largeShmRequest:

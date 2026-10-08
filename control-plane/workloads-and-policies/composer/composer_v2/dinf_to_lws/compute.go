@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/composer"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/itemized"
 	workloadsApi "github.com/dsx-ai-factory/run-ai/control-plane/workloads/pkg/client/generated"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +24,11 @@ func (dinfComposer *DistributedInferenceToLWSComposer) processComputeFields(
 		if src == nil {
 			return nil
 		}
+		canonical, err := gpucompat.NormalizeLegacyWorkloadCompute(src)
+		if err != nil {
+			return workloadsApi.NewError(400, err.Error())
+		}
+		src = canonical
 
 		container := &target.Spec.Containers[0]
 		var sizingInfo composer.GpuSizingInfo
@@ -33,7 +39,7 @@ func (dinfComposer *DistributedInferenceToLWSComposer) processComputeFields(
 			dinfComposer.fc.ComposeCpuMemoryRequest(src.CpuMemoryRequest.Get(), &container.Resources.Requests, composer.StringToK8sResourceList, composer.ResourceMemory),
 			dinfComposer.fc.ComposeCpuMemoryLimit(src.CpuMemoryLimit.Get(), src.CpuMemoryRequest.Get(), &container.Resources.Limits, composer.StringToK8sResourceList, composer.ResourceMemory),
 			dinfComposer.fc.ComposeGpuRequestsAndLimits(ctx, src.GpuDevicesRequest.Get(), src.GpuRequestType.Get(),
-				src.GpuPortionRequest.Get(), src.GpuPortionLimit.Get(),
+				src.GpuMemoryPortionRequest.Get(), src.GpuMemoryPortionLimit.Get(),
 				src.GpuMemoryRequest.Get(), src.GpuMemoryLimit.Get(), composer.WholeGpusToK8sResources,
 				&container.Resources, nil, &sizingInfo),
 			dinfComposer.fc.ComposeExtendedResources(itemized.ExtendedResourceNickPrefix, src.ExtendedResources, &container.Resources, composer.ExtendedResourcesToK8sResources, nil),

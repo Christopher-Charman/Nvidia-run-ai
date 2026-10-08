@@ -38,7 +38,9 @@ var _ = Describe("Test Compute Asset dao", func() {
 
 			nameValidationQuery, _ := scope.GetNameValidationQuery(auth.MockAuthInfo(), computeCreation.Meta.Name, computeCreation.Meta.Scope, nil, nil, nil, computeCreation.Meta.Private, api.ASSETKIND_COMPUTE, nil)
 			res, _ := dao.CreateComputeAsset(auth.MockAuthInfo(), computeCreation, nameValidationQuery)
-			Expect(res.Spec).To(Equal(*computeCreation.Spec))
+			expected := *computeCreation.Spec
+			expected.GpuMemoryPortionRequest = convutils.Ref(1.2)
+			Expect(res.Spec).To(Equal(expected))
 		})
 	})
 })

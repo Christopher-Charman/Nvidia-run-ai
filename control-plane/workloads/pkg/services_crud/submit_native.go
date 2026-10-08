@@ -7,6 +7,7 @@ package services_crud
 
 import (
 	"context"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/composer"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/composer/composer_v1/runai_workloads"
@@ -46,7 +47,7 @@ func composeDistributedInferenceNative(ctx context.Context, wc *workloadContext)
 
 	dInfComposer.WithStorageClassConfiguration(wc.storageClassConfigs)
 
-	if composerErr := dInfComposer.Compose(ctx, wc.spec, &dinfwv1.DistributedInferenceWorkload{}); composerErr != nil {
+	if composerErr := dInfComposer.Compose(ctx, gpucompat.StoredWorkloadSpec(wc.spec), &dinfwv1.DistributedInferenceWorkload{}); composerErr != nil {
 		return composer.WorkloadRequirements{}, workloadsApi.NewSubmissionErrorV2(composerErr.Code, composerErr.Message)
 	}
 
@@ -76,10 +77,10 @@ func composeDistributedNative(ctx context.Context, wc *workloadContext) (compose
 	distributedComposer.WithStorageClassConfiguration(wc.storageClassConfigs)
 
 	distributedWorkload := workloadsApi.SupersetWorkload{
-		Spec: wc.spec,
+		Spec: gpucompat.StoredWorkloadSpec(wc.spec),
 	}
 	if wc.masterSpec != nil {
-		distributedWorkload.MasterSpec = *workloadsApi.NewNullableMasterSpec(wc.masterSpec)
+		distributedWorkload.MasterSpec = *workloadsApi.NewNullableMasterSpec(gpucompat.StoredMasterSpec(wc.masterSpec))
 	}
 
 	if composerErr := distributedComposer.Compose(ctx, &distributedWorkload, &jobs.JobWorkload{}); composerErr != nil {
@@ -100,7 +101,7 @@ func composeInferenceNative(ctx context.Context, wc *workloadContext) (composer.
 
 	jobSpecComposer.WithStorageClassConfiguration(wc.storageClassConfigs)
 
-	composerErr := jobSpecComposer.Compose(ctx, wc.spec, &jobs.JobSpec{})()
+	composerErr := jobSpecComposer.Compose(ctx, gpucompat.StoredWorkloadSpec(wc.spec), &jobs.JobSpec{})()
 	if composerErr == nil {
 		composerErr = wc.create.notificationsComposer.Compose(ctx, nil, wc.create.complimentaryAssetInfo, wc.spec)()
 	}
@@ -122,7 +123,7 @@ func composeInteractiveTrainingNative(ctx context.Context, wc *workloadContext) 
 
 	jobSpecComposer.WithStorageClassConfiguration(wc.storageClassConfigs)
 
-	if composerErr := jobSpecComposer.Compose(ctx, wc.spec, &jobs.JobSpec{})(); composerErr != nil {
+	if composerErr := jobSpecComposer.Compose(ctx, gpucompat.StoredWorkloadSpec(wc.spec), &jobs.JobSpec{})(); composerErr != nil {
 		return composer.WorkloadRequirements{}, workloadsApi.NewSubmissionErrorV2(composerErr.Code, composerErr.Message)
 	}
 

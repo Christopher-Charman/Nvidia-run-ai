@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"net/http"
 	"reflect"
 	"sort"
@@ -299,7 +300,7 @@ func composeInferenceUpdateNative(
 		nil,
 		options)
 
-	composerErr := jobSpecComposer.Compose(ctx, workload.Spec, &jobs.JobSpec{})()
+	composerErr := jobSpecComposer.Compose(ctx, gpucompat.StoredWorkloadSpec(workload.Spec), &jobs.JobSpec{})()
 	if composerErr != nil {
 		return composer.WorkloadRequirements{}, NewSubmissionErrorWithDetails(composerErr.Code, composerErr.Message, composerErr.Details)
 	}
@@ -333,6 +334,15 @@ func mergeUpdateSpecIntoFullSpec(ctx context.Context, fullSpec *workloadsApi.Sup
 	}
 
 	fullSpecAsMap, err := gojsonq.LoadJson(*fullSpec)
+	if err != nil {
+		return workloadsApi.NewError(http.StatusBadRequest, err.Error())
+	}
+
+	updateSpecAsMap, err = gpucompat.NormalizeLegacyGPUFields(updateSpecAsMap)
+	if err != nil {
+		return workloadsApi.NewError(http.StatusBadRequest, err.Error())
+	}
+	fullSpecAsMap, err = gpucompat.NormalizeLegacyGPUFields(fullSpecAsMap)
 	if err != nil {
 		return workloadsApi.NewError(http.StatusBadRequest, err.Error())
 	}

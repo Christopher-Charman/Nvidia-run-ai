@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"net/http"
 	"reflect"
 	"sort"
@@ -260,7 +261,7 @@ func composeDistributedInferenceUpdateNative(
 		nil,
 		options)
 
-	composerErr := dInfComposer.Compose(ctx, workload.Spec, &dinfwv1.DistributedInferenceWorkload{})
+	composerErr := dInfComposer.Compose(ctx, gpucompat.StoredWorkloadSpec(workload.Spec), &dinfwv1.DistributedInferenceWorkload{})
 	if composerErr != nil {
 		return composer.WorkloadRequirements{}, NewSubmissionErrorWithDetails(composerErr.Code, composerErr.Message, composerErr.Details)
 	}

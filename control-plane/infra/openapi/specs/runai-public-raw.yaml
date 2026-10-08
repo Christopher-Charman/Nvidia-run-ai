@@ -35136,6 +35136,26 @@ components:
       maxLength: 63
       example: 10M
       nullable: true
+    GpuMemoryPortionLimit:
+      description: >-
+        Maximum GPU memory fraction consumed per GPU device. Must be no less
+        than gpuMemoryPortionRequest.
+      type: number
+      format: double
+      example: 0.5
+      nullable: true
+      minimum: 0
+      x-gorm-ignore: true
+    GpuMemoryPortionRequest:
+      description: >-
+        GPU memory fraction to allocate per GPU device, between 0 and 1.
+        Required when gpuRequestType is portion.
+      type: number
+      format: double
+      example: 0.5
+      nullable: true
+      minimum: 0
+      x-gorm-ignore: true
     GpuMemoryRequest:
       description: >-
         Required if and only if gpuRequestType is memory. States the GPU memory
@@ -35149,24 +35169,28 @@ components:
       nullable: true
     GpuPortionLimit:
       description: >-
-        Limitations on the portion consumed by the workload, per GPU device. The
-        system guarantees The gpuPotionLimit must be no less than the
-        gpuPortionRequest.
+        Deprecated in 3.1; use gpuMemoryPortionLimit. Scheduled for removal in
+        3.2. Limitations on the portion consumed by the workload, per GPU
+        device. The system guarantees The gpuPotionLimit must be no less than
+        the gpuPortionRequest.
       type: number
       format: double
       example: 0.5
       nullable: true
       minimum: 0
+      deprecated: true
     GpuPortionRequest:
       description: >-
-        Required if and only if gpuRequestType is portion. States the portion of
-        the GPU to allocate for the created workload, per GPU device, between 0
-        and 1. The default is no allocated GPUs.
+        Deprecated in 3.1; use gpuMemoryPortionRequest. Scheduled for removal in
+        3.2. Required if and only if gpuRequestType is portion. States the
+        portion of the GPU to allocate for the created workload, per GPU device,
+        between 0 and 1. The default is no allocated GPUs.
       type: number
       format: double
       example: 0.5
       nullable: true
       minimum: 0
+      deprecated: true
     GpuRequestType:
       description: >-
         Sets the unit type for GPU resources requests. Stated in terms of
@@ -35203,12 +35227,20 @@ components:
           $ref: '#/components/schemas/GpuDevicesRequest'
         gpuMemoryLimit:
           $ref: '#/components/schemas/GpuMemoryLimit'
+        gpuMemoryPortionLimit:
+          $ref: '#/components/schemas/GpuMemoryPortionLimit'
+        gpuMemoryPortionRequest:
+          $ref: '#/components/schemas/GpuMemoryPortionRequest'
         gpuMemoryRequest:
           $ref: '#/components/schemas/GpuMemoryRequest'
         gpuPortionLimit:
-          $ref: '#/components/schemas/GpuPortionLimit'
+          allOf:
+            - $ref: '#/components/schemas/GpuPortionLimit'
+          deprecated: true
         gpuPortionRequest:
-          $ref: '#/components/schemas/GpuPortionRequest'
+          allOf:
+            - $ref: '#/components/schemas/GpuPortionRequest'
+          deprecated: true
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestType'
         largeShmRequest:
@@ -40769,12 +40801,20 @@ components:
               $ref: '#/components/schemas/GpuDevicesRequest'
             gpuMemoryLimit:
               $ref: '#/components/schemas/GpuMemoryLimit'
+            gpuMemoryPortionLimit:
+              $ref: '#/components/schemas/GpuMemoryPortionLimit'
+            gpuMemoryPortionRequest:
+              $ref: '#/components/schemas/GpuMemoryPortionRequest'
             gpuMemoryRequest:
               $ref: '#/components/schemas/GpuMemoryRequest'
             gpuPortionLimit:
-              $ref: '#/components/schemas/GpuPortionLimit'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionLimit'
+              deprecated: true
             gpuPortionRequest:
-              $ref: '#/components/schemas/GpuPortionRequest'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionRequest'
+              deprecated: true
             gpuRequestType:
               $ref: '#/components/schemas/GpuRequestType'
             largeShmRequest:
@@ -41644,12 +41684,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -41854,12 +41902,20 @@ components:
               $ref: '#/components/schemas/GpuDevicesRequest'
             gpuMemoryLimit:
               $ref: '#/components/schemas/GpuMemoryLimit'
+            gpuMemoryPortionLimit:
+              $ref: '#/components/schemas/GpuMemoryPortionLimit'
+            gpuMemoryPortionRequest:
+              $ref: '#/components/schemas/GpuMemoryPortionRequest'
             gpuMemoryRequest:
               $ref: '#/components/schemas/GpuMemoryRequest'
             gpuPortionLimit:
-              $ref: '#/components/schemas/GpuPortionLimit'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionLimit'
+              deprecated: true
             gpuPortionRequest:
-              $ref: '#/components/schemas/GpuPortionRequest'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionRequest'
+              deprecated: true
             gpuRequestType:
               $ref: '#/components/schemas/GpuRequestType'
             largeShmRequest:
@@ -42280,8 +42336,12 @@ components:
           $ref: '#/components/schemas/GpuMemoryLimit'
         gpuMemoryRequest:
           $ref: '#/components/schemas/GpuMemoryRequest'
+        gpuMemoryPortionLimit:
+          $ref: '#/components/schemas/GpuMemoryPortionLimit'
         gpuPortionLimit:
           $ref: '#/components/schemas/GpuPortionLimit'
+        gpuMemoryPortionRequest:
+          $ref: '#/components/schemas/GpuMemoryPortionRequest'
         gpuPortionRequest:
           $ref: '#/components/schemas/GpuPortionRequest'
         gpuRequestType:
@@ -42781,10 +42841,18 @@ components:
           $ref: '#/components/schemas/QuantityRules'
         gpuMemoryRequest:
           $ref: '#/components/schemas/QuantityRules'
+        gpuMemoryPortionLimit:
+          $ref: '#/components/schemas/NumberRules'
         gpuPortionLimit:
+          allOf:
+            - $ref: '#/components/schemas/NumberRules'
+          deprecated: true
+        gpuMemoryPortionRequest:
           $ref: '#/components/schemas/NumberRules'
         gpuPortionRequest:
-          $ref: '#/components/schemas/NumberRules'
+          allOf:
+            - $ref: '#/components/schemas/NumberRules'
+          deprecated: true
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestRules'
         largeShmRequest:
@@ -45167,12 +45235,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
               type: object
@@ -45369,12 +45445,20 @@ components:
                   $ref: '#/components/schemas/IntegerRules'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/QuantityRules'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/NumberRules'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/NumberRules'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/QuantityRules'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/NumberRules'
+                  allOf:
+                    - $ref: '#/components/schemas/NumberRules'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/NumberRules'
+                  allOf:
+                    - $ref: '#/components/schemas/NumberRules'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestRules'
               type: object
@@ -53131,12 +53215,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -53281,12 +53373,20 @@ components:
               $ref: '#/components/schemas/GpuDevicesRequest'
             gpuMemoryLimit:
               $ref: '#/components/schemas/GpuMemoryLimit'
+            gpuMemoryPortionLimit:
+              $ref: '#/components/schemas/GpuMemoryPortionLimit'
+            gpuMemoryPortionRequest:
+              $ref: '#/components/schemas/GpuMemoryPortionRequest'
             gpuMemoryRequest:
               $ref: '#/components/schemas/GpuMemoryRequest'
             gpuPortionLimit:
-              $ref: '#/components/schemas/GpuPortionLimit'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionLimit'
+              deprecated: true
             gpuPortionRequest:
-              $ref: '#/components/schemas/GpuPortionRequest'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionRequest'
+              deprecated: true
             gpuRequestType:
               $ref: '#/components/schemas/GpuRequestType'
             largeShmRequest:
@@ -53424,12 +53524,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -53586,12 +53694,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -53912,12 +54028,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -54060,12 +54184,20 @@ components:
                       $ref: '#/components/schemas/GpuDevicesRequest'
                     gpuMemoryLimit:
                       $ref: '#/components/schemas/GpuMemoryLimit'
+                    gpuMemoryPortionLimit:
+                      $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                    gpuMemoryPortionRequest:
+                      $ref: '#/components/schemas/GpuMemoryPortionRequest'
                     gpuMemoryRequest:
                       $ref: '#/components/schemas/GpuMemoryRequest'
                     gpuPortionLimit:
-                      $ref: '#/components/schemas/GpuPortionLimit'
+                      allOf:
+                        - $ref: '#/components/schemas/GpuPortionLimit'
+                      deprecated: true
                     gpuPortionRequest:
-                      $ref: '#/components/schemas/GpuPortionRequest'
+                      allOf:
+                        - $ref: '#/components/schemas/GpuPortionRequest'
+                      deprecated: true
                     gpuRequestType:
                       $ref: '#/components/schemas/GpuRequestType'
                     largeShmRequest:
@@ -54483,12 +54615,20 @@ components:
               $ref: '#/components/schemas/GpuDevicesRequest'
             gpuMemoryLimit:
               $ref: '#/components/schemas/GpuMemoryLimit'
+            gpuMemoryPortionLimit:
+              $ref: '#/components/schemas/GpuMemoryPortionLimit'
+            gpuMemoryPortionRequest:
+              $ref: '#/components/schemas/GpuMemoryPortionRequest'
             gpuMemoryRequest:
               $ref: '#/components/schemas/GpuMemoryRequest'
             gpuPortionLimit:
-              $ref: '#/components/schemas/GpuPortionLimit'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionLimit'
+              deprecated: true
             gpuPortionRequest:
-              $ref: '#/components/schemas/GpuPortionRequest'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionRequest'
+              deprecated: true
             gpuRequestType:
               $ref: '#/components/schemas/GpuRequestType'
             largeShmRequest:
@@ -54686,12 +54826,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -54952,12 +55100,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -55144,12 +55300,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -55373,12 +55537,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
                 largeShmRequest:
@@ -55543,12 +55715,20 @@ components:
               $ref: '#/components/schemas/GpuDevicesRequest'
             gpuMemoryLimit:
               $ref: '#/components/schemas/GpuMemoryLimit'
+            gpuMemoryPortionLimit:
+              $ref: '#/components/schemas/GpuMemoryPortionLimit'
+            gpuMemoryPortionRequest:
+              $ref: '#/components/schemas/GpuMemoryPortionRequest'
             gpuMemoryRequest:
               $ref: '#/components/schemas/GpuMemoryRequest'
             gpuPortionLimit:
-              $ref: '#/components/schemas/GpuPortionLimit'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionLimit'
+              deprecated: true
             gpuPortionRequest:
-              $ref: '#/components/schemas/GpuPortionRequest'
+              allOf:
+                - $ref: '#/components/schemas/GpuPortionRequest'
+              deprecated: true
             gpuRequestType:
               $ref: '#/components/schemas/GpuRequestType'
             largeShmRequest:
@@ -58066,12 +58246,20 @@ components:
                   $ref: '#/components/schemas/GpuDevicesRequest'
                 gpuMemoryLimit:
                   $ref: '#/components/schemas/GpuMemoryLimit'
+                gpuMemoryPortionLimit:
+                  $ref: '#/components/schemas/GpuMemoryPortionLimit'
+                gpuMemoryPortionRequest:
+                  $ref: '#/components/schemas/GpuMemoryPortionRequest'
                 gpuMemoryRequest:
                   $ref: '#/components/schemas/GpuMemoryRequest'
                 gpuPortionLimit:
-                  $ref: '#/components/schemas/GpuPortionLimit'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionLimit'
+                  deprecated: true
                 gpuPortionRequest:
-                  $ref: '#/components/schemas/GpuPortionRequest'
+                  allOf:
+                    - $ref: '#/components/schemas/GpuPortionRequest'
+                  deprecated: true
                 gpuRequestType:
                   $ref: '#/components/schemas/GpuRequestType'
               type: object

@@ -8,6 +8,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
 	"net/http"
 	"strconv"
 
@@ -29,13 +30,37 @@ var nonCreationMode = policiesClient.PolicyClientOptions{
 	NonCreationMode: true,
 }
 
-func validateMutatedSpecVsPolicy(rules map[string]interface{}, defaults map[string]interface{}, defaultFromOrder *policyApi.DefaultFromOrder,
+func validateMutatedSpecVsPolicy(rules map[string]interface{}, defaults map[string]interface{},
 	mutatedSpec map[string]interface{},
 ) (map[string]interface{}, *api.SubmissionErrorV2) {
+	var err error
+	rules, err = gpucompat.NormalizeLegacyGPUPolicy(rules)
+	if err != nil {
+		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
+	}
+	defaults, err = gpucompat.NormalizeLegacyGPUFields(defaults)
+	if err != nil {
+		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
+	}
+	canonical, err := gpucompat.NormalizeLegacyGPUFields(mutatedSpec)
+	if err != nil {
+		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
+	}
+	for key := range mutatedSpec {
+		delete(mutatedSpec, key)
+	}
+	for key, value := range canonical {
+		mutatedSpec[key] = value
+	}
+	order, err := policyCompliance.NewDefaultsFromOrder(rules)
+	if err != nil {
+		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
+	}
+
 	fieldsWithCantEditRule := make([]string, 0)
 	complianceErrors := make(policyCompliance.ComplianceErrors, 0)
 
-	policyCompliance.ValidateCompliance("", rules, defaults, mutatedSpec, *defaultFromOrder.Worker,
+	policyCompliance.ValidateCompliance("", rules, defaults, mutatedSpec, order,
 		&fieldsWithCantEditRule, nil, &complianceErrors)
 
 	if len(complianceErrors) != 0 {
@@ -145,6 +170,14 @@ func MutateWorkload[S WorkloadV2Spec](
 	} else {
 		// Use gojsonq.LoadJson (not CopySpecs) to preserve numeric types via decoder.UseNumber()
 		inputSpecAsMap, _ = gojsonq.LoadJson(inputSpec)
+	}
+
+	for _, source := range []*map[string]interface{}{&inputSpecAsMap, &templateSpec, &policyDefaults} {
+		canonical, err := gpucompat.NormalizeLegacyGPUFields(*source)
+		if err != nil {
+			return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
+		}
+		*source = canonical
 	}
 
 	// Phase 1: Template = Spec -> Template
