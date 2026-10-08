@@ -18,12 +18,13 @@ import (
 	"fmt"
 )
 
-// SubjectType Subject type enum for access rules.
+// SubjectType Subject type enum for access rules.  Note: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts. Requests that send 'app' are still accepted and are stored as 'service-account'.
 type SubjectType string
 
 // List of SubjectType
 const (
 	SUBJECTTYPE_USER            SubjectType = "user"
+	SUBJECTTYPE_APP             SubjectType = "app"
 	SUBJECTTYPE_SERVICE_ACCOUNT SubjectType = "service-account"
 	SUBJECTTYPE_GROUP           SubjectType = "group"
 )
@@ -31,6 +32,7 @@ const (
 // All allowed values of SubjectType enum
 var AllowedSubjectTypeEnumValues = []SubjectType{
 	"user",
+	"app",
 	"service-account",
 	"group",
 }

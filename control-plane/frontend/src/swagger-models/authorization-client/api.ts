@@ -2294,13 +2294,14 @@ export type ScopeType = typeof ScopeType[keyof typeof ScopeType];
 
 
 /**
- * Subject type enum for access rules. 
+ * Subject type enum for access rules.  Note: The \'app\' subject type is DEPRECATED. Please use \'service-account\' instead for service accounts. Requests that send \'app\' are still accepted and are stored as \'service-account\'. 
  * @export
  * @enum {string}
  */
 
 export const SubjectType = {
     User: 'user',
+    App: 'app',
     ServiceAccount: 'service-account',
     Group: 'group'
 } as const;

@@ -3200,9 +3200,10 @@
       },
       "SubjectType": {
         "type": "string",
-        "description": "Subject type enum for access rules.\n",
+        "description": "Subject type enum for access rules.\n\nNote: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts.\nRequests that send 'app' are still accepted and are stored as 'service-account'.\n",
         "enum": [
           "user",
+          "app",
           "service-account",
           "group"
         ]
