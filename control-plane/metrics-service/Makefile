@@ -17,7 +17,7 @@ SHARED_PACKAGES_PATH=pkg
 OPENAPI_CLIENT_NAME_GO=client
 SHARED_PACKAGES_PATH_ABS=control-plane/metrics-service/pkg
 
-test: test-ginkgo integration-tests ## Run unit and integration tests
+test: build-async test-ginkgo integration-tests ## Run unit and integration tests
 .PHONY: test
 
 lint: lint-go ## Run linter.
@@ -37,13 +37,17 @@ build: openapi-build build-go generate-mocks-client ## Build the service.
 openapi-lint: openapi-lint-generic ## Lint the swagger bundle.
 .PHONY: openapi-lint
 
+build-integration-tests:
+	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
+	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
+
 #@ Integration tests
-integration-tests: _compose-pull build-for-test
+integration-tests: _compose-pull build-integration-tests
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml down --volumes --remove-orphans
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml up --remove-orphans --force-recreate --abort-on-container-exit
 
 # used for launching docker compose without the integration tests docker, in order to run them from IDE
-integration-tests-debug:
+integration-tests-debug: _compose-pull build-integration-tests
 	AGENT_PORT=8090 docker compose --profile run-setup -f ./integration-tests/docker-compose.yaml up --remove-orphans --force-recreate --abort-on-container-exit
 
 _build-promtool-agent:
@@ -58,17 +62,9 @@ build-async:
 	$(MAKE) -j2 build-go-amd build-go-arm
 .PHONY: build-async
 
-build-for-test:
-	$(MAKE) -j2 build-async generate-mocks-client build-integration-tests
-.PHONY: build-for-test
-
-build-integration-tests: build-async
+build-integration-tests:
 	$(MAKE) -j2 _build-promtool-agent build-integration-tests-generic
 	AGENT_PORT=8090 docker compose --profile "*" -f ./integration-tests/docker-compose.yaml build
-
-# The ginkgo recipe lives on these targets. Depending from `test-ginkgo` would
-# leave the recipe free to run beside `build-for-test` under `make -j`.
-test-ginkgo-local test-ginkgo-privileged: build-for-test
 
 # Purely an optimization — `up` pulls anything missing anyway, so a failure here
 # (an old compose without --ignore-buildable, a flaky registry) must not fail the build.
