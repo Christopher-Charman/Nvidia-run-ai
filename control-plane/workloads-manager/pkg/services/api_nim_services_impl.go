@@ -270,7 +270,7 @@ func (nsi *NimServicesImpl) composeNimService(
 
 	err := nimComposer.Compose(ctx, &generalizedSpec, &nimService.Spec)()
 	if err != nil {
-		return nil, nimServiceNetworkingInfo{}, api.NewError(http.StatusBadRequest, "failed to compose NIMService spec", err)
+		return nil, nimServiceNetworkingInfo{}, api.NewError(int(err.Code), "failed to compose NIMService spec", err)
 	}
 
 	// Read back the networking decision made by the composer during composition.
