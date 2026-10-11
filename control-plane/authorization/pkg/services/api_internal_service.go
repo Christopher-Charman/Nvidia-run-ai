@@ -83,7 +83,10 @@ func (i *InternalApiService) GetSubjectAccessRules(ctx context.Context, subjectT
 }
 
 func (i *InternalApiService) DeleteSubjectAccessRules(ctx context.Context, subjectType string, subjectId string, dryRun bool) (api.ImplResponse, error) {
-	subjectType = normalizeSubjectType(subjectType)
+	// Existing rows were migrated to service-account, so a caller that still deletes by 'app' targets those rows.
+	if isDeprecatedSubjectType(subjectType) {
+		subjectType = string(api.SUBJECTTYPE_SERVICE_ACCOUNT)
+	}
 	tenantId, requesterId, groups, err := parseAuthData(ctx)
 	if err != nil {
 		return NewErrorResponse(err), nil
@@ -177,7 +180,9 @@ func (i *InternalApiService) GetScopeAccessRules(ctx context.Context, clusterId 
 }
 
 func (i *InternalApiService) createInternalAccessRule(ctx context.Context, request api.InternalCreateAccessRuleRequest, roleId uint) (api.ImplResponse, error) {
-	request.SubjectType = normalizeSubjectType(request.SubjectType)
+	if isDeprecatedSubjectType(request.SubjectType) {
+		return NewErrorResponse(deprecatedSubjectTypeError()), nil
+	}
 	tenantId, err := parseTenantId(ctx)
 	if err != nil {
 		return NewErrorResponse(err), nil

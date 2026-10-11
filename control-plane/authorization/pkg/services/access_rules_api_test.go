@@ -252,15 +252,14 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 			Expect(response.TotalRecords).To(Equal(int32(0)))
 		})
 
-		It("Accepts the deprecated app subject type on create and stores service-account", func() {
-			createdRule := createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
+		It("Rejects the deprecated app subject type on create with 415", func() {
+			createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
 				ScopeId:     ProjectId,
 				ScopeType:   api.SCOPETYPE_PROJECT,
 				SubjectId:   "deprecated-app-subject-type",
 				SubjectType: api.SubjectType("app"),
 				RoleId:      createdRoles[0].Id,
-			}, &createdAccessRules, false, http.StatusCreated)
-			Expect(createdRule.SubjectType).To(Equal(api.SUBJECTTYPEEXTENDED_SERVICE_ACCOUNT))
+			}, &createdAccessRules, true, http.StatusUnsupportedMediaType)
 		})
 
 		It("Get with filter subjectId", func() {
@@ -589,6 +588,34 @@ var _ = Describe("Access rules API tests", Ordered, func() {
 			getAccessRuleResponse, err := accessRulesApiService.GetAccessRule(ctx, createdAccessRules[0].Id)
 			Expect(err).To(BeNil())
 			Expect(getAccessRuleResponse.Code).To(Equal(http.StatusOK))
+		})
+
+		It("Rejects the deprecated app subject type on internal create with 415", func() {
+			createResponse, err := internalAccessRulesApiService.CreateInternalAccessRule(ctx, api.InternalCreateAccessRuleRequest{
+				SubjectId:   "deprecated-app-internal",
+				SubjectType: api.SubjectType("app"),
+				RoleName:    api.ALLOWEDINTERNALCREATEROLES_CLUSTER_APPLICATION,
+			})
+			Expect(err).To(BeNil())
+			Expect(createResponse.Code).To(Equal(http.StatusUnsupportedMediaType))
+		})
+
+		It("Delete by the deprecated app subject type removes the service-account rules", func() {
+			rule := createTestAccessRule(ctx, accessRulesApiService, api.AccessRuleCreationFields{
+				ScopeId:     ProjectId,
+				ScopeType:   api.SCOPETYPE_PROJECT,
+				SubjectId:   "sa-delete-by-deprecated-app",
+				SubjectType: api.SUBJECTTYPE_SERVICE_ACCOUNT,
+				RoleId:      createdAccessRules[0].RoleId,
+			}, &createdAccessRules, false, http.StatusCreated)
+
+			deletionResponse, err := internalAccessRulesApiService.DeleteSubjectAccessRules(ctx, "app", "sa-delete-by-deprecated-app", false)
+			Expect(err).To(BeNil())
+			Expect(deletionResponse.Code).To(Equal(http.StatusNoContent))
+
+			getResponse, err := accessRulesApiService.GetAccessRule(ctx, rule.Id)
+			Expect(err).To(BeNil())
+			Expect(getResponse.Code).To(Equal(http.StatusNotFound))
 		})
 
 		It("Delete subject access rules", func() {
@@ -1834,16 +1861,18 @@ var _ = Describe("Legacy subjectType query parameter", func() {
 	})
 })
 
-var _ = Describe("normalizeSubjectType", func() {
-	It("maps the deprecated app subject type to service-account", func() {
-		Expect(normalizeSubjectType(api.SubjectType("app"))).To(Equal(api.SUBJECTTYPE_SERVICE_ACCOUNT))
-		Expect(normalizeSubjectType("app")).To(Equal(string(api.SUBJECTTYPE_SERVICE_ACCOUNT)))
+var _ = Describe("isDeprecatedSubjectType", func() {
+	It("matches only the deprecated app subject type", func() {
+		Expect(isDeprecatedSubjectType(api.SubjectType("app"))).To(BeTrue())
+		Expect(isDeprecatedSubjectType("app")).To(BeTrue())
+		for _, subjectType := range []api.SubjectType{api.SUBJECTTYPE_USER, api.SUBJECTTYPE_SERVICE_ACCOUNT, api.SUBJECTTYPE_GROUP} {
+			Expect(isDeprecatedSubjectType(subjectType)).To(BeFalse())
+		}
 	})
 
-	It("leaves every other subject type untouched", func() {
-		for _, subjectType := range []api.SubjectType{api.SUBJECTTYPE_USER, api.SUBJECTTYPE_SERVICE_ACCOUNT, api.SUBJECTTYPE_GROUP} {
-			Expect(normalizeSubjectType(subjectType)).To(Equal(subjectType))
-		}
-		Expect(normalizeSubjectType("unknown")).To(Equal("unknown"))
+	It("is reported as 415 Unsupported Media Type pointing at service-account", func() {
+		apiErr := deprecatedSubjectTypeError()
+		Expect(apiErr.Code).To(Equal(int32(http.StatusUnsupportedMediaType)))
+		Expect(apiErr.Message).To(ContainSubstring("service-account"))
 	})
 })

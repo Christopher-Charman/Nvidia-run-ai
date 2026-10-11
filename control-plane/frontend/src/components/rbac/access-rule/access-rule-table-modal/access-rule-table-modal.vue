@@ -77,6 +77,7 @@ import { ErrorAlert } from "@/utils/error-alert.util";
 const ALL_AUTH_RELEVANT_SUBJECT_TYPES: SubjectTypeExtended[] = [
   SubjectTypeExtended.User,
   SubjectTypeExtended.ServiceAccount,
+  SubjectTypeExtended.App,
 ];
 
 export default defineComponent({

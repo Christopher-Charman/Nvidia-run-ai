@@ -3050,9 +3050,10 @@
       },
       "SubjectTypeExtended": {
         "type": "string",
-        "description": "Subject type enum for access rule responses. Extends SubjectType with the built-in\nall-authenticated-users subject, which applies to every authenticated user and service account.\n",
+        "description": "Subject type enum for access rule responses. Extends SubjectType with the built-in\nall-authenticated-users subject, which applies to every authenticated user and service account.\n\nNote: The 'app' subject type is DEPRECATED and is no longer returned. Please use 'service-account' instead for service accounts.\n",
         "enum": [
           "user",
+          "app",
           "service-account",
           "group",
           "all-authenticated-users"
@@ -3200,7 +3201,7 @@
       },
       "SubjectType": {
         "type": "string",
-        "description": "Subject type enum for access rules.\n\nNote: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts.\nRequests that send 'app' are still accepted and are stored as 'service-account'.\n",
+        "description": "Subject type enum for access rules.\n\nNote: The 'app' subject type is DEPRECATED and no longer supported. Please use 'service-account' instead for service accounts.\nRequests that create an access rule with 'app' are rejected with 415 Unsupported Media Type.\n",
         "enum": [
           "user",
           "app",

@@ -24,12 +24,13 @@ var dummySubjectTypeExtended = runaihttp.AssertPattern
 
 ////////////////////////// RUNAI END ////////////////////////////
 
-// SubjectTypeExtended : Subject type enum for access rule responses. Extends SubjectType with the built-in all-authenticated-users subject, which applies to every authenticated user and service account.
+// SubjectTypeExtended : Subject type enum for access rule responses. Extends SubjectType with the built-in all-authenticated-users subject, which applies to every authenticated user and service account.  Note: The 'app' subject type is DEPRECATED and is no longer returned. Please use 'service-account' instead for service accounts.
 type SubjectTypeExtended string
 
 // List of SubjectTypeExtended
 const (
 	SUBJECTTYPEEXTENDED_USER                    SubjectTypeExtended = "user"
+	SUBJECTTYPEEXTENDED_APP                     SubjectTypeExtended = "app"
 	SUBJECTTYPEEXTENDED_SERVICE_ACCOUNT         SubjectTypeExtended = "service-account"
 	SUBJECTTYPEEXTENDED_GROUP                   SubjectTypeExtended = "group"
 	SUBJECTTYPEEXTENDED_ALL_AUTHENTICATED_USERS SubjectTypeExtended = "all-authenticated-users"
@@ -38,6 +39,7 @@ const (
 // AllowedSubjectTypeExtendedEnumValues is all the allowed values of SubjectTypeExtended enum
 var AllowedSubjectTypeExtendedEnumValues = []SubjectTypeExtended{
 	"user",
+	"app",
 	"service-account",
 	"group",
 	"all-authenticated-users",
@@ -46,6 +48,7 @@ var AllowedSubjectTypeExtendedEnumValues = []SubjectTypeExtended{
 // validSubjectTypeExtendedEnumValue provides a map of SubjectTypeExtendeds for fast verification of use input
 var validSubjectTypeExtendedEnumValues = map[SubjectTypeExtended]struct{}{
 	"user":                    {},
+	"app":                     {},
 	"service-account":         {},
 	"group":                   {},
 	"all-authenticated-users": {},

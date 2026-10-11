@@ -580,14 +580,15 @@ func (s *SyncSlice[T]) GetAll() []T {
 	return append([]T(nil), s.items...)
 }
 
-// deprecatedSubjectTypeApp is still part of the public request enum (removing an accepted request value is a breaking
-// API change) but it is no longer a stored subject type.
+// deprecatedSubjectTypeApp stays in the API enums so the spec keeps accepting it (removing an enum value is a breaking
+// API change), but it is no longer a supported subject type.
 const deprecatedSubjectTypeApp = "app"
 
-// normalizeSubjectType maps the deprecated 'app' subject type of a request to 'service-account'.
-func normalizeSubjectType[T ~string](subjectType T) T {
-	if string(subjectType) == deprecatedSubjectTypeApp {
-		return T(api.SUBJECTTYPE_SERVICE_ACCOUNT)
-	}
-	return subjectType
+func isDeprecatedSubjectType[T ~string](subjectType T) bool {
+	return string(subjectType) == deprecatedSubjectTypeApp
+}
+
+func deprecatedSubjectTypeError() *api.Error {
+	return api.NewError(http.StatusUnsupportedMediaType,
+		fmt.Sprintf("subjectType %q is no longer supported: use %q", deprecatedSubjectTypeApp, api.SUBJECTTYPE_SERVICE_ACCOUNT), nil)
 }

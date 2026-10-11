@@ -18,7 +18,7 @@ import (
 	"fmt"
 )
 
-// SubjectType Subject type enum for access rules.  Note: The 'app' subject type is DEPRECATED. Please use 'service-account' instead for service accounts. Requests that send 'app' are still accepted and are stored as 'service-account'.
+// SubjectType Subject type enum for access rules.  Note: The 'app' subject type is DEPRECATED and no longer supported. Please use 'service-account' instead for service accounts. Requests that create an access rule with 'app' are rejected with 415 Unsupported Media Type.
 type SubjectType string
 
 // List of SubjectType

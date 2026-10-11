@@ -66,6 +66,7 @@ export default defineComponent({
         case SubjectTypeExtended.Group:
           return `Group - ${this.accessRule.subjectId}`;
         case SubjectTypeExtended.ServiceAccount:
+        case SubjectTypeExtended.App:
           return `Service account - ${this.accessRule.subjectId}`;
         default:
           return this.accessRule.subjectId;
