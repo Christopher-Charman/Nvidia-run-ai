@@ -77,3 +77,9 @@ runai-application-packages/validation/coverage.out
 **/swagger/_build/swagger.html
 
 **/.gradle
+
+# Fern versioned docs, generated from release branches by tools/materialize-fern-versions.sh
+/fern/versions/
+
+# Built by `make build-integration-tests`
+**/integration-tests/bin/

@@ -35,7 +35,9 @@ var _ = Describe("GPU compute mode configuration", func() {
 		Entry("both modes", `{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":true,"components":{"time-slicing":{"available":true},"sm-sharing":{"available":true}}}}}}}`, true, true),
 		Entry("SM disabled", `{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":true,"components":{"time-slicing":{"available":true},"sm-sharing":{"available":false}}}}}}}`, true, false),
 		Entry("missing SM report", `{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":true,"components":{"time-slicing":{"available":true}}}}}}}`, true, false),
-		Entry("parent unavailable overrides stale children", `{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":false,"components":{"time-slicing":{"available":true},"sm-sharing":{"available":true}}}}}}}`, false, false),
+		Entry("parent unavailable overrides stale children",
+			`{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":false,"components":{"time-slicing":{"available":true},"sm-sharing":{"available":true}}}}}}}`,
+			false, false),
 		Entry("unknown future mode", `{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":true,"components":{"future-mode":{"available":true}}}}}}}`, false, false),
 	)
 
@@ -45,7 +47,15 @@ var _ = Describe("GPU compute mode configuration", func() {
 		Expect(cache.ClearStore[clusterInfo]()).To(Succeed())
 		DeferCleanup(func() { Expect(cache.ClearStore[clusterInfo]()).To(Succeed()) })
 		displayed := &openapi.DisplayedCluster{}
-		Expect(json.Unmarshal([]byte(`{"uuid":"mode-cluster","version":"3.0.0","status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":true,"components":{"time-slicing":{"available":true},"sm-sharing":{"available":false,"reason":"SM-sharing disabled"}}}}}}}`), displayed)).To(Succeed())
+		Expect(json.Unmarshal([]byte(`{
+			"uuid":"mode-cluster","version":"3.0.0",
+			"status":{"dependencies":{"optional":{"gpu-compute-modes":{
+				"available":true,"components":{
+					"time-slicing":{"available":true},
+					"sm-sharing":{"available":false,"reason":"SM-sharing disabled"}
+				}
+			}}}}
+		}`), displayed)).To(Succeed())
 		mock := cluster.NewSimpleMockClient().WithCluster("mode-cluster", *displayed)
 		cluster.SetMock(mock)
 		for range 2 {

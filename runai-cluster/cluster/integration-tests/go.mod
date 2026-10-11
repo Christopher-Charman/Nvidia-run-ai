@@ -47,7 +47,6 @@ require (
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/getters v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/resourceutils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/utils v0.0.0-00010101000000-000000000000 // indirect
-	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/workload-common v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dsx-ai-factory/run-ai/runai-cluster/common/node-pool-utils v0.0.0-00010101000000-000000000000 // indirect
 	github.com/dsx-ai-factory/run-ai/runai-cluster/common/priority v0.0.0-00010101000000-000000000000 // indirect
@@ -63,7 +62,6 @@ require (
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-openapi/swag/cmdutils v0.27.1 // indirect
 	github.com/go-openapi/swag/conv v0.27.1 // indirect
 	github.com/go-openapi/swag/fileutils v0.27.1 // indirect
@@ -180,7 +178,6 @@ require (
 	github.com/google/go-containerregistry v0.20.5 // indirect
 	github.com/google/pprof v0.0.0-20260507013755-92041b743c96 // indirect
 	github.com/google/uuid v1.6.0
-	github.com/hashicorp/go-version v1.9.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kai-scheduler/kai-resource-management-api v0.1.3
 	github.com/mattn/go-colorable v0.1.15 // indirect
@@ -239,7 +236,6 @@ replace (
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/topology => ../common/topology
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/common/utils => ../common/utils
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/external-workload-integrator => ../external-workload-integrator
-	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/go-operator => ../go-operator
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/sdk => ../sdk
 
 	github.com/dsx-ai-factory/run-ai/runai-cluster/cluster/workload-common => ../../../runai-cluster/cluster/workload-common
