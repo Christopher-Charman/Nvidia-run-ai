@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 
 	clusterApi "github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/client/generated"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/clients/policies"
@@ -256,6 +257,8 @@ func createWorkload(ctx context.Context, backendClient clients.TenantSettingsCli
 	if complianceErr != nil {
 		return complianceErr
 	}
+
+	gpumode.ResolveEffectiveModes(mutatedSpec)
 
 	// Build responseSpec from mutatedSpec (includes template + policy defaults)
 	responseSpec, responseMasterSpec, rebuildErr := buildResponseSpecFromMap[workloadsApi.SupersetSpec, workloadsApi.MasterSpec](workloadType, mutatedSpec)
@@ -779,6 +782,7 @@ func MutateWorkload(
 		if err != nil {
 			return nil, workloadsApi.NewSubmissionErrorV2(http.StatusBadRequest, fmt.Sprintf("%s: %v", source.name, err))
 		}
+		gpumode.StripEffectiveModes(normalized)
 		*source.value = normalized
 	}
 
@@ -1241,6 +1245,7 @@ func preValidateMpiGpuFields(ctx context.Context, spec *workloadsApi.SupersetSpe
 		validateForbiddenFieldForMpi(&err, fldNameGpuMemoryRequest, computeFields.GpuMemoryRequest.Get())
 		validateForbiddenFieldForMpi(&err, fldNameGpuMemoryLimit, computeFields.GpuMemoryLimit.Get())
 	} else {
+		computeFields.ComputeMode.Unset()
 		computeFields.GpuDevicesRequest = workloadsApi.NullableInt32{}
 		computeFields.GpuRequestType = workloadsApi.NullableGpuRequestType{}
 		computeFields.GpuMemoryPortionRequest = workloadsApi.NullableFloat64{}

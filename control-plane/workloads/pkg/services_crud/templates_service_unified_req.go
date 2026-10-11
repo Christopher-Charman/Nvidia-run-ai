@@ -68,6 +68,10 @@ func NewUnifiedRequest(ctx context.Context, workloadType api.WorkloadType, templ
 		return nil, aliasErr
 	}
 
+	result.template, aliasErr = stripTemplateComputeModes(result.template)
+	if aliasErr != nil {
+		return nil, aliasErr
+	}
 	return &result, nil
 }
 

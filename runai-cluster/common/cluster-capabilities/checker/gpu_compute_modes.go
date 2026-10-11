@@ -7,10 +7,14 @@ package checker
 
 import clusterService "github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/client/generated"
 
-func gpuComputeModes(cluster *clusterService.DisplayedCluster) map[string]GpuComputeModeStatus {
+// GpuComputeModes reads runtime-reported availability independently of cluster version.
+func GpuComputeModes(cluster *clusterService.DisplayedCluster) map[string]GpuComputeModeStatus {
 	modes := map[string]GpuComputeModeStatus{
 		"time-slicing": {Reason: "GPU compute mode availability has not been reported"},
 		"sm-sharing":   {Reason: "GPU compute mode availability has not been reported"},
+	}
+	if cluster == nil {
+		return modes
 	}
 	status := cluster.Status.Get()
 	if status == nil {

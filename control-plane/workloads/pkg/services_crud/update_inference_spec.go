@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"net/http"
 	"reflect"
 	"sort"
@@ -167,7 +168,7 @@ func UpdateInferenceSpec(ctx context.Context, workloadId string, tenantSettingsC
 		}
 
 		// validate policy
-		_, policyErr := validatePolicy(ctx, nativeWorkload)
+		_, policyErr := validatePolicy(ctx, nativeWorkload, request.Spec.Compute != nil)
 		if policyErr != nil {
 			policyErr = redactSensitiveValuesFromResponse(policyErr, sensitiveRequestValues)
 			return api.Response(int(policyErr.Code), policyErr), nil
@@ -224,7 +225,7 @@ func UpdateInferenceSpec(ctx context.Context, workloadId string, tenantSettingsC
 		apiErr := NewSubmissionErrorWithDetails(copyErr.Code, copyErr.Message, copyErr.Details)
 		return api.Response(int(apiErr.Code), apiErr), nil
 	}
-	if _, policyErr := validatePolicy(ctx, mergedWorkload); policyErr != nil {
+	if _, policyErr := validatePolicy(ctx, mergedWorkload, request.Spec.Compute != nil); policyErr != nil {
 		policyErr = redactSensitiveValuesFromResponse(policyErr, sensitiveRequestValues)
 		return api.Response(int(policyErr.Code), policyErr), nil
 	}
@@ -292,6 +293,10 @@ func composeInferenceUpdateNative(
 	workload *models_crud.Workload,
 	options composer.FieldsComposerOptions,
 ) (composer.WorkloadRequirements, *workloadsApi.SubmissionErrorV2) {
+	if err := validateNativeGpuMode(workload.Spec); err != nil {
+		return composer.WorkloadRequirements{}, err
+	}
+
 	jobSpecComposer := runai_workloads.NewSupersetToJobSpecComposer(
 		Inference,
 		workload.Name,
@@ -346,6 +351,8 @@ func mergeUpdateSpecIntoFullSpec(ctx context.Context, fullSpec *workloadsApi.Sup
 	if err != nil {
 		return workloadsApi.NewError(http.StatusBadRequest, err.Error())
 	}
+
+	gpumode.StripEffectiveModes(updateSpecAsMap)
 
 	if err := restoreRedactedSensitiveEnvironmentVariableValues(updateSpecAsMap, fullSpecAsMap); err != nil {
 		return workloadsApi.NewError(http.StatusBadRequest, err.Error())

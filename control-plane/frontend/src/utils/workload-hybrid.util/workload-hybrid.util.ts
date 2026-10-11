@@ -1065,6 +1065,7 @@ function getComputeField(
   return {
     gpuDevicesRequest: compute.gpuDevicesRequest,
     gpuRequestType: compute.gpuRequestType,
+    gpuComputeMode: compute.gpuComputeMode,
     gpuPortionRequest: compute.gpuPortionRequest,
     gpuPortionLimit: compute.gpuPortionLimit,
     gpuMemoryRequest: compute.gpuMemoryRequest,
@@ -1358,7 +1359,7 @@ function _getBaseFlatWorkloadSpecData(workloadSpec: IUISuperWorkloadSpec): Super
 
 function getComputeFieldFromUI(compute: WorkspaceSpecSpecAllOfCompute): WorkspaceSpecSpecAllOfCompute {
   return {
-    ...compute,
+    ...omit(compute, ["computeMode"]),
     gpuPortionRequest: compute.gpuPortionRequest === 1 ? undefined : compute.gpuPortionRequest,
     gpuRequestType: compute.gpuPortionRequest === 1 ? undefined : compute.gpuRequestType,
   };

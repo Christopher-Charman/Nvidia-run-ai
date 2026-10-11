@@ -22,7 +22,7 @@ var _ = Describe("GPU compute mode configuration", func() {
 		func(statusJSON string, timeSlicing, smSharing bool) {
 			displayed := &openapi.DisplayedCluster{}
 			Expect(json.Unmarshal([]byte(statusJSON), displayed)).To(Succeed())
-			modes := gpuComputeModes(displayed)
+			modes := GpuComputeModes(displayed)
 			Expect(modes).To(HaveLen(2))
 			Expect(modes["time-slicing"].Available).To(Equal(timeSlicing))
 			Expect(modes["sm-sharing"].Available).To(Equal(smSharing))
@@ -61,7 +61,7 @@ var _ = Describe("GPU compute mode configuration", func() {
 	It("preserves the parent failure reason for both modes", func() {
 		displayed := &openapi.DisplayedCluster{}
 		Expect(json.Unmarshal([]byte(`{"status":{"dependencies":{"optional":{"gpu-compute-modes":{"available":false,"reason":"runtime unavailable"}}}}}`), displayed)).To(Succeed())
-		for _, mode := range gpuComputeModes(displayed) {
+		for _, mode := range GpuComputeModes(displayed) {
 			Expect(mode).To(Equal(GpuComputeModeStatus{Reason: "runtime unavailable"}))
 		}
 	})

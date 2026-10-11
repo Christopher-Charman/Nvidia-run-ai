@@ -26,6 +26,14 @@ import (
 // Output of the composer is captured via wc.notificationsComposer; the only
 // value returned to the caller is the workload requirements summary.
 func composeNative(ctx context.Context, wc *workloadContext) (composer.WorkloadRequirements, *workloadsApi.SubmissionErrorV2) {
+	for _, spec := range []any{wc.spec, wc.masterSpec} {
+		if spec == nil {
+			continue
+		}
+		if err := validateNativeGpuMode(spec); err != nil {
+			return composer.WorkloadRequirements{}, err
+		}
+	}
 	switch wc.workloadType {
 	case DistributedInference:
 		return composeDistributedInferenceNative(ctx, wc)

@@ -305,6 +305,9 @@ func (s *ComputeApiService) UpdateComputeAssetById(ctx context.Context, id strin
 }
 
 func validateComputeSpec(computeSpec api.ComputeAssetSpec, supportMultiFraction bool) *api.Error {
+	if computeSpec.GpuComputeMode != nil && !computeSpec.GpuComputeMode.IsValid() {
+		return api.NewValidationError("compute.gpuComputeMode must be time-slicing or sm-sharing")
+	}
 	err := validateSingleComputeGpuRequest(computeSpec, supportMultiFraction)
 	if err != nil {
 		return err

@@ -24348,6 +24348,16 @@ components:
       nullable: true
       pattern: .*
       type: string
+    ComputeMode:
+      description: "Effective GPU compute sharing mode saved when the workload was\
+        \ submitted. This describes the submitted configuration, not observed GPU\
+        \ hardware state. Present for GPU workloads; ignored in requests."
+      enum:
+      - time-slicing
+      - sm-sharing
+      nullable: true
+      readOnly: true
+      type: string
     CpuCoreLimit:
       description: "Limitations on the number of CPUs consumed by the workload (0.5,\
         \ 1, .etc). The system guarantees that this workload will not be able to consume\
@@ -24425,6 +24435,16 @@ components:
       maxItems: 1000
       nullable: true
       type: array
+    GpuComputeMode:
+      description: GPU compute sharing mode. Policy and template defaults apply before
+        the built-in time-slicing fallback. Explicit modes require an available GPU
+        fractioning runtime on the selected cluster.
+      enum:
+      - time-slicing
+      - sm-sharing
+      minLength: 1
+      nullable: true
+      type: string
     GpuDevicesRequest:
       description: "Requested number of GPU devices. Currently if more than one device\
         \ is requested, it is not possible to provide values for gpuMemory or gpuPortion."
@@ -27099,6 +27119,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -28067,6 +28089,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -29119,6 +29143,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -30542,6 +30568,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -32005,6 +32033,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -33233,6 +33263,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -33756,6 +33788,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -35191,6 +35225,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -35714,6 +35750,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -37160,6 +37198,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -37683,6 +37723,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -39116,6 +39158,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -39639,6 +39683,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -41172,6 +41218,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -42142,6 +42190,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -43105,6 +43155,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -44140,6 +44192,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -45128,6 +45182,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -46079,6 +46135,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -47039,6 +47097,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -47987,6 +48047,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -49330,6 +49392,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -50296,6 +50360,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -51255,6 +51321,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -51946,6 +52014,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -53364,6 +53434,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -54510,6 +54582,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -55504,6 +55578,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -56057,6 +56133,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -57461,6 +57539,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -57983,6 +58063,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -59401,6 +59483,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -59954,6 +60038,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -61358,6 +61444,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -61880,6 +61968,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -63277,6 +63367,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -63830,6 +63922,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -65234,6 +65328,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -65756,6 +65852,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -67242,6 +67340,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -68212,6 +68312,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -69141,6 +69243,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -70105,6 +70209,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -71034,6 +71140,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -71996,6 +72104,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -72925,6 +73035,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -73884,6 +73996,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -74813,6 +74927,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -75812,6 +75928,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -76783,6 +76901,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -77777,6 +77897,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -78778,6 +78900,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -79746,6 +79870,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -80677,6 +80803,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -81643,6 +81771,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -82574,6 +82704,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -83538,6 +83670,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -84469,6 +84603,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -85430,6 +85566,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -86361,6 +86499,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -87322,6 +87462,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -88270,6 +88412,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -89222,6 +89366,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -90239,6 +90385,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -91195,6 +91343,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -92150,6 +92300,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -93093,6 +93245,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -94040,6 +94194,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -94981,6 +95137,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -95943,6 +96101,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -96886,6 +97046,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -97833,6 +97995,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -98772,6 +98936,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -99734,6 +99900,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -100677,6 +100845,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -101624,6 +101794,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -102560,6 +102732,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -103522,6 +103696,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -104465,6 +104641,8 @@ components:
                 gpuMemoryRequest: 10M
                 gpuMemoryPortionLimit: 0.5
                 gpuPortionRequest: 0.5
+                computeMode: time-slicing
+                gpuComputeMode: time-slicing
                 gpuMemoryPortionRequest: 0.5
                 largeShmRequest: false
                 cpuCoreRequest: 0.5
@@ -105412,6 +105590,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -106389,6 +106569,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -107332,6 +107514,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -108289,6 +108473,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -109232,6 +109418,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -110193,6 +110381,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -111136,6 +111326,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -112107,6 +112299,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -113073,6 +113267,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -114000,6 +114196,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -114962,6 +115160,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -115889,6 +116089,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -116849,6 +117051,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -117776,6 +117980,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -118733,6 +118939,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -119660,6 +119868,8 @@ components:
               gpuMemoryRequest: 10M
               gpuMemoryPortionLimit: 0.5
               gpuPortionRequest: 0.5
+              computeMode: time-slicing
+              gpuComputeMode: time-slicing
               gpuMemoryPortionRequest: 0.5
               largeShmRequest: false
               cpuCoreRequest: 0.5
@@ -120618,6 +120828,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -121563,6 +121775,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -122512,6 +122726,8 @@ components:
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
             gpuPortionRequest: 0.5
+            computeMode: time-slicing
+            gpuComputeMode: time-slicing
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
@@ -123733,6 +123949,8 @@ components:
           minimum: 0
           nullable: true
           type: number
+        gpuComputeMode:
+          $ref: '#/components/schemas/GpuComputeMode'
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestType'
         largeShmRequest:
@@ -124615,6 +124833,23 @@ components:
         instances:
           $ref: '#/components/schemas/ItemRules'
       type: object
+    GpuComputeModeOptions:
+      nullable: true
+      properties:
+        options:
+          description: Limit the permitted values for gpuComputeMode to a given set
+            of values.
+          items:
+            $ref: '#/components/schemas/GpuComputeModeOptions_options_inner'
+          nullable: true
+          type: array
+      type: object
+    GpuComputeModeRules:
+      allOf:
+      - $ref: '#/components/schemas/StringRulesCommon'
+      - $ref: '#/components/schemas/GpuComputeModeOptions'
+      nullable: true
+      type: object
     GpuRequestOptions:
       nullable: true
       properties:
@@ -124677,6 +124912,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/NumberRules'
           deprecated: true
+        gpuComputeMode:
+          $ref: '#/components/schemas/GpuComputeModeRules'
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestRules'
         largeShmRequest:
@@ -131679,12 +131916,16 @@ components:
         gpuMemoryRequest: 10M
         gpuMemoryPortionLimit: 0.5
         gpuPortionRequest: 0.5
+        computeMode: time-slicing
+        gpuComputeMode: time-slicing
         gpuMemoryPortionRequest: 0.5
         largeShmRequest: false
         cpuCoreRequest: 0.5
         gpuPortionLimit: 0.5
       nullable: true
       properties:
+        computeMode:
+          $ref: '#/components/schemas/ComputeMode'
         cpuCoreLimit:
           description: "Limitations on the number of CPUs consumed by the workload\
             \ (0.5, 1, .etc). The system guarantees that this workload will not be\
@@ -131731,6 +131972,8 @@ components:
           maxItems: 1000
           nullable: true
           type: array
+        gpuComputeMode:
+          $ref: '#/components/schemas/GpuComputeMode'
         gpuDevicesRequest:
           description: "Requested number of GPU devices. Currently if more than one\
             \ device is requested, it is not possible to provide values for gpuMemory\
@@ -133343,6 +133586,8 @@ components:
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
           gpuPortionRequest: 0.5
+          computeMode: time-slicing
+          gpuComputeMode: time-slicing
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
@@ -133508,6 +133753,17 @@ components:
           nullable: true
           pattern: "^[a-zA-Z_:][a-zA-Z0-9_:]*$"
           type: string
+        displayed:
+          description: Textual description of the value
+          nullable: true
+          pattern: .*
+          type: string
+      required:
+      - value
+    GpuComputeModeOptions_options_inner:
+      properties:
+        value:
+          $ref: '#/components/schemas/GpuComputeMode'
         displayed:
           description: Textual description of the value
           nullable: true

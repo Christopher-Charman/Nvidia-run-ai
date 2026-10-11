@@ -19,6 +19,8 @@ import {
 } from "@/swagger-models/assets-service-client";
 import {
   GpuRequestType,
+  GpuComputeMode,
+  ComputeMode,
   ScopeType,
   UidGidSource,
   WorkloadType,
@@ -294,6 +296,21 @@ describe("workload-hybrid.util", () => {
   });
 
   describe("_getCleanedComputeFieldsFromUI", () => {
+    it("preserves the requested mode and discards the effective response mode", () => {
+      const loaded = workloadHybridUtil.getComputeField({
+        gpuDevicesRequest: 1,
+        gpuComputeMode: GpuComputeMode.SmSharing,
+        computeMode: ComputeMode.TimeSlicing,
+      });
+      expect(loaded?.gpuComputeMode).toBe(GpuComputeMode.SmSharing);
+      expect(loaded).not.toHaveProperty("computeMode");
+      const result = workloadHybridUtil._getCleanedComputeFieldsFromUI({
+        ...loaded,
+        computeMode: ComputeMode.TimeSlicing,
+      });
+      expect(result).toEqual({ gpuDevicesRequest: 1, gpuComputeMode: GpuComputeMode.SmSharing });
+    });
+
     it("removes gpuPortionRequest and gpuRequestType when gpuPortionRequest is 1", () => {
       const compute: WorkspaceSpecSpecAllOfCompute = {
         gpuPortionRequest: 1,

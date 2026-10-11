@@ -807,6 +807,7 @@ var _ = Describe("Workload composer validations", func() {
 			actualAsMap, _ := gojsonq.LoadJson(payload.Spec.Compute)
 
 			expectAsMap, _ := gojsonq.LoadJson(api.WorkspaceSpecSpecAllOfCompute{
+				ComputeMode:       convutils.Ref(api.COMPUTEMODE_TIME_SLICING),
 				CpuCoreRequest:    convutils.Ref(0.1),
 				CpuCoreLimit:      convutils.Ref(0.5),
 				CpuMemoryRequest:  convutils.Ref("100M"),
@@ -878,6 +879,7 @@ var _ = Describe("Workload composer validations", func() {
 			actualMasterAsMap, _ := gojsonq.LoadJson(payload.MasterSpec.Get().Compute.Get())
 
 			expectedWorkerAsMap, _ := gojsonq.LoadJson(api.WorkspaceSpecSpecAllOfCompute{
+				ComputeMode:             convutils.Ref(api.COMPUTEMODE_TIME_SLICING),
 				CpuCoreRequest:          convutils.Ref(0.1),
 				CpuCoreLimit:            convutils.Ref(0.5),
 				CpuMemoryRequest:        convutils.Ref("100M"),
@@ -891,6 +893,7 @@ var _ = Describe("Workload composer validations", func() {
 			Expect(actualWorkerAsMap).To(Equal(expectedWorkerAsMap))
 
 			expectedMasterAsMap, _ := gojsonq.LoadJson(api.WorkspaceSpecSpecAllOfCompute{
+				ComputeMode:       convutils.Ref(api.COMPUTEMODE_TIME_SLICING),
 				CpuCoreRequest:    convutils.Ref(0.1),
 				CpuCoreLimit:      convutils.Ref(0.5),
 				CpuMemoryRequest:  convutils.Ref("100M"),

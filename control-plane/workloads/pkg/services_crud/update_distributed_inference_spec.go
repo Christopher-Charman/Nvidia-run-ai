@@ -255,6 +255,10 @@ func composeDistributedInferenceUpdateNative(
 	workload *models_crud.Workload,
 	options composer.FieldsComposerOptions,
 ) (composer.WorkloadRequirements, *workloadsApi.SubmissionErrorV2) {
+	if err := validateNativeGpuMode(workload.Spec); err != nil {
+		return composer.WorkloadRequirements{}, err
+	}
+
 	dInfComposer := runai_workloads.NewDinfWorkloadComposer(
 		workload.Name,
 		workload.CreatedBy,

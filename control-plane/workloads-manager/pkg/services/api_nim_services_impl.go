@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"net/http"
 	"strings"
 
@@ -77,9 +78,11 @@ func (nsi *NimServicesImpl) CreateNimService(ctx context.Context, request api.Ni
 		return nil, complianceErr
 	}
 
+	gpumode.ResolveEffectiveModes(mutatedSpec)
 	if request.Spec.Compute != nil {
 		compute := *request.Spec.Compute
 		compute.GpuPortionRequest, compute.GpuPortionLimit = nil, nil
+		compute.ComputeMode = nil
 		request.Spec.Compute = &compute
 	}
 	copyErr := convutils.CopySpecs(&request.Spec, mutatedSpec)
@@ -125,6 +128,10 @@ func (nsi *NimServicesImpl) CreateNimService(ctx context.Context, request api.Ni
 		}
 	}
 
+	ctx, ctxErr := nsi.updateContextWithMergedSpec(ctx, &request.Metadata, request.Spec)
+	if ctxErr != nil {
+		return nil, NewSubmissionError(http.StatusInternalServerError, "failed to save resolved NIM spec", ctxErr)
+	}
 	workloadV2Response, submissionErrors := nsi.workloadsImpl.CreateWorkloadV2(ctx, workloadRequest, false)
 	if len(submissionErrors) > 0 {
 		return nil, &submissionErrors[0]
@@ -425,6 +432,12 @@ func (nsi *NimServicesImpl) UpdateNimServiceSpec(ctx context.Context, id string,
 		return nil, api.NewError(http.StatusBadRequest, "failed to merge NIMService spec for update", err)
 	}
 
+	if request.Spec.Compute != nil {
+		if err := nsi.resolveUpdatedNimGpuMode(ctx, existingNimService.Metadata.ProjectId, &mergedSpec); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := validateNimServingPortUrlRequiresExposure(mergedSpec.ServingPort); err != nil {
 		return nil, err
 	}
@@ -521,6 +534,8 @@ func (nsi *NimServicesImpl) mergeUpdateSpecIntoFullSpec(ctx context.Context, upd
 		}
 		*source = canonical
 	}
+
+	gpumode.StripEffectiveModes(partialSpecMap)
 
 	// Merge at root level: overwrite full spec fields with partial spec fields
 	// If a field in the partial spec is an empty object or empty array, delete it from the full spec

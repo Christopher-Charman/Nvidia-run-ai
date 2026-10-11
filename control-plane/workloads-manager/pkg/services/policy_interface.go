@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
+	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"net/http"
 	"strconv"
 
@@ -57,11 +58,16 @@ func validateMutatedSpecVsPolicy(rules map[string]interface{}, defaults map[stri
 		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
 	}
 
+	gpumode.StripEffectiveModes(mutatedSpec)
+	applyFallback, cleanupFallback := gpumode.PolicyFallback()
+	defer cleanupFallback()
+	options := &policyCompliance.ValidateComplianceOptions{ApplyBuiltInDefaults: applyFallback}
+
 	fieldsWithCantEditRule := make([]string, 0)
 	complianceErrors := make(policyCompliance.ComplianceErrors, 0)
 
 	policyCompliance.ValidateCompliance("", rules, defaults, mutatedSpec, order,
-		&fieldsWithCantEditRule, nil, &complianceErrors)
+		&fieldsWithCantEditRule, options, &complianceErrors)
 
 	if len(complianceErrors) != 0 {
 		issues := complianceErrors.ForWorkloadsV2()
@@ -177,6 +183,7 @@ func MutateWorkload[S WorkloadV2Spec](
 		if err != nil {
 			return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
 		}
+		gpumode.StripEffectiveModes(canonical)
 		*source = canonical
 	}
 

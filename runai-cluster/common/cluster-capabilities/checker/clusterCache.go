@@ -65,7 +65,7 @@ func setCacheClusterInfo(clusterId string, displayedCluster *clusterService.Disp
 	info := &clusterInfo{
 		Version: clusterSemverVersion,
 		Configuration: &ClusterConfiguration{
-			GpuComputeModes:             gpuComputeModes(displayedCluster),
+			GpuComputeModes:             GpuComputeModes(displayedCluster),
 			WorkloadOwnershipProtection: workloadOwnershipProtection(displayedCluster),
 			KnativeAvailable:            knativeAvailable,
 			KnativeScaleToZeroAvailable: knativeScaleToZeroAvailable,
