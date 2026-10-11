@@ -49,13 +49,9 @@ allOf:
         gpuMemoryRequest:
           $ref: ./compute/GpuMemoryRequest.yaml
         gpuPortionLimit:
-          allOf:
-          - $ref: ./compute/GpuPortionLimit.yaml
-          deprecated: true
+          $ref: ./compute/GpuPortionLimit.yaml
         gpuPortionRequest:
-          allOf:
-          - $ref: ./compute/GpuPortionRequest.yaml
-          deprecated: true
+          $ref: ./compute/GpuPortionRequest.yaml
         gpuRequestType:
           $ref: ./compute/GpuRequestType.yaml
         largeShmRequest:

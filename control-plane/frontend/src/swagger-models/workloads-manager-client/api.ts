@@ -1356,19 +1356,19 @@ export interface NimServiceSpecAllOfCompute {
      */
     'gpuMemoryRequest'?: string | null;
     /**
-     * 
+     * Deprecated. Use gpuMemoryPortionLimit instead. Limitations on the portion consumed by the workload, per GPU device. The system guarantees The gpuPotionLimit must be no less than the gpuPortionRequest.
      * @type {number}
      * @memberof NimServiceSpecAllOfCompute
      * @deprecated
      */
-    'gpuPortionLimit'?: number;
+    'gpuPortionLimit'?: number | null;
     /**
-     * 
+     * Deprecated. Use gpuMemoryPortionRequest instead. Required if and only if gpuRequestType is portion. States the portion of the GPU to allocate for the created workload, per GPU device, between 0 and 1. The default is no allocated GPUs.
      * @type {number}
      * @memberof NimServiceSpecAllOfCompute
      * @deprecated
      */
-    'gpuPortionRequest'?: number;
+    'gpuPortionRequest'?: number | null;
     /**
      * 
      * @type {GpuRequestType}

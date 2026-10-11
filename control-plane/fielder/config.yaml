@@ -1948,41 +1948,42 @@ fields:
   gpuPortionRequest:
     name: compute.gpuPortionRequest
     variants:
-      - deprecated: true
-        spec: compute/GpuPortionRequest.yaml
+      - spec: compute/GpuPortionRequest.yaml
         defaults: compute/GpuPortionRequest.yaml
-        rules: ../policy_rules/NumberRules.yaml
         targets:
           - SupersetSpec
           - SupersetDefaults
-          - SupersetRules
           - TrainingSpec
           - TrainingTemplateSpec
           - TrainingDefaults
-          - TrainingRules
           - WorkspaceSpec
           - WorkspaceTemplateSpec
           - WorkspaceDefaults
-          - WorkspaceRules
           - DistributedSpec
           - DistributedTemplateSpec
           - MasterSpec
           - MasterTemplateSpec
           - ReplicaDefaults
-          - ReplicaRules
           - InferenceSpec
           - InferenceTemplateSpec
           - InferenceUpdateSpec
           - InferenceDefaults
-          - InferenceRules
           - NimServiceSpec
           - NimServiceDefaults
-          - NimServiceRules
           - DinfLeaderWorkerSpec
           - DinfLeaderWorkerTemplateSpec
           - DinfLeaderWorkerDefaults
-          - DinfLeaderWorkerRules
           - AssetsComputeSpec
+      - deprecated: true
+        rules: ../policy_rules/NumberRules.yaml
+        targets:
+          - SupersetRules
+          - TrainingRules
+          - WorkspaceRules
+          - ReplicaRules
+          - InferenceRules
+          - NimServiceRules
+          - DinfLeaderWorkerRules
   gpuMemoryPortionLimit:
     name: compute.gpuMemoryPortionLimit
     variants:
@@ -2023,41 +2024,42 @@ fields:
   gpuPortionLimit:
     name: compute.gpuPortionLimit
     variants:
-      - deprecated: true
-        spec: compute/GpuPortionLimit.yaml
+      - spec: compute/GpuPortionLimit.yaml
         defaults: compute/GpuPortionLimit.yaml
-        rules: ../policy_rules/NumberRules.yaml
         targets:
           - SupersetSpec
           - SupersetDefaults
-          - SupersetRules
           - TrainingSpec
           - TrainingTemplateSpec
           - TrainingDefaults
-          - TrainingRules
           - WorkspaceSpec
           - WorkspaceTemplateSpec
           - WorkspaceDefaults
-          - WorkspaceRules
           - DistributedSpec
           - DistributedTemplateSpec
           - MasterSpec
           - MasterTemplateSpec
           - ReplicaDefaults
-          - ReplicaRules
           - InferenceSpec
           - InferenceTemplateSpec
           - InferenceUpdateSpec
           - InferenceDefaults
-          - InferenceRules
           - NimServiceSpec
           - NimServiceDefaults
-          - NimServiceRules
           - DinfLeaderWorkerSpec
           - DinfLeaderWorkerTemplateSpec
           - DinfLeaderWorkerDefaults
-          - DinfLeaderWorkerRules
           - AssetsComputeSpec
+      - deprecated: true
+        rules: ../policy_rules/NumberRules.yaml
+        targets:
+          - SupersetRules
+          - TrainingRules
+          - WorkspaceRules
+          - ReplicaRules
+          - InferenceRules
+          - NimServiceRules
+          - DinfLeaderWorkerRules
   gpuMemoryRequest:
     name: compute.gpuMemoryRequest
     variants:

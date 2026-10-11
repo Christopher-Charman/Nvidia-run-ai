@@ -45,13 +45,9 @@ allOf:
         gpuMemoryRequest:
           $ref: ../workloads_spec/compute/GpuMemoryRequest.yaml
         gpuPortionLimit:
-          allOf:
-          - $ref: ../workloads_spec/compute/GpuPortionLimit.yaml
-          deprecated: true
+          $ref: ../workloads_spec/compute/GpuPortionLimit.yaml
         gpuPortionRequest:
-          allOf:
-          - $ref: ../workloads_spec/compute/GpuPortionRequest.yaml
-          deprecated: true
+          $ref: ../workloads_spec/compute/GpuPortionRequest.yaml
         gpuRequestType:
           $ref: ../workloads_spec/compute/GpuRequestType.yaml
       type: object

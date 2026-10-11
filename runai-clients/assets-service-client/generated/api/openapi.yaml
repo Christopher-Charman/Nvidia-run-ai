@@ -14407,9 +14407,9 @@ components:
       type: string
     GpuPortionLimit:
       deprecated: true
-      description: "Deprecated in 3.1; use gpuMemoryPortionLimit. Scheduled for removal\
-        \ in 3.2. Limitations on the portion consumed by the workload, per GPU device.\
-        \ The system guarantees The gpuPotionLimit must be no less than the gpuPortionRequest."
+      description: "Deprecated. Use gpuMemoryPortionLimit instead. Limitations on\
+        \ the portion consumed by the workload, per GPU device. The system guarantees\
+        \ The gpuPotionLimit must be no less than the gpuPortionRequest."
       example: 0.5
       format: double
       minimum: 0
@@ -14417,10 +14417,10 @@ components:
       type: number
     GpuPortionRequest:
       deprecated: true
-      description: "Deprecated in 3.1; use gpuMemoryPortionRequest. Scheduled for\
-        \ removal in 3.2. Required if and only if gpuRequestType is portion. States\
-        \ the portion of the GPU to allocate for the created workload, per GPU device,\
-        \ between 0 and 1. The default is no allocated GPUs."
+      description: "Deprecated. Use gpuMemoryPortionRequest instead. Required if and\
+        \ only if gpuRequestType is portion. States the portion of the GPU to allocate\
+        \ for the created workload, per GPU device, between 0 and 1. The default is\
+        \ no allocated GPUs."
       example: 0.5
       format: double
       minimum: 0
@@ -14469,11 +14469,11 @@ components:
         gpuDevicesRequest: 1
         gpuMemoryRequest: 10M
         gpuMemoryPortionLimit: 0.5
-        gpuPortionRequest: ""
+        gpuPortionRequest: 0.5
         gpuMemoryPortionRequest: 0.5
         largeShmRequest: false
         cpuCoreRequest: 0.5
-        gpuPortionLimit: ""
+        gpuPortionLimit: 0.5
       properties:
         cpuCoreLimit:
           description: "Limitations on the number of CPUs consumed by the workload\
@@ -14568,13 +14568,26 @@ components:
           pattern: "^([+]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
           type: string
         gpuPortionLimit:
-          allOf:
-          - $ref: '#/components/schemas/GpuPortionLimit'
           deprecated: true
+          description: "Deprecated. Use gpuMemoryPortionLimit instead. Limitations\
+            \ on the portion consumed by the workload, per GPU device. The system\
+            \ guarantees The gpuPotionLimit must be no less than the gpuPortionRequest."
+          example: 0.5
+          format: double
+          minimum: 0
+          nullable: true
+          type: number
         gpuPortionRequest:
-          allOf:
-          - $ref: '#/components/schemas/GpuPortionRequest'
           deprecated: true
+          description: "Deprecated. Use gpuMemoryPortionRequest instead. Required\
+            \ if and only if gpuRequestType is portion. States the portion of the\
+            \ GPU to allocate for the created workload, per GPU device, between 0\
+            \ and 1. The default is no allocated GPUs."
+          example: 0.5
+          format: double
+          minimum: 0
+          nullable: true
+          type: number
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestType'
         largeShmRequest:
@@ -14638,11 +14651,11 @@ components:
           gpuDevicesRequest: 1
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
-          gpuPortionRequest: ""
+          gpuPortionRequest: 0.5
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
-          gpuPortionLimit: ""
+          gpuPortionLimit: 0.5
         usedBy:
           assets:
             compute:
@@ -14773,11 +14786,11 @@ components:
             gpuDevicesRequest: 1
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
-            gpuPortionRequest: ""
+            gpuPortionRequest: 0.5
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
-            gpuPortionLimit: ""
+            gpuPortionLimit: 0.5
           usedBy:
             assets:
               compute:
@@ -14891,11 +14904,11 @@ components:
             gpuDevicesRequest: 1
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
-            gpuPortionRequest: ""
+            gpuPortionRequest: 0.5
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
-            gpuPortionLimit: ""
+            gpuPortionLimit: 0.5
           usedBy:
             assets:
               compute:
@@ -60403,11 +60416,11 @@ components:
           gpuDevicesRequest: 1
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
-          gpuPortionRequest: ""
+          gpuPortionRequest: 0.5
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
-          gpuPortionLimit: ""
+          gpuPortionLimit: 0.5
         cleanPodPolicy: None
         servingConfiguration:
           requestTimeoutSeconds: 1
@@ -61860,11 +61873,11 @@ components:
           gpuDevicesRequest: 1
           gpuMemoryRequest: 10M
           gpuMemoryPortionLimit: 0.5
-          gpuPortionRequest: ""
+          gpuPortionRequest: 0.5
           gpuMemoryPortionRequest: 0.5
           largeShmRequest: false
           cpuCoreRequest: 0.5
-          gpuPortionLimit: ""
+          gpuPortionLimit: 0.5
         preemptibility: null
         security:
           privileged: ""
@@ -62632,11 +62645,11 @@ components:
             gpuDevicesRequest: 1
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
-            gpuPortionRequest: ""
+            gpuPortionRequest: 0.5
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
-            gpuPortionLimit: ""
+            gpuPortionLimit: 0.5
           cleanPodPolicy: None
           servingConfiguration:
             requestTimeoutSeconds: 1
@@ -64045,11 +64058,11 @@ components:
             gpuDevicesRequest: 1
             gpuMemoryRequest: 10M
             gpuMemoryPortionLimit: 0.5
-            gpuPortionRequest: ""
+            gpuPortionRequest: 0.5
             gpuMemoryPortionRequest: 0.5
             largeShmRequest: false
             cpuCoreRequest: 0.5
-            gpuPortionLimit: ""
+            gpuPortionLimit: 0.5
           preemptibility: null
           security:
             privileged: ""
@@ -65388,11 +65401,11 @@ components:
         gpuDevicesRequest: 1
         gpuMemoryRequest: 10M
         gpuMemoryPortionLimit: 0.5
-        gpuPortionRequest: ""
+        gpuPortionRequest: 0.5
         gpuMemoryPortionRequest: 0.5
         largeShmRequest: false
         cpuCoreRequest: 0.5
-        gpuPortionLimit: ""
+        gpuPortionLimit: 0.5
       nullable: true
       properties:
         cpuCoreLimit:
@@ -65488,13 +65501,26 @@ components:
           pattern: "^([+]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$"
           type: string
         gpuPortionLimit:
-          allOf:
-          - $ref: '#/components/schemas/GpuPortionLimit'
           deprecated: true
+          description: "Deprecated. Use gpuMemoryPortionLimit instead. Limitations\
+            \ on the portion consumed by the workload, per GPU device. The system\
+            \ guarantees The gpuPotionLimit must be no less than the gpuPortionRequest."
+          example: 0.5
+          format: double
+          minimum: 0
+          nullable: true
+          type: number
         gpuPortionRequest:
-          allOf:
-          - $ref: '#/components/schemas/GpuPortionRequest'
           deprecated: true
+          description: "Deprecated. Use gpuMemoryPortionRequest instead. Required\
+            \ if and only if gpuRequestType is portion. States the portion of the\
+            \ GPU to allocate for the created workload, per GPU device, between 0\
+            \ and 1. The default is no allocated GPUs."
+          example: 0.5
+          format: double
+          minimum: 0
+          nullable: true
+          type: number
         gpuRequestType:
           $ref: '#/components/schemas/GpuRequestType'
         largeShmRequest:
