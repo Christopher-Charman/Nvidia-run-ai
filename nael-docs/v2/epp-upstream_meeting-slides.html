@@ -1,0 +1,855 @@
+<!--
+  Run:ai + NVIDIA brand-style slide template
+  ==========================================
+  Self-contained HTML deck — no framework, no build step.
+
+  Conventions used in this deck:
+    - Each slide is a <div class="slide">; first one has class "active".
+    - Slide pattern: <h3>EYEBROW</h3> <h2>Title</h2> body...
+    - Section dividers: extra class "part-divider" with a faded big number.
+    - Title slide: extra class "title-slide" with centered content.
+    - Code blocks support inline color via <span style="color:var(--nvidia-green);">.
+    - Use class="flow-node|flow-arrow|flow-desc" inside <pre> for ASCII flows.
+
+  Navigation: ← → or Space to move, Home/End for first/last, swipe on touch.
+  Press V for one-page view, T for light/dark.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPP: Select the profile on imbalance, not on the mean</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #1a1a2e;
+    --bg-slide: #16213e;
+    --bg-card: #0f3460;
+    --accent: #76b900;
+    --accent-dim: #5a8f00;
+    --text: #e8e8e8;
+    --text-dim: #a0a0b0;
+    --text-bright: #ffffff;
+    --code-bg: #0d1117;
+    --border: #2a3a5e;
+    --nvidia-green: #76b900;
+    --runai-purple: #7b61ff;
+    --accent-strong: #76b900;
+  }
+
+  body.light {
+    --bg: #fafbfc;
+    --bg-slide: #ffffff;
+    --bg-card: #f2f4f8;
+    --text: #1a1a2e;
+    --text-dim: #5a6072;
+    --text-bright: #0a0a1a;
+    --code-bg: #f4f6fa;
+    --border: #d8dde6;
+    --accent-strong: #4d7a00;
+  }
+  body.light h3,
+  body.light th,
+  body.light code,
+  body.light .flow-node,
+  body.light .col h4,
+  body.light .status-ok,
+  body.light ul li::before,
+  body.light ol li::before { color: var(--accent-strong); }
+  body.light h1 .accent { color: var(--accent-strong); }
+  body.light ol li::before { background: rgba(77, 122, 0, 0.12); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 60px 80px;
+    position: relative;
+  }
+
+  .slide.active { display: flex; }
+  .slide-content { max-width: 1100px; width: 100%; }
+
+  /* Header bar */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--nvidia-green), var(--runai-purple));
+    z-index: 100;
+  }
+
+  .slide-number {
+    position: fixed; bottom: 24px; right: 40px;
+    font-size: 14px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; z-index: 100;
+  }
+
+  .logo-bar {
+    position: fixed; bottom: 24px; left: 40px;
+    font-size: 13px; color: var(--text-dim);
+    letter-spacing: 1px; text-transform: uppercase; z-index: 100;
+  }
+
+  /* Typography */
+  h1 {
+    font-size: 48px; font-weight: 700;
+    color: var(--text-bright); margin-bottom: 16px; line-height: 1.15;
+  }
+  h1 .accent { color: var(--nvidia-green); }
+  h1 .purple { color: var(--runai-purple); }
+
+  h2 {
+    font-size: 36px; font-weight: 600;
+    color: var(--text-bright); margin-bottom: 12px;
+  }
+
+  h3 {
+    font-size: 15px; font-weight: 500;
+    color: var(--nvidia-green); text-transform: uppercase;
+    letter-spacing: 2px; margin-bottom: 20px;
+  }
+
+  .subtitle {
+    font-size: 22px; color: var(--text-dim); font-weight: 300;
+    margin-bottom: 40px; line-height: 1.5;
+  }
+
+  p, li { font-size: 20px; line-height: 1.7; color: var(--text); }
+
+  .quote {
+    font-size: 20px; color: var(--text);
+    background: var(--bg-card);
+    border-left: 4px solid var(--nvidia-green);
+    padding: 20px 28px; border-radius: 0 8px 8px 0;
+    margin: 24px 0; line-height: 1.6; font-style: italic;
+  }
+
+  ul { list-style: none; padding: 0; }
+  ul li { padding: 8px 0 8px 28px; position: relative; }
+  ul li::before {
+    content: '▸'; position: absolute; left: 0;
+    color: var(--nvidia-green); font-weight: 700;
+  }
+
+  ol { padding-left: 24px; counter-reset: ol-counter; list-style: none; }
+  ol li {
+    padding: 8px 0 8px 36px; position: relative; counter-increment: ol-counter;
+  }
+  ol li::before {
+    content: counter(ol-counter);
+    position: absolute; left: 0; top: 8px;
+    color: var(--nvidia-green); font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(118, 185, 0, 0.1);
+    width: 26px; height: 26px; line-height: 26px;
+    text-align: center; border-radius: 4px; font-size: 14px;
+  }
+
+  strong { color: var(--text-bright); font-weight: 600; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--code-bg); padding: 2px 8px; border-radius: 4px;
+    font-size: 0.85em; color: var(--nvidia-green);
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 18px; }
+  th {
+    background: var(--bg-card); color: var(--nvidia-green);
+    text-align: left; padding: 14px 20px; font-weight: 600;
+    text-transform: uppercase; font-size: 13px; letter-spacing: 1px;
+    border-bottom: 2px solid var(--nvidia-green);
+  }
+  td { padding: 12px 20px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:hover td { background: rgba(118, 185, 0, 0.05); }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px; margin: 20px 0;
+    overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; line-height: 1.6; color: var(--text);
+  }
+  .flow-node { color: var(--nvidia-green); font-weight: 500; }
+  .flow-arrow { color: var(--text-dim); }
+  .flow-desc { color: var(--text-dim); font-style: italic; }
+
+  /* Two-column layout */
+  .columns {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 20px 0;
+  }
+  .col {
+    background: var(--bg-card); border-radius: 12px;
+    padding: 28px; border: 1px solid var(--border);
+  }
+  .col h4 {
+    font-size: 18px; color: var(--nvidia-green);
+    margin-bottom: 16px; font-weight: 600;
+  }
+  .col pre {
+    margin: 12px 0 0 0; font-size: 16px; border: none; background: var(--code-bg);
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-green { background: rgba(118, 185, 0, 0.2); color: var(--nvidia-green); }
+  .badge-purple { background: rgba(123, 97, 255, 0.2); color: var(--runai-purple); }
+
+  /* Keyboard hint */
+  .keyboard-hint {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%); font-size: 12px;
+    color: var(--text-dim); opacity: 0.5; z-index: 100;
+  }
+  kbd {
+    background: var(--border); padding: 2px 8px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  }
+
+  /* Status indicators */
+  .status-ok { color: var(--nvidia-green); }
+  .status-redirect { color: #f0a030; }
+  .status-denied { color: #e04040; }
+
+  /* Title slide special */
+  .title-slide h1 { font-size: 56px; margin-bottom: 8px; }
+  .title-slide .subtitle { font-size: 24px; }
+
+  /* Section divider */
+  .part-divider { text-align: center; }
+  .part-divider h2 { font-size: 44px; margin-bottom: 16px; }
+  .part-divider .subtitle { font-size: 20px; }
+  .part-number {
+    font-size: 100px; font-weight: 700;
+    color: var(--nvidia-green); opacity: 0.2;
+    line-height: 1; margin-bottom: 10px;
+  }
+
+  /* Top-right control cluster (slide ⇄ document, dark ⇄ light) */
+  .controls {
+    position: fixed; top: 16px; right: 16px; z-index: 200;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .ctrl-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--bg-card); color: var(--text);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 14px; font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 500; letter-spacing: 0.5px;
+    cursor: pointer; user-select: none;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .ctrl-btn:hover { border-color: var(--nvidia-green); color: var(--text-bright); }
+  .ctrl-btn svg { width: 14px; height: 14px; }
+  .ctrl-btn.icon-only { padding: 8px; width: 34px; height: 34px; justify-content: center; }
+  .view-toggle .label-doc { display: inline; }
+  .view-toggle .label-slide { display: none; }
+  body.doc-mode .view-toggle .label-doc { display: none; }
+  body.doc-mode .view-toggle .label-slide { display: inline; }
+  .theme-toggle .icon-moon { display: none; }
+  .theme-toggle .icon-sun { display: inline; }
+  body.light .theme-toggle .icon-moon { display: inline; }
+  body.light .theme-toggle .icon-sun { display: none; }
+
+  /* Document (one-page) mode */
+  body.doc-mode { overflow: auto; height: auto; }
+  body.doc-mode .slide {
+    display: flex !important;
+    height: auto; min-height: auto;
+    padding: 56px 80px;
+    border-bottom: 1px solid var(--border);
+    page-break-after: always;
+    break-after: page;
+  }
+  body.doc-mode .slide:last-of-type { border-bottom: none; }
+  body.doc-mode .slide-number,
+  body.doc-mode .logo-bar,
+  body.doc-mode .keyboard-hint { display: none; }
+  body.doc-mode .top-bar { position: absolute; }
+
+  /* Print: always render as single document */
+  @media print {
+    body { overflow: visible; height: auto; background: #fff; color: #000; }
+    .controls, .slide-number, .logo-bar, .keyboard-hint { display: none !important; }
+    .slide {
+      display: flex !important;
+      height: auto; min-height: auto;
+      padding: 40px 60px;
+      page-break-after: always;
+      break-after: page;
+    }
+    .slide:last-of-type { page-break-after: auto; break-after: auto; }
+    .top-bar { position: absolute; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+<div class="logo-bar">RUN:AI · NVIDIA</div>
+<div class="slide-number" id="slideNum"></div>
+<div class="keyboard-hint"><kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate</div>
+
+<div class="controls">
+  <button class="ctrl-btn view-toggle" id="viewToggle" title="Toggle slide / one-page view (press V)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+    <span class="label-doc">One page</span>
+    <span class="label-slide">Slides</span>
+  </button>
+  <button class="ctrl-btn icon-only theme-toggle" id="themeToggle" title="Toggle dark / light theme (press T)" aria-label="Toggle theme">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+    </svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"></path>
+    </svg>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 1: TITLE -->
+<div class="slide active title-slide">
+  <div class="slide-content" style="text-align:center;">
+    <h1>Select the profile on <span class="accent">imbalance</span>,<br>not on the <span class="purple">mean</span></h1>
+    <p class="subtitle">Rule-based scheduling-profile selection for the EPP, revised.<br>For discussion with Nir before opening an upstream issue.</p>
+    <div style="margin-top:40px;">
+      <span class="badge badge-green">Draft proposal</span>&nbsp;&nbsp;
+      <span class="badge badge-purple">Not implemented</span>&nbsp;&nbsp;
+      <span class="badge badge-green">Numbers illustrative</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 2: THE STORY IN 3 LINES -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>The story in 3 lines</h3>
+    <h2>Where we are, what broke, what I propose</h2>
+    <ol style="margin-top:16px;">
+      <li><strong>Today:</strong> the EPP runs one profile with fixed scorer weights. Two ideas exist for adapting: Nir's background weight tuning, and my per-request profile selection on mean queue depth.</li>
+      <li><strong>What broke in mine:</strong> the mean cannot see a hotspot, the choice flips between requests, and the thresholds are raw request counts that mean nothing across models.</li>
+      <li><strong>Proposal:</strong> select on two normalized signals, imbalance and pressure, with enter/exit bounds. Same statistics Nir already uses, so this becomes the discrete, explainable mode of his work, not a competitor.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 3: PART 1 DIVIDER -->
+<div class="slide">
+  <div class="slide-content part-divider">
+    <div class="part-number">1</div>
+    <h2>Where we are today</h2>
+    <p class="subtitle">One profile, fixed weights, two ideas on the table</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 4: EPP TODAY -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Current state · ✅ exists</h3>
+    <h2>The EPP runs one profile with fixed weights</h2>
+    <pre style="font-size:15px; line-height:1.7;">
+<span class="flow-node">Incoming request</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">✅ ProfileHandler</span>        <span class="flow-desc">single-profile-handler: always the one configured profile</span>
+<span class="flow-arrow">        │  run "balanced"</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">✅ Profile "balanced"</span>    <span class="flow-desc">decode-filter → prefix ×2 · KV ×1 · queue ×1 → max-score picker</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">Selected pod</span>             <span class="flow-desc">score(p) = Σ w[j] × s[j,p]   weights never change</span></pre>
+    <p style="color:var(--text-dim); font-size:17px;">Scores react to live metrics. Weights do not. Under a hotspot the prefix scorer keeps pulling traffic to the hot pod.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 5: TWO IDEAS -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Current state · two approaches</h3>
+    <h2>Two ways to adapt, already on the table</h2>
+    <div class="columns">
+      <div class="col" style="border-color: var(--runai-purple);">
+        <h4 style="color:var(--runai-purple);">Nir · background weight tuning</h4>
+        <ul>
+          <li>Detectors measure <strong>imbalance</strong> (CV of KV + assigned) and <strong>pressure</strong> (waiting share), pool-wide</li>
+          <li>Configurator rewrites scorer weights <strong>continuously</strong> via a sigmoid</li>
+          <li>Zero work on the request path</li>
+          <li>Prerequisites merged: #2119 categories, #2207 float weights</li>
+        </ul>
+      </div>
+      <div class="col" style="border-color: var(--nvidia-green);">
+        <h4>Nael v1 · per-request profile selection</h4>
+        <ul>
+          <li>One plugin reads the request's candidates, computes <strong>mean queue</strong></li>
+          <li>Ordered rules pick one of <strong>predefined profiles</strong> with fixed weights</li>
+          <li>Explainable: "rule X matched → profile Y"</li>
+          <li>Draft only, no prototype, no numbers</li>
+        </ul>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:17px;">Continuous versus discrete. Pool-scoped versus request-scoped. Both want the same outcome: affinity when even, distribution when uneven.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 6: V1 FLOW -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Current state · my v1 suggestion</h3>
+    <h2>What v1 did, step by step</h2>
+    <pre style="font-size:15px; line-height:1.7;">
+<span class="flow-node">✅ Locate and screen candidates</span>
+<span class="flow-arrow">        │  candidate snapshots: WaitingQueueSize, UpdateTime</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">🆕 Produce</span>                <span class="flow-desc">meanQueue = Σ queue[i] / N   (all candidates must be fresh)</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">🆕 Pick</span>                   <span class="flow-desc">mean ≥ 20 → load-oriented · mean &lt; 5 → cache-oriented · else balanced</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">✅ Run selected profile</span>   <span class="flow-desc">fixed weights per profile · max-score picker</span></pre>
+    <div class="quote" style="margin-top:8px;">The request chooses a fixed policy; that policy chooses the pod.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7: PART 2 DIVIDER -->
+<div class="slide">
+  <div class="slide-content part-divider">
+    <div class="part-number">2</div>
+    <h2>Three things that break in v1</h2>
+    <p class="subtitle">Wrong measurement · no memory · wrong units</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 8: PROBLEM 1 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Problem 1 · wrong measurement</h3>
+    <h2>The mean cannot see a hotspot</h2>
+    <table>
+      <tr><th>Candidate queues</th><th>Mean</th><th>v1 selects</th><th>What is really happening</th></tr>
+      <tr><td><code>10, 10, 10</code></td><td>10</td><td class="status-ok">balanced ✔</td><td>Even load, affinity is safe</td></tr>
+      <tr><td><code>0, 0, 30</code></td><td>10</td><td class="status-denied">balanced ✘</td><td>One hot pod, two idle. Should distribute</td></tr>
+      <tr><td><code>18, 20, 22</code></td><td>20</td><td class="status-denied">load-oriented ✘</td><td>Busy but even. Queue scorer cannot help</td></tr>
+      <tr><td><code>5, 20, 35</code></td><td>20</td><td class="status-ok">load-oriented ✔</td><td>Busy and uneven</td></tr>
+    </table>
+    <p style="color:var(--text-dim); font-size:17px;">Rows 1 and 2 get the same answer. Rows 3 and 4 get the same answer. The one thing we switch profiles for, unevenness, is the one thing the mean cannot measure.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 9: PROBLEM 3 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Problem 3 · no memory</h3>
+    <h2>Every request decides from scratch, so the choice flips</h2>
+    <pre style="font-size:16px; line-height:1.8;">
+request 1   signal 0.48   0.48 ≥ 0.5 ?  no   → balanced
+request 2   signal 0.52   0.52 ≥ 0.5 ?  yes  → load-oriented     <span class="status-redirect">flip</span>
+request 3   signal 0.47   0.47 ≥ 0.5 ?  no   → balanced          <span class="status-redirect">flip</span>
+request 4   signal 0.55   0.55 ≥ 0.5 ?  yes  → load-oriented     <span class="status-redirect">flip</span>
+request 5   signal 0.40   0.40 ≥ 0.5 ?  no   → balanced          <span class="status-redirect">flip</span></pre>
+    <ul>
+      <li>Nothing changed in the pool. This is scrape jitter around the threshold.</li>
+      <li>Same-session requests land on different pods. The KV cache they share is wasted.</li>
+      <li>We pay for adaptation and lose affinity at the same time.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 10: PROBLEM 6 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Problem 6 · wrong units</h3>
+    <h2>"20 waiting requests" means nothing without capacity</h2>
+    <table>
+      <tr><th>Pool</th><th>Can run at once</th><th>20 waiting is…</th><th>v1 rule <code>mean ≥ 20</code></th></tr>
+      <tr><td>Llama 8B · 1 × A100</td><td>~256</td><td>~8% of capacity, idle</td><td class="status-denied">load-oriented ✘ far too early</td></tr>
+      <tr><td>Llama 70B · 8 × A100</td><td>~32</td><td>~60% of capacity, busy</td><td class="status-ok">load-oriented ✔</td></tr>
+    </table>
+    <ul>
+      <li>One YAML, one number, right on one pool and wrong on the other.</li>
+      <li>Every operator must retune per model and per GPU, and nothing tells them how.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 11: COMMON ROOT -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Problems 1 · 3 · 6</h3>
+    <h2>One root cause: the rule input</h2>
+    <table>
+      <tr><th>#</th><th>Problem</th><th>Because the rule input is…</th></tr>
+      <tr><td>1</td><td>Cannot see a hotspot</td><td>a <strong>mean</strong>, which has no notion of spread</td></tr>
+      <tr><td>3</td><td>Flips between requests</td><td>compared to a <strong>single threshold</strong> with no memory</td></tr>
+      <tr><td>6</td><td>Not portable across models</td><td>a <strong>raw count</strong> in requests, not a ratio</td></tr>
+    </table>
+    <div class="quote">Fix the input once and all three go away. The rest of v1, one plugin, predefined profiles, default on invalid data, stays.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 12: PART 3 DIVIDER -->
+<div class="slide">
+  <div class="slide-content part-divider">
+    <div class="part-number">3</div>
+    <h2>The proposal</h2>
+    <p class="subtitle">Two normalized signals · enter/exit bounds · same plugin</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 13: THE SIGNALS -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · signals</h3>
+    <h2>Two numbers between 0 and 1, from metrics the EPP already has</h2>
+    <table>
+      <tr><th>Signal</th><th>Formula</th><th>Answers</th><th>Source (per pod, ✅ exists)</th></tr>
+      <tr><td><code>cv</code> imbalance</td><td><code>min(1, σ / mean)</code> of the queues, 0 if mean &lt; gate</td><td>How <strong>uneven</strong> is the load?</td><td><code>WaitingQueueSize</code></td></tr>
+      <tr><td><code>P</code> pressure</td><td><code>Σ waiting / Σ (waiting + running)</code></td><td>How <strong>much</strong> is waiting?</td><td><code>WaitingQueueSize</code>, <code>RunningRequestsSize</code></td></tr>
+    </table>
+    <ul>
+      <li>Both are the exact statistics of Nir's imbalance and pressure detectors, scoped to the request's candidates instead of the pool.</li>
+      <li>No new scraping. Read via <code>GetMetrics()</code> like <code>queue-scorer</code> does. The pool averages exported to Prometheus are not usable: pool-wide, truncated, and not reachable from a plugin.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 14: WHERE IT SITS -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · placement</h3>
+    <h2>Where the change sits in the existing path</h2>
+    <pre style="font-size:14px; line-height:1.6;">
+<span class="flow-node">✅ Locate and screen candidates</span>
+<span class="flow-arrow">        │  snapshots: WaitingQueueSize · RunningRequestsSize · UpdateTime</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">🆕 Produce</span>   one pass: mean, cv, P, expiresAt           <span class="flow-desc">changed: what is computed</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">✅ Admission</span>
+<span class="flow-arrow">        │</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">🆕 Pick</span>      regime check → enter/exit rules → store     <span class="flow-desc">changed: how it decides</span>   ◄──► <span class="flow-node">🆕 shared regime state</span>
+<span class="flow-arrow">        │</span>                                                                        <span class="flow-desc">on the plugin instance</span>
+<span class="flow-arrow">        ▼</span>
+<span class="flow-node">✅ Run selected profile</span>   fixed weights, unchanged
+
+<span class="flow-node">🔜 Later</span>     same cv / P from Nir's background detectors  <span class="flow-desc">if selection moves into the configurator</span></pre>
+    <p style="color:var(--text-dim); font-size:16px;">✅ exists today · 🆕 this proposal · 🔜 depends on where we agree selection should live</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 15: FIX 1 IN ACTION -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Fix 1 · imbalance</h3>
+    <h2>Same pools, new rule input</h2>
+    <table style="font-size:17px;">
+      <tr><th>waiting</th><th>running</th><th>mean</th><th>cv</th><th>P</th><th>v1 (mean)</th><th>v2 (cv, P)</th></tr>
+      <tr><td><code>0, 0, 0</code></td><td><code>5, 5, 5</code></td><td>0</td><td>0.00</td><td>0.00</td><td>cache</td><td class="status-ok">cache ✔</td></tr>
+      <tr><td><code>18, 20, 22</code></td><td><code>30, 30, 30</code></td><td>20</td><td>0.10</td><td>0.40</td><td class="status-denied">load ✘</td><td class="status-ok">balanced ✔</td></tr>
+      <tr><td><code>0, 0, 30</code></td><td><code>10, 10, 10</code></td><td>10</td><td>1.00</td><td>0.50</td><td class="status-denied">balanced ✘</td><td class="status-ok">load ✔</td></tr>
+      <tr><td><code>0, 2, 4</code></td><td><code>10, 10, 10</code></td><td>2</td><td>0 (gated)</td><td>0.17</td><td>cache</td><td class="status-ok">cache ✔</td></tr>
+      <tr><td><code>5, 20, 35</code></td><td><code>30, 30, 30</code></td><td>20</td><td>0.75</td><td>0.40</td><td>load</td><td class="status-ok">load ✔</td></tr>
+    </table>
+    <p style="color:var(--text-dim); font-size:16px;">Rules: <code>cv ≥ 0.5 → load-oriented</code>, then <code>P &lt; 0.2 → cache-oriented</code>, else balanced. The two wrong answers of v1 are now right; nothing that was right became wrong.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 16: FIX 3 IN ACTION -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Fix 3 · memory</h3>
+    <h2>Enter at 0.5, leave at 0.35, do nothing in between</h2>
+    <div class="columns">
+      <div class="col">
+        <h4 style="color:#e04040;">Before · one threshold</h4>
+        <pre>0.48  balanced
+0.52  load         <span class="status-redirect">flip</span>
+0.47  balanced     <span class="status-redirect">flip</span>
+0.55  load         <span class="status-redirect">flip</span>
+0.40  balanced     <span class="status-redirect">flip</span>
+0.30  balanced
+
+4 flips</pre>
+      </div>
+      <div class="col" style="border-color: var(--nvidia-green);">
+        <h4>After · enter 0.5 / exit 0.35</h4>
+        <pre>0.48  balanced     no regime, below enter
+0.52  load         <span class="status-ok">enter</span>
+0.47  load         held, above exit
+0.55  load         held
+0.40  load         held, above exit
+0.30  balanced     <span class="status-ok">exit</span>
+
+1 entry, 1 exit</pre>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:16px;">The plugin remembers one thing: the current profile. A thermostat: on at 25, off at 23, no flicker at 24. Smoothing (Nir's 0.1/0.9) is optional on top; it trims spikes but does not prevent flips.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 17: FIX 6 IN ACTION -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Fix 6 · units</h3>
+    <h2>Ask "what share is waiting", not "how many"</h2>
+    <table>
+      <tr><th>Pool</th><th>waiting</th><th>running</th><th><code>P = waiting / (waiting + running)</code></th><th>Rule <code>P ≥ 0.4</code> busy?</th></tr>
+      <tr><td>Llama 8B · 1 × A100</td><td>20</td><td>256</td><td>0.07</td><td class="status-ok">no, idle ✔</td></tr>
+      <tr><td>Llama 70B · 8 × A100</td><td>20</td><td>32</td><td>0.38</td><td class="status-ok">almost, busy ✔</td></tr>
+    </table>
+    <ul>
+      <li>The pod's capacity is built into the ratio. One threshold works on every model and GPU.</li>
+      <li><code>cv</code> is already unitless. The only count left is the gate "mean &lt; 3 → cv = 0", which just asks "is there anything worth redistributing".</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 18: YAML -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · configuration</h3>
+    <h2>What the operator writes</h2>
+    <div class="columns">
+      <div class="col">
+        <h4 style="color:#e04040;">v1</h4>
+        <pre>rules:
+- name: high-queue
+  when: { metric: waitingQueueSize,
+          aggregation: mean,
+          operator: gte, <span style="color:#e04040;">value: 20</span> }
+  profile: load-oriented
+- name: low-queue
+  when: { metric: waitingQueueSize,
+          aggregation: mean,
+          operator: lt, <span style="color:#e04040;">value: 5</span> }
+  profile: cache-oriented</pre>
+      </div>
+      <div class="col" style="border-color: var(--nvidia-green);">
+        <h4>v2</h4>
+        <pre>minMeanQueue: 3      # gate for cv
+smoothing: 0.1       # α, 0 disables
+rules:
+- name: hotspot
+  when: { <span style="color:var(--nvidia-green);">signal: imbalance</span>,
+          operator: gte,
+          <span style="color:var(--nvidia-green);">enter: 0.5, exit: 0.35</span> }
+  profile: load-oriented
+- name: idle
+  when: { <span style="color:var(--nvidia-green);">signal: pressure</span>,
+          operator: lt,
+          <span style="color:var(--nvidia-green);">enter: 0.2, exit: 0.3</span> }
+  profile: cache-oriented</pre>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:16px;">Profiles and weights unchanged (cache 4/1/1, balanced 2/1/1, load 1/1/4). Only handler parameters change. Startup validation: exit &lt; enter for gte, exit &gt; enter for lt.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 19: RELATION TO NIR -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · relation to Nir's work</h3>
+    <h2>Same measurements, discrete instead of continuous</h2>
+    <table>
+      <tr><th></th><th>Nir · configurator</th><th>This proposal</th></tr>
+      <tr><td>Imbalance signal</td><td>CVn of KV + assigned, pool-wide</td><td>cv of waiting queue, candidate-scoped (KV optional)</td></tr>
+      <tr><td>Pressure signal</td><td><code>Σ waiting / Σ (waiting + running)</code></td><td>identical</td></tr>
+      <tr><td>Smoothing</td><td>0.1 × prev + 0.9 × new</td><td>same, optional</td></tr>
+      <tr><td>Stability</td><td>sigmoid (k = 6, s0 = 0.6)</td><td>enter/exit bounds</td></tr>
+      <tr><td>Output</td><td>continuous weights, derived</td><td>one of N operator-written profiles</td></tr>
+      <tr><td>Explainability</td><td>"weights were 0.11 / 0.44 / 0.44"</td><td>"rule hotspot entered at cv 0.52"</td></tr>
+    </table>
+    <div class="quote" style="margin-top:8px;">Issue #1992 already lists "select groups of scorers instead of adjusting each weight" as an alternative. This is that alternative, built on the same signals.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 20: UNCHANGED + OUT OF SCOPE -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · boundaries</h3>
+    <h2>What stays, what is deliberately not here</h2>
+    <div class="columns">
+      <div class="col" style="border-color: var(--nvidia-green);">
+        <h4>Unchanged from v1</h4>
+        <ul>
+          <li>One plugin: <code>DataProducer</code> + <code>ProfileHandler</code>, no new CRD</li>
+          <li>Candidate-scoped evaluation</li>
+          <li>Predefined profiles, fixed weights</li>
+          <li>Default profile on invalid data, no retry</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4 style="color:var(--text-dim);">Tracked separately</h4>
+        <ul>
+          <li>Single ProfileHandler seat vs <code>disagg-profile-handler</code></li>
+          <li>Producer budget, fallback metric, p99 benchmark</li>
+          <li>Partial metric coverage (≥ 80%) instead of full</li>
+          <li>Deriving profile weights from a budget</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 21: PART 4 DIVIDER -->
+<div class="slide">
+  <div class="slide-content part-divider">
+    <div class="part-number">4</div>
+    <h2>What I need from you</h2>
+    <p class="subtitle">Four decisions, then a path to upstream</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 22: QUESTIONS FOR NIR -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Decisions</h3>
+    <h2>Four questions for this meeting</h2>
+    <ol>
+      <li><strong>Where should selection live?</strong> A separate ProfileHandler (request-scoped, but takes the only handler seat), or a <code>mode: discrete</code> inside your configurator (pool-scoped, coexists with disagg)?</li>
+      <li><strong>Normalization of cv.</strong> Plain <code>σ / mean</code> capped at 1, or your <code>(σ / mean) / √(N−1)</code>? Copying yours makes a later switch of signal source a no-op.</li>
+      <li><strong>Does discrete selection sound worth benchmarking</strong> against your continuous weights on the same hotspot setup (8 pods, Llama 8B, GuideLLM)?</li>
+      <li><strong>Which branch and settings</strong> produced your reported results, especially whether the pressure cap was active?</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 23: PATH TO UPSTREAM -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Next steps</h3>
+    <h2>Proposed path to the community</h2>
+    <pre style="font-size:16px; line-height:1.9;">
+<span class="flow-node">  1. This meeting</span>              <span class="flow-desc">agree on the four decisions</span>
+<span class="flow-arrow">         │</span>
+<span class="flow-arrow">         ▼</span>
+<span class="flow-node">  2. Open upstream issue</span>       <span class="flow-desc">in the #1992 thread: "discrete profile selection on imbalance signals"</span>
+<span class="flow-arrow">         │</span>
+<span class="flow-arrow">         ▼</span>
+<span class="flow-node">  3. Prototype</span>                 <span class="flow-desc">on adaptive-with-pressure, reusing the detectors' statistics</span>
+<span class="flow-arrow">         │</span>
+<span class="flow-arrow">         ▼</span>
+<span class="flow-node">  4. Benchmark, 3 modes</span>        <span class="flow-desc">static · continuous (Nir) · discrete (this) — TTFT p50/p99, throughput, profile switches</span>
+<span class="flow-arrow">         │</span>
+<span class="flow-arrow">         ▼</span>
+<span class="flow-node">  5. PR or drop</span>                <span class="flow-desc">only if discrete ≥ continuous on the hotspot workload</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 24: END -->
+<div class="slide">
+  <div class="slide-content part-divider">
+    <h2>Thanks, Nir</h2>
+    <p class="subtitle" style="margin-top:20px;">Measure how uneven, not how much.<br>Do not change your mind until the signal clearly leaves the band.</p>
+    <p style="color:var(--text-dim); font-size:15px; margin-top:32px;">Issue draft: <code>nael-docs/v2/epp-upstream_issue-template.md</code> · Background: <code>nael-docs/v1/</code></p>
+  </div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const slideNum = document.getElementById('slideNum');
+  let current = 0;
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    slideNum.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  const viewToggle = document.getElementById('viewToggle');
+  function setDocMode(on) {
+    document.body.classList.toggle('doc-mode', on);
+    viewToggle.setAttribute('aria-pressed', String(on));
+    if (on) {
+      slides.forEach(s => s.classList.add('active'));
+    } else {
+      slides.forEach((s, i) => s.classList.toggle('active', i === current));
+      window.scrollTo(0, 0);
+    }
+  }
+  viewToggle.addEventListener('click', () => {
+    setDocMode(!document.body.classList.contains('doc-mode'));
+  });
+
+  const themeToggle = document.getElementById('themeToggle');
+  const THEME_KEY = 'runai-slides-theme';
+  function setTheme(light) {
+    document.body.classList.toggle('light', light);
+    themeToggle.setAttribute('aria-pressed', String(light));
+    try { localStorage.setItem(THEME_KEY, light ? 'light' : 'dark'); } catch (_) {}
+  }
+  themeToggle.addEventListener('click', () => {
+    setTheme(!document.body.classList.contains('light'));
+  });
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light') setTheme(true);
+  } catch (_) {}
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest('input, textarea, [contenteditable="true"]')) return;
+    if (e.key === 'v' || e.key === 'V') {
+      e.preventDefault();
+      setDocMode(!document.body.classList.contains('doc-mode'));
+      return;
+    }
+    if (e.key === 't' || e.key === 'T') {
+      e.preventDefault();
+      setTheme(!document.body.classList.contains('light'));
+      return;
+    }
+    if (document.body.classList.contains('doc-mode')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      showSlide(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      showSlide(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(slides.length - 1);
+    }
+  });
+
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    if (document.body.classList.contains('doc-mode')) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? showSlide(current + 1) : showSlide(current - 1);
+    }
+  });
+
+  showSlide(0);
+</script>
+
+</body>
+</html>
