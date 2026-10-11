@@ -333,7 +333,7 @@
 <div class="slide active title-slide">
   <div class="slide-content" style="text-align:center;">
     <h1>Adaptive routing in the <span class="accent">EPP</span>:<br>a <span class="purple">discrete</span>, operator-controlled option</h1>
-    <p class="subtitle">Rule-based scheduling-profile selection.<br>For discussion with Nir before opening an upstream issue.</p>
+    <p class="subtitle">Rule-based scheduling-profile selection.<br>Draft for review before opening an upstream issue.</p>
     <div style="margin-top:40px;">
       <span class="badge badge-green">Draft proposal</span>&nbsp;&nbsp;
       <span class="badge badge-purple">Not implemented</span>&nbsp;&nbsp;
@@ -392,7 +392,7 @@
 <div class="slide">
   <div class="slide-content">
     <h3>Today · adaptive routing, in progress</h3>
-    <h2>Background detectors retune the weights (Nir)</h2>
+    <h2>Background detectors retune the weights</h2>
     <pre style="font-size:15px; line-height:1.7;">
 <span class="flow-node">✅ Endpoint metrics store</span>  <span class="flow-arrow">──►</span>  <span class="flow-node">🆕 Imbalance detector</span>   <span class="flow-desc">CVn of KV usage and assigned requests, pool-wide</span>
 <span class="flow-arrow">                           ──►</span>  <span class="flow-node">🆕 Pressure detector</span>    <span class="flow-desc">Σ waiting / Σ (waiting + running)</span>
@@ -638,10 +638,10 @@ default                      → balanced</pre>
     <h3>Decisions</h3>
     <h2>Four questions for this meeting</h2>
     <ol>
-      <li><strong>Where should selection live?</strong> A separate ProfileHandler (request-scoped, but takes the only handler seat), or a <code>mode: discrete</code> inside your configurator (pool-scoped, coexists with disagg)?</li>
-      <li><strong>Normalization of cv.</strong> Plain <code>σ / mean</code> capped at 1, or your <code>(σ / mean) / √(N−1)</code>? Copying yours makes a later change of signal source a no-op.</li>
-      <li><strong>Worth benchmarking</strong> discrete selection against your continuous weights on the same hotspot setup (8 pods, Llama 8B, GuideLLM)?</li>
-      <li><strong>Which branch and settings</strong> produced your reported results, especially whether the pressure cap was active?</li>
+      <li><strong>Where should selection live?</strong> A separate ProfileHandler (request-scoped, but takes the only handler seat), or a <code>mode: discrete</code> inside the configurator (pool-scoped, coexists with disagg)?</li>
+      <li><strong>Normalization of cv.</strong> Plain <code>σ / mean</code> capped at 1, or the detectors’ <code>(σ / mean) / √(N−1)</code>? Copying it makes a later change of signal source a no-op.</li>
+      <li><strong>Worth benchmarking</strong> discrete selection against continuous weights on the same hotspot setup (8 pods, Llama 8B, GuideLLM)?</li>
+      <li><strong>Which branch and settings</strong> produced the reported results, especially whether the pressure cap was active?</li>
     </ol>
   </div>
 </div>
@@ -671,7 +671,7 @@ default                      → balanced</pre>
 <!-- ═══════════════════════════════════════════════ 18: END -->
 <div class="slide">
   <div class="slide-content part-divider">
-    <h2>Thanks, Nir</h2>
+    <h2>Thanks</h2>
     <p class="subtitle" style="margin-top:20px;">Operators write the policies; a rule picks one; the log says why.</p>
     <p style="color:var(--text-dim); font-size:15px; margin-top:32px;">Issue draft: <code>nael-docs/v2/epp-upstream_issue-template.md</code> · Background: <code>nael-docs/v1/</code></p>
   </div>
