@@ -309,7 +309,6 @@ kubectl logs deploy/$POOL-epp --tail=30 | grep -i -E 'scor|profile|selected|endp
 |---|---|---|
 | **A · static** | default profile, release image | step 4 as written |
 | **C · discrete (ours)** | our image + `adaptive-profiles.yaml` | step 5 |
-| Reference only | Nir's background configurator | never merged into `main`; not runnable here. His reported numbers are cited, not reproduced. |
 
 ## Teardown
 

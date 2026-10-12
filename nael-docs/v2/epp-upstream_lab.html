@@ -58,7 +58,7 @@
   .md hr { border:none; border-top:1px solid var(--border); margin:24px 0; }
   .card { background:var(--bg-slide); border:1px solid var(--border); border-radius:12px; padding:18px 20px; margin:14px 0; }
   .card pre { font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.5; background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:12px 14px; overflow-x:auto; margin-top:8px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:12px; }
   @media (max-width:760px) { .grid { grid-template-columns:1fr; } }
   .mode { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
   .mode h4 { color:var(--nvidia-green); font-size:15px; margin-bottom:6px; } body.light .mode h4 { color:var(--accent-strong); }
@@ -94,7 +94,6 @@
     </div>
     <div class="grid">
       <div class="mode"><h4>A · default profile</h4><p class="mini">llm-d Router <code>main</code>, release image, one profile: queue 2 · KV 2 · prefix 3. The baseline everyone runs.</p><p class="mini"><strong>✅ runs today</strong></p></div>
-      <div class="mode pl"><h4>Reference · continuous</h4><p class="mini">Nir's background configurator. Never merged into <code>main</code>; cited as prior art, not run.</p><p class="mini"><strong>⚪ not a run</strong></p></div>
       <div class="mode pl"><h4>C · discrete</h4><p class="mini">Predefined profiles, rules on cv and P with enter/exit bounds.</p><p class="mini"><strong>🔜 needs the prototype</strong></p></div>
     </div>
     <div class="card">
@@ -424,7 +423,6 @@ kubectl logs deploy/$POOL-epp --tail=30 | grep -i -E 'scor|profile|selected|endp
 |---|---|---|
 | **A · static** | default profile, release image | step 4 as written |
 | **C · discrete (ours)** | our image + `adaptive-profiles.yaml` | step 5 |
-| Reference only | Nir's background configurator | never merged into `main`; not runnable here. His reported numbers are cited, not reproduced. |
 
 ## Teardown
 
@@ -507,7 +505,6 @@ Status: run plan, written 2026-10-12. Run A can be executed today. Run C needs t
                   TTFT p50 / p99 · tokens/s per GPU · queue spread · hit rate · switches (C)
 ```
 
-Reference, not a run: Nir's background configurator never merged into `main`; his reported hotspot result is cited in the issue draft as prior art.
 
 ## 1. The workload
 
@@ -671,7 +668,6 @@ Exact guidellm command · repetitions · cache policy (warm) · settle time
 | 3 | `llm-d-router` `config/manifests/benchmark/benchmark.yaml` | Alternative load tool (ShareGPT sweep); no shared-prefix knob, not used |
 | 4 | GuideLLM `docs/en/guides/datasets.md` | `prefix_tokens` synthetic data option |
 | 5 | `nael-docs/v2/epp-upstream_issue-template.md` | Run C plugins config and `adaptive_profile_selections_total` |
-| 6 | Nir's reported hotspot benchmark (8 × A100, Llama 8B, GuideLLM), see `nael-docs/v1/` | Prior art cited, not reproduced |
 
 ## 🔧 If you only do one thing
 

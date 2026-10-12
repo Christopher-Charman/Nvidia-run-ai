@@ -41,7 +41,6 @@ Status: run plan, written 2026-10-12. Run A can be executed today. Run C needs t
                   TTFT p50 / p99 · tokens/s per GPU · queue spread · hit rate · switches (C)
 ```
 
-Reference, not a run: Nir's background configurator never merged into `main`; his reported hotspot result is cited in the issue draft as prior art.
 
 ## 1. The workload
 
@@ -205,7 +204,6 @@ Exact guidellm command · repetitions · cache policy (warm) · settle time
 | 3 | `llm-d-router` `config/manifests/benchmark/benchmark.yaml` | Alternative load tool (ShareGPT sweep); no shared-prefix knob, not used |
 | 4 | GuideLLM `docs/en/guides/datasets.md` | `prefix_tokens` synthetic data option |
 | 5 | `nael-docs/v2/epp-upstream_issue-template.md` | Run C plugins config and `adaptive_profile_selections_total` |
-| 6 | Nir's reported hotspot benchmark (8 × A100, Llama 8B, GuideLLM), see `nael-docs/v1/` | Prior art cited, not reproduced |
 
 ## 🔧 If you only do one thing
 
