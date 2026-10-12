@@ -485,11 +485,11 @@ pod-3       0.00 → 0.00     0.20 → 0.40     0.98 → 2.94     <span class="s
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 3. <span class="status-ok">✅</span> EPP parses the body</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 4. <span class="status-ok">✅</span> Candidates + per-pod snapshots</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 5. <span class="status-ok">✅</span> Prefix lookup</div>
-<div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Produce</div>
+<div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 7. <span class="status-ok">✅</span> Admission</div></pre></div>
-      <div><pre style="margin:0; background:var(--bg-card); font-family:inherit;"><div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Pick</div>
+      <div><pre style="margin:0; background:var(--bg-card); font-family:inherit;"><div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 9. <span class="status-ok">✅</span> Run the chosen profile</div>
-<div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;">10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: log line</div>
+<div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;">10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">13. <span class="status-ok">✅</span> vLLM serves it</div>
@@ -503,8 +503,8 @@ pod-3       0.00 → 0.00     0.20 → 0.40     0.98 → 2.94     <span class="s
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 6 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin <code>adaptive-profile-handler</code>: Produce</h2>
-    <p style="font-size:16px; margin-bottom:12px;">Our plugin, a new <code>ProfileHandler</code> type named <code>adaptive-profile-handler</code> (one instance per EPP, replaces <code>single-profile-handler</code>), walks the same three pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code> = σ / mean, capped at 1, 0 when the mean is below a small gate) and how <strong>much</strong> is waiting overall (<code>P</code> = waiting / (waiting + running)). If any pod's numbers are missing or older than <code>maxMetricAge</code>, it marks the summary invalid instead. No decision yet.</p>
+    <h2>Our profile handler <code>adaptive-profile-handler</code>: Produce</h2>
+    <p style="font-size:16px; margin-bottom:12px;">Our profile handler, a new <code>ProfileHandler</code> plugin type named <code>adaptive-profile-handler</code> (one instance per EPP, takes the single handler seat instead of <code>single-profile-handler</code>; the same instance also implements <code>DataProducer</code>, which is why it runs here), walks the same three pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code> = σ / mean, capped at 1, 0 when the mean is below a small gate) and how <strong>much</strong> is waiting overall (<code>P</code> = waiting / (waiting + running)). If any pod's numbers are missing or older than <code>maxMetricAge</code>, it marks the summary invalid instead. No decision yet.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
         <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;">Flow</div>
@@ -513,11 +513,11 @@ pod-3       0.00 → 0.00     0.20 → 0.40     0.98 → 2.94     <span class="s
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   3. <span class="status-ok">✅</span> EPP parses the body</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   4. <span class="status-ok">✅</span> Candidates + per-pod snapshots</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   5. <span class="status-ok">✅</span> Prefix lookup</div>
-<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶  6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Produce</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶  6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">   7. <span class="status-ok">✅</span> Admission</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Pick</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">   9. <span class="status-ok">✅</span> Run the chosen profile</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: log line</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  13. <span class="status-ok">✅</span> vLLM serves it</div>
@@ -555,8 +555,8 @@ prefix     pod-1 0% · pod-2 0% · pod-3 98% hit   ← pod-3 served this prefix 
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 8 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin <code>adaptive-profile-handler</code>: Pick</h2>
-    <p style="font-size:16px; margin-bottom:12px;">The scheduler asks for a profile. Our plugin first asks: "which profile did I choose last time, and is the signal still inside that profile's stay band (above its exit threshold)?" If yes, keep it. If no, take the first rule whose enter threshold holds: very uneven → <code>load-oriented</code>, almost nothing waiting → <code>cache-oriented</code>; otherwise the default. It stores the choice in a field on the plugin instance (in the EPP process, guarded by a mutex), so the next request's Pick starts from it. A restart resets it.</p>
+    <h2>Our profile handler <code>adaptive-profile-handler</code>: Pick</h2>
+    <p style="font-size:16px; margin-bottom:12px;">The scheduler asks for a profile. Our profile handler (its <code>Pick</code> hook) first asks: "which profile did I choose last time, and is the signal still inside that profile's stay band (above its exit threshold)?" If yes, keep it. If no, take the first rule whose enter threshold holds: very uneven → <code>load-oriented</code>, almost nothing waiting → <code>cache-oriented</code>; otherwise the default. It stores the choice in a field on the profile handler instance (in the EPP process, guarded by a mutex), so the next request's Pick starts from it. A restart resets it.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
         <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;">Flow</div>
@@ -565,11 +565,11 @@ prefix     pod-1 0% · pod-2 0% · pod-3 98% hit   ← pod-3 served this prefix 
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   3. <span class="status-ok">✅</span> EPP parses the body</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   4. <span class="status-ok">✅</span> Candidates + per-pod snapshots</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   5. <span class="status-ok">✅</span> Prefix lookup</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Produce</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   7. <span class="status-ok">✅</span> Admission</div>
-<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶  8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Pick</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶  8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">   9. <span class="status-ok">✅</span> Run the chosen profile</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: log line</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  13. <span class="status-ok">✅</span> vLLM serves it</div>
@@ -617,11 +617,11 @@ admitted   true (waited 0 ms)
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   3. <span class="status-ok">✅</span> EPP parses the body</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   4. <span class="status-ok">✅</span> Candidates + per-pod snapshots</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   5. <span class="status-ok">✅</span> Prefix lookup</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Produce</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   7. <span class="status-ok">✅</span> Admission</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Pick</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
 <div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶  9. <span class="status-ok">✅</span> Run the chosen profile</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: log line</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">  10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  13. <span class="status-ok">✅</span> vLLM serves it</div>
@@ -659,7 +659,7 @@ plugin     remembers: last = load-oriented   ← shared across requests
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 10 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin <code>adaptive-profile-handler</code>: log line</h2>
+    <h2>Our profile handler <code>adaptive-profile-handler</code>: log line</h2>
     <p style="font-size:16px; margin-bottom:12px;">ProcessResults marks the chosen profile as primary and explains the decision in two places: one JSON line on the EPP pod's stdout (<code>kubectl logs</code>), and one Prometheus counter on the EPP's <code>/metrics</code>. Nothing is stored on the request.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
@@ -669,11 +669,11 @@ plugin     remembers: last = load-oriented   ← shared across requests
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   3. <span class="status-ok">✅</span> EPP parses the body</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   4. <span class="status-ok">✅</span> Candidates + per-pod snapshots</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   5. <span class="status-ok">✅</span> Prefix lookup</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Produce</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   7. <span class="status-ok">✅</span> Admission</div>
-<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: Pick</div>
+<div style="color:var(--runai-purple); font-size:13.5px; line-height:1.5; white-space:nowrap;">   8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
 <div style="color:var(--text); font-size:13.5px; line-height:1.5; white-space:nowrap;">   9. <span class="status-ok">✅</span> Run the chosen profile</div>
-<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶ 10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our plugin: log line</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:13.5px; line-height:1.5; white-space:nowrap;">▶ 10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text-dim); opacity:.55; font-size:13.5px; line-height:1.5; white-space:nowrap;">  13. <span class="status-ok">✅</span> vLLM serves it</div>
