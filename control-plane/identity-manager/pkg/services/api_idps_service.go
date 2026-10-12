@@ -92,8 +92,10 @@ func (s *IdpsApiService) CreateIdp(ctx context.Context, idpCreationRequest api.I
 			return api.Response(http.StatusConflict, fmt.Errorf(errMsg, idpRequest.Alias, *realm, "name already exists")),
 				utils.Error{Code: http.StatusBadRequest, Message: fmt.Sprintf(errMsg, idpRequest.Alias, *realm, "name already exists")}
 		}
+
+		statusCode, message := utils.GetHttpStatusCodeAndMessage(err)
 		logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf(errMsg, idpRequest.Alias, *realm, err.Error())
-		return api.Response(http.StatusInternalServerError, nil), utils.Error{Code: http.StatusInternalServerError, Message: ""}
+		return api.Response(statusCode, nil), utils.Error{Code: statusCode, Message: message}
 	}
 
 	if shouldSaveIdpResources(idpRequest.Resource) {
@@ -130,8 +132,9 @@ func (s *IdpsApiService) UpdateIdp(ctx context.Context, idpAlias string, idpUpda
 		audit.AuditFromCtx(ctx).WithEntityName(idpRequest.Alias)
 		err = s.updateIdp(ctx, *realm, idpRequest)
 		if err != nil {
+			statusCode, message := utils.GetHttpStatusCodeAndMessage(err)
 			logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("failed to update idp with alias %s for tenant %s. err: %s", idpRequest.Alias, *realm, err.Error())
-			return api.Response(http.StatusInternalServerError, nil), utils.Error{Code: http.StatusInternalServerError, Message: ""}
+			return api.Response(statusCode, nil), utils.Error{Code: statusCode, Message: message}
 		}
 		defer s.idpsCacheWrapper.InvalidateCache(ctx, *realm, idpAlias)
 		if shouldSaveIdpResources(idpRequest.Resource) {
@@ -373,7 +376,7 @@ func (s *IdpsApiService) createIdp(ctx context.Context, realm string, idpRequest
 	if err == nil {
 		exchangeError := s.enableTokenExchangeForIdpIfSupported(ctx, realm, idpRep)
 		if exchangeError != nil {
-			logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("failed to enable token exchange for identity provider with alias %s in realm %s. err: %s", idpRequest.Alias, realm, err.Error())
+			logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("failed to enable token exchange for identity provider with alias %s in realm %s. err: %s", idpRequest.Alias, realm, exchangeError.Error())
 		}
 		s.idpsCacheWrapper.InvalidateCache(ctx, realm, idpRequest.Alias)
 	}
@@ -407,7 +410,7 @@ func (s *IdpsApiService) getIdpConfig(ctx context.Context, realm string, idpRequ
 	if isIdpXmlWithFileType(*idpRequest) {
 		reader, err := utils.DecodeBase64ToReader(idpRequest.Resource)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w:%w", utils.Error{Code: http.StatusBadRequest, Message: "failed to decode base64 string"}, err)
 		}
 		return s.getConfigFromFile(ctx, realm, reader, idpRequest.ResourceName, string(models.SAML))
 	}

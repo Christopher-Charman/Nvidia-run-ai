@@ -175,14 +175,13 @@ func (k *KeycloakIdpRepository) UpdateIdpMappers(ctx context.Context, realm, ali
 		kcMapper := k.fromIdpMapperModel(mapper)
 		if mapper.ID != nil {
 			err = k.kcClient.UpdateIdentityProviderMapper(ctx, *token, realm, alias, *kcMapper)
-			mapperErr = errors.Join(mapperErr, err)
 		} else {
 			_, err = k.kcClient.CreateIdentityProviderMapper(ctx, *token, realm, alias, *kcMapper)
 		}
 		mapperErr = errors.Join(mapperErr, err)
 	}
 	if mapperErr != nil {
-		return fmt.Errorf("failed to update idp mappers. err: %s", err.Error())
+		return fmt.Errorf("failed to update idp mappers. err: %s", mapperErr.Error())
 	}
 	return mapperErr
 }
@@ -192,7 +191,9 @@ func (k *KeycloakIdpRepository) GetIdpConfig(ctx context.Context, realm string, 
 	if err != nil {
 		return nil, iamError.HandleKeyCloakError(err)
 	}
-	return k.kcClient.ImportIdentityProviderConfig(ctx, *token, realm, url, providerId)
+
+	config, err := k.kcClient.ImportIdentityProviderConfig(ctx, *token, realm, url, providerId)
+	return config, iamError.HandleKeyCloakError(err)
 }
 
 func (k *KeycloakIdpRepository) GetIdpConfigFromFile(ctx context.Context, realm string, providerId string, fileName string, fileBody io.Reader) (map[string]string, error) {
@@ -200,7 +201,9 @@ func (k *KeycloakIdpRepository) GetIdpConfigFromFile(ctx context.Context, realm 
 	if err != nil {
 		return nil, iamError.HandleKeyCloakError(err)
 	}
-	return k.kcClient.ImportIdentityProviderConfigFromFile(ctx, *token, realm, providerId, fileName, fileBody)
+
+	config, err := k.kcClient.ImportIdentityProviderConfigFromFile(ctx, *token, realm, providerId, fileName, fileBody)
+	return config, iamError.HandleKeyCloakError(err)
 }
 
 func (k *KeycloakIdpRepository) SetBrowserRedirector(ctx context.Context, realm string, alias string) error {
