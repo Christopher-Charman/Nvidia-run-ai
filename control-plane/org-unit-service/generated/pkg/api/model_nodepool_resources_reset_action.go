@@ -30,16 +30,19 @@ type NodepoolResourcesResetAction string
 // List of NodepoolResourcesResetAction
 const (
 	NODEPOOLRESOURCESRESETACTION_CPU_QUOTAS_TO_DEFAULT NodepoolResourcesResetAction = "CPU_QUOTAS_TO_DEFAULT"
+	NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DESERVED   NodepoolResourcesResetAction = "WEIGHTS_TO_DESERVED"
 )
 
 // AllowedNodepoolResourcesResetActionEnumValues is all the allowed values of NodepoolResourcesResetAction enum
 var AllowedNodepoolResourcesResetActionEnumValues = []NodepoolResourcesResetAction{
 	"CPU_QUOTAS_TO_DEFAULT",
+	"WEIGHTS_TO_DESERVED",
 }
 
 // validNodepoolResourcesResetActionEnumValue provides a map of NodepoolResourcesResetActions for fast verification of use input
 var validNodepoolResourcesResetActionEnumValues = map[NodepoolResourcesResetAction]struct{}{
 	"CPU_QUOTAS_TO_DEFAULT": {},
+	"WEIGHTS_TO_DESERVED":   {},
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise

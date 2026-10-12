@@ -24,11 +24,13 @@ type NodepoolResourcesResetAction string
 // List of NodepoolResourcesResetAction
 const (
 	NODEPOOLRESOURCESRESETACTION_CPU_QUOTAS_TO_DEFAULT NodepoolResourcesResetAction = "CPU_QUOTAS_TO_DEFAULT"
+	NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DESERVED   NodepoolResourcesResetAction = "WEIGHTS_TO_DESERVED"
 )
 
 // All allowed values of NodepoolResourcesResetAction enum
 var AllowedNodepoolResourcesResetActionEnumValues = []NodepoolResourcesResetAction{
 	"CPU_QUOTAS_TO_DEFAULT",
+	"WEIGHTS_TO_DESERVED",
 }
 
 func (v *NodepoolResourcesResetAction) UnmarshalJSON(src []byte) error {

@@ -75,7 +75,7 @@ func validateCreateParams(ctx context.Context, fields api.NodepoolCreateFields, 
 		return validationErr
 	}
 
-	validationErr = validateSchedulingCapabilitiesOnCreate(fields.SchedulingCapabilities)
+	validationErr = validateSchedulingCapabilities(fields.SchedulingCapabilities)
 	if validationErr != nil {
 		return validationErr
 	}
@@ -94,7 +94,8 @@ func validatePatchParams(ctx context.Context, dbNodepool models.Nodepool, fields
 func validateUpdatePatchParamsInner(ctx context.Context, fields api.NodepoolUpdateFields,
 	isUpdate bool, dbNodepool *models.Nodepool, capChecker clients_local.ClusterCapabilityChecker,
 ) error {
-	if fields.GpuNetworkAccelerationDetection == nil && fields.SchedulingConfiguration == nil {
+	if fields.GpuNetworkAccelerationDetection == nil && fields.SchedulingConfiguration == nil &&
+		fields.SchedulingCapabilities == (api.SchedulingCapabilitiesNullable{}) {
 		// no need to even check capabilities if no need to
 		return nil
 	}
@@ -109,7 +110,7 @@ func validateUpdatePatchParamsInner(ctx context.Context, fields api.NodepoolUpda
 		return validationErr
 	}
 
-	validationErr = validateSchedulingCapabilitiesUpdate(fields.SchedulingCapabilities, isUpdate)
+	validationErr = validateSchedulingCapabilities(fields.SchedulingCapabilities)
 	if validationErr != nil {
 		return validationErr
 	}
@@ -343,23 +344,10 @@ func validateTimeBasedFairShareWindowTypeAndStartTime(
 	return nil
 }
 
-func validateSchedulingCapabilitiesOnCreate(sc api.SchedulingCapabilitiesNullable) error {
+func validateSchedulingCapabilities(sc api.SchedulingCapabilitiesNullable) error {
 	if sc.CpuQuota != nil && *sc.CpuQuota && sc.Quota != nil && !*sc.Quota {
 		return fmt.Errorf("SchedulingCapabilities.CpuQuota can only be enabled when SchedulingCapabilities.Quota is enabled")
 	}
-
-	// not checking min version for "ranks" - will be enforced in the org-unit-service
-
-	return nil
-}
-
-func validateSchedulingCapabilitiesUpdate(sc api.SchedulingCapabilitiesNullable, isUpdate bool) error {
-	validationErr := validateSchedulingCapabilitiesOnCreate(sc)
-	if validationErr != nil {
-		return validationErr
-	}
-
-	// TODO: add all validations using the internal API for org-unit here! if trying to change allowQuota/allowRanks.
 
 	return nil
 }
@@ -669,7 +657,7 @@ func setTimeBasedFairSharePatch(
 	return result
 }
 
-func setSchedulingCapabilitiesOnCreateUpdate(ctx context.Context,
+func setSchedulingCapabilitiesOnCreate(ctx context.Context,
 	nodePool *models.Nodepool,
 	fields api.SchedulingCapabilitiesNullable,
 ) {
@@ -695,28 +683,15 @@ func setSchedulingCapabilitiesOnCreateUpdate(ctx context.Context,
 	}
 }
 
-func setSchedulingCapabilitiesOnPatch(dbNodepool *models.Nodepool, fields api.SchedulingCapabilitiesNullable) {
+func setSchedulingCapabilitiesOnUpdate(dbNodepool *models.Nodepool, fields api.SchedulingCapabilitiesNullable) {
 	if dbNodepool == nil {
 		return
 	}
 
-	// the difference in Patch is that we only set the fields that are not nil
-
-	/*
-		TODO: un-comment once we have the whole feature functioning and not x-internal
-		if fields.AdjustableWeights != nil {
-			dbNodepool.AllowAdjustableWeights = *fields.AdjustableWeights
-		}
-		if fields.Quota != nil {
-			dbNodepool.AllowQuota = *fields.Quota
-		}
-		if fields.Ranks != nil {
-			dbNodepool.AllowRanks = *fields.Ranks
-		}
-		if fields.CpuQuota != nil {
-			dbNodepool.AllowCpuQuota = *fields.CpuQuota
-		}
-	*/
+	dbNodepool.AllowAdjustableWeights = ptr.Deref(fields.AdjustableWeights, dbNodepool.AllowAdjustableWeights)
+	dbNodepool.AllowQuota = ptr.Deref(fields.Quota, dbNodepool.AllowQuota)
+	dbNodepool.AllowRanks = ptr.Deref(fields.Ranks, dbNodepool.AllowRanks)
+	dbNodepool.AllowCpuQuota = ptr.Deref(fields.CpuQuota, dbNodepool.AllowCpuQuota)
 }
 
 func setStatusSchedulingConfigurationFromApiToDao(dbNodepool *models.Nodepool, apiStatus *api.NodepoolSyncFieldsStatus) {

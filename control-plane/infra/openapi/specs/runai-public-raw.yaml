@@ -31023,6 +31023,7 @@ components:
       x-internal: true
       enum:
         - CPU_QUOTAS_TO_DEFAULT
+        - WEIGHTS_TO_DESERVED
     OrgUnitsNodepoolResourcesResetRequest:
       type: object
       required:

@@ -1,0 +1,102 @@
+/*
+ * SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package services
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
+	"k8s.io/utils/ptr"
+
+	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/internal/generated/pkg/api"
+	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/database/models"
+	openapi "github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client/generated"
+	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
+	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
+)
+
+const maxBlockingOrgUnitsInMessage = 10
+
+// applyCapabilityTransitions must run after the request is merged into the node pool and before it is
+// saved. All checks run before any reset, so a refused change leaves the org units untouched; resets run
+// before the save, so the stored org-unit values always agree with the saved flags.
+func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, before, after models.Nodepool) *api.Error {
+	if before.AllowQuota && !after.AllowQuota {
+		if apiErr := s.refuseIfInUse(ctx, after, "quota",
+			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_HAS_QUOTA, "QUOTAS_TO_DEFAULT"); apiErr != nil {
+			return apiErr
+		}
+	}
+
+	if before.AllowRanks && !after.AllowRanks {
+		if apiErr := s.refuseIfInUse(ctx, after, "ranks",
+			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_NON_DEFAULT_RANK, "RANKS_TO_DEFAULT"); apiErr != nil {
+			return apiErr
+		}
+	}
+
+	return s.resetTurnedOffCapabilities(ctx, before, after)
+}
+
+func (s *NodePoolsApiService) refuseIfInUse(ctx context.Context, nodepool models.Nodepool, capability string,
+	summaryType openapi.OrgUnitsNodepoolSummaryType, resetAction string,
+) *api.Error {
+	blocking, err := s.orgUnitClient.NodePoolSummary(ctx, strconv.Itoa(int(nodepool.ID)), summaryType)
+	if err != nil {
+		logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("Failed to get %s summary of nodepool %s. error: %v", summaryType, nodepool.Name, err)
+		return api.NewError(http.StatusServiceUnavailable,
+			fmt.Sprintf("failed to check the org units of nodepool %s", nodepool.Name), err)
+	}
+	if len(blocking) == 0 {
+		return nil
+	}
+	return api.NewError(http.StatusBadRequest, fmt.Sprintf(
+		"Cannot turn off %s on nodepool %s. %d org units use it: %s. Reset them with the org-unit resources reset action %s, then try again.",
+		capability, nodepool.Name, len(blocking), describeOrgUnits(blocking), resetAction), nil)
+}
+
+func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
+	names := make([]string, 0, min(len(orgUnits), maxBlockingOrgUnitsInMessage))
+	for _, orgUnit := range orgUnits[:min(len(orgUnits), maxBlockingOrgUnitsInMessage)] {
+		names = append(names, strings.TrimSpace(ptr.Deref(orgUnit.Type, "")+" "+ptr.Deref(orgUnit.Name, "")))
+	}
+	if len(orgUnits) > maxBlockingOrgUnitsInMessage {
+		names = append(names, fmt.Sprintf("and %d more", len(orgUnits)-maxBlockingOrgUnitsInMessage))
+	}
+	return strings.Join(names, ", ")
+}
+
+func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, before, after models.Nodepool) *api.Error {
+	resets := []struct {
+		turnedOff bool
+		action    openapi.NodepoolResourcesResetAction
+	}{
+		{before.AllowCpuQuota && !after.AllowCpuQuota, openapi.NODEPOOLRESOURCESRESETACTION_CPU_QUOTAS_TO_DEFAULT},
+		// reads derive the weight from deserved while weights are off, but the stored weights stay and
+		// would come back if weights are turned on again
+		{before.AllowAdjustableWeights && !after.AllowAdjustableWeights, openapi.NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DESERVED},
+	}
+	var applied []string
+	for _, reset := range resets {
+		if !reset.turnedOff {
+			continue
+		}
+		err := s.orgUnitClient.NodePoolResetResources(ctx, after.ClusterId.String(), strconv.Itoa(int(after.ID)), reset.action)
+		if err != nil {
+			logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("Failed to reset %s on nodepool %s. error: %v", reset.action, after.Name, err)
+			message := fmt.Sprintf("failed to reset %s on the org units of nodepool %s", reset.action, after.Name)
+			if len(applied) > 0 {
+				message += fmt.Sprintf(". Already reset: %s. Send the request again to finish", strings.Join(applied, ", "))
+			}
+			return api.NewError(http.StatusServiceUnavailable, message, err)
+		}
+		applied = append(applied, string(reset.action))
+	}
+	return nil
+}
