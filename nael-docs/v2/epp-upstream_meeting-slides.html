@@ -443,38 +443,621 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ 7b: REQUEST STEPS 1-7 -->
+<!-- ═══════════════════════════════════════════════ 7.01: REQUEST FLOW STEP 1 -->
 <div class="slide">
   <div class="slide-content">
-    <h3>Proposal · one request, step by step (1 of 2)</h3>
-    <h2>Before the decision</h2>
-    <ol style="font-size:17px; line-height:1.5;">
-      <li><span class="status-ok">✅</span> The <strong>client</strong> sends a request: "model X, here is my prompt".</li>
-      <li><span class="status-ok">✅</span> The <strong>Gateway</strong> catches it, holds it, and asks the EPP: "which pod should this go to?"</li>
-      <li><span class="status-ok">✅</span> The EPP reads the body and notes the <strong>model</strong> and the <strong>prompt</strong>.</li>
-      <li><span class="status-ok">✅</span> The EPP lists the pods that can serve this model and are ready. For each it takes the latest numbers already in memory: <strong>waiting</strong>, <strong>running</strong>, <strong>KV usage</strong>, and when they were refreshed.</li>
-      <li><span class="status-ok">✅</span> The <strong>prefix lookup</strong> checks which of those pods has already seen the start of this prompt.</li>
-      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> walks the same pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code>) and how <strong>much</strong> is waiting overall (<code>P</code>).<span style="color:var(--text-dim); display:block; font-size:16px; margin-top:2px;">If any pod's numbers are stale, it marks the summary invalid instead.</span></li>
-      <li><span class="status-ok">✅</span> <strong>Admission</strong> asks: is there room right now? If not, the request waits in line.</li>
-    </ol>
+    <h3>One request, step 1 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Client sends the request</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The client sends <code>POST /v1/completions</code>: "model X, here is my prompt". The prompt starts with a long system prompt shared by every user.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  1. ✅ Client sends the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;"><span style="color:var(--nvidia-green);">requestId  r-7f3a</span>
+<span style="color:var(--nvidia-green);">body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}</span></pre>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ 7c: REQUEST STEPS 8-14 -->
+<!-- ═══════════════════════════════════════════════ 7.02: REQUEST FLOW STEP 2 -->
 <div class="slide">
   <div class="slide-content">
-    <h3>Proposal · one request, step by step (2 of 2)</h3>
-    <h2>The decision, and after</h2>
-    <ol style="font-size:17px; line-height:1.5; counter-reset: ol-counter 7;">
-      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> asks: "which profile did I choose last time, and is the signal still inside that profile's stay band?"<span style="color:var(--text-dim); display:block; font-size:16px; margin-top:2px;">→ yes: keep the same profile. → no: first matching rule (very uneven → load-oriented, almost nothing waiting → cache-oriented), else the default. It remembers the choice. Today this step does not exist: the one fixed profile always runs.</span></li>
-      <li><span class="status-ok">✅</span> The chosen <strong>profile runs exactly as today</strong>: filters drop unfit pods, scorers rate the rest with that profile's fixed weights, the picker takes the best → pod-1.</li>
-      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> writes one log line: which rule fired, at what signal value, which profile, which pod.</li>
-      <li><span class="status-ok">✅</span> The EPP answers the Gateway with <strong>one header</strong>: "send it to pod-1". Nothing else it computed leaves the EPP.</li>
-      <li><span class="status-ok">✅</span> The Gateway forwards the <strong>original, untouched</strong> request to pod-1.</li>
-      <li><span class="status-ok">✅</span> <strong>vLLM</strong> on pod-1 runs prefill (fast if the prefix is cached) and decode, and streams the answer back through the Gateway to the client.</li>
-      <li><span class="status-ok">✅</span> The EPP notes "<strong>pod-1 has now seen this prefix</strong>" for next time.</li>
-    </ol>
-    <p style="color:var(--text-dim); font-size:15px; margin-top:8px;">Two new steps (6 and 8) and one new log line (10). Everything else is today's EPP.</p>
+    <h3>One request, step 2 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Gateway holds it, asks the EPP</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The Gateway does not forward yet. It sends headers + body to the EPP over ext-proc and waits for one answer: which pod.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+<span style="color:var(--nvidia-green);">← nothing new on the request; the EPP creates its request context now</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.03: REQUEST FLOW STEP 3 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 3 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>EPP parses the body</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The parser reads the JSON and notes what the scorers will need.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  3. ✅ EPP parses the body</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+<span style="color:var(--nvidia-green);">model      Qwen/Qwen3-8B</span>
+<span style="color:var(--nvidia-green);">prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.04: REQUEST FLOW STEP 4 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 4 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Candidates + per-pod snapshots</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The EPP lists the pods that can serve this model and are ready, and attaches to each the latest numbers it already holds in memory. A background scraper refreshes them every ~50 ms; nothing is fetched now.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+<span style="color:var(--nvidia-green);">candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago</span>
+<span style="color:var(--nvidia-green);">           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago</span>
+<span style="color:var(--nvidia-green);">           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago</span>
+<span style="color:var(--nvidia-green);">           (pod-4 excluded: not ready)</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.05: REQUEST FLOW STEP 5 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 5 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Prefix lookup</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The prefix producer hashes the prompt in 64-token blocks and asks its own index: "which pods did I send this beginning to before?" It never asks vLLM.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  5. ✅ Prefix lookup</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+<span style="color:var(--nvidia-green);">prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.06: REQUEST FLOW STEP 6 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 6 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new</span></h3>
+    <h2>Our plugin: Produce</h2>
+    <p style="font-size:17px; margin-bottom:14px;">Our plugin walks the same three pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (cv) and how <strong>much</strong> is waiting overall (P). If any pod's numbers are stale, it marks the summary invalid instead.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+<span style="color:var(--nvidia-green);">adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.07: REQUEST FLOW STEP 7 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 7 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Admission</h2>
+    <p style="font-size:17px; margin-bottom:14px;">Flow control asks: is there room right now? If not, the request waits in the EPP's own queue by priority, keeping everything gathered so far.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  7. ✅ Admission</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+<span style="color:var(--nvidia-green);">admitted   true (waited 0 ms)</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.08: REQUEST FLOW STEP 8 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 8 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new</span></h3>
+    <h2>Our plugin: Pick</h2>
+    <p style="font-size:17px; margin-bottom:14px;">Our plugin asks: "which profile did I choose last time, and is the signal still inside that profile's stay band?" If yes, keep it. If no, take the first matching rule, else the default. It remembers the choice. <em>Today this step does not exist: the one fixed profile always runs.</em></p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+<span style="color:var(--nvidia-green);">regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;</span>
+<span style="color:var(--nvidia-green);">profile    load-oriented  (prefix 1 · KV 1 · queue 4)</span>
+<span style="color:var(--nvidia-green);">plugin     last = load-oriented          ← shared state, not on the request</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.09: REQUEST FLOW STEP 9 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 9 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Run the chosen profile</h2>
+    <p style="font-size:17px; margin-bottom:14px;">Exactly as any profile runs today: filters drop unfit pods, scorers rate the rest with that profile's fixed weights, the picker takes the best.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶  9. ✅ Run the chosen profile</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+<span style="color:var(--nvidia-green);">scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)</span>
+<span style="color:var(--nvidia-green);">result     pod-1</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.10: REQUEST FLOW STEP 10 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 10 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new</span></h3>
+    <h2>Our plugin: log line</h2>
+    <p style="font-size:17px; margin-bottom:14px;">ProcessResults marks the chosen profile as primary and writes one line that explains the decision.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶ 10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)
+result     pod-1
+<span style="color:var(--nvidia-green);">log        r-7f3a rule=hotspot entered cv=1.00 P=0.33 profile=load-oriented pod=pod-1</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.11: REQUEST FLOW STEP 11 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 11 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>EPP answers the Gateway</h2>
+    <p style="font-size:17px; margin-bottom:14px;">One header goes back. Nothing else the EPP computed leaves the EPP.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶ 11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)
+result     pod-1
+log        r-7f3a rule=hotspot entered cv=1.00 P=0.33 profile=load-oriented pod=pod-1
+<span style="color:var(--nvidia-green);">→ header   x-gateway-destination-endpoint: 10.0.3.11:8000   (pod-1)</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.12: REQUEST FLOW STEP 12 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 12 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Gateway forwards the request</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The Gateway releases the original, untouched request to pod-1. vLLM knows nothing about the EPP.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶ 12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)
+result     pod-1
+log        r-7f3a rule=hotspot entered cv=1.00 P=0.33 profile=load-oriented pod=pod-1
+→ header   x-gateway-destination-endpoint: 10.0.3.11:8000   (pod-1)
+<span style="color:var(--nvidia-green);">(request context is dropped once the response completes)</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.13: REQUEST FLOW STEP 13 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 13 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>vLLM serves it</h2>
+    <p style="font-size:17px; margin-bottom:14px;">pod-1 runs prefill (fast if the prefix is already in its KV cache) and decode, and streams the answer back through the Gateway to the client.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶ 13. ✅ vLLM serves it</div>
+<div style="color:var(--text-dim); opacity:.55; font-size:14.5px; line-height:1.55; white-space:nowrap;">  14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)
+result     pod-1
+log        r-7f3a rule=hotspot entered cv=1.00 P=0.33 profile=load-oriented pod=pod-1
+→ header   x-gateway-destination-endpoint: 10.0.3.11:8000   (pod-1)
+(request context is dropped once the response completes)
+<span style="color:var(--nvidia-green);">response   TTFT, tokens … measured by the benchmark</span></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7.14: REQUEST FLOW STEP 14 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>One request, step 14 of 14 · <span class="status-ok">✅ exists today</span></h3>
+    <h2>Prefix index updated</h2>
+    <p style="font-size:17px; margin-bottom:14px;">The prefix producer notes "pod-1 has now seen this prefix". Next request with the same beginning will find pod-1 in the index. This is what makes a prefix stick to a pod, and what lets a hotspot spread out once traffic is distributed.</p>
+    <div style="display:grid; grid-template-columns: 340px 1fr; gap:24px; align-items:start;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Flow</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   1. ✅ Client sends the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   2. ✅ Gateway holds it, asks the EPP</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   3. ✅ EPP parses the body</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   4. ✅ Candidates + per-pod snapshots</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   5. ✅ Prefix lookup</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   6. 🆕 Our plugin: Produce</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   7. ✅ Admission</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   8. 🆕 Our plugin: Pick</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">   9. ✅ Run the chosen profile</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  10. 🆕 Our plugin: log line</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  11. ✅ EPP answers the Gateway</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  12. ✅ Gateway forwards the request</div>
+<div style="color:var(--text); font-size:14.5px; line-height:1.55; white-space:nowrap;">  13. ✅ vLLM serves it</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:14.5px; line-height:1.55; white-space:nowrap;">▶ 14. ✅ Prefix index updated</div>
+      </div>
+      <div style="background:var(--code-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px;">
+        <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px;">Request context after this step</div>
+<pre style="margin:0; padding:0; border:none; background:none; font-size:12.5px; line-height:1.5;">requestId  r-7f3a
+body       {model: Qwen3-8B, prompt: &quot;&lt;1024-token prefix&gt; User: what is 2+2?&quot;, max_tokens: 128}
+← nothing new on the request; the EPP creates its request context now
+model      Qwen/Qwen3-8B
+prompt     &quot;&lt;1024-token prefix&gt; User: …&quot;   (~1040 tokens)
+candidates pod-1  waiting 0   running 12  KV 0.41  updated 30 ms ago
+           pod-2  waiting 2   running 14  KV 0.48  updated 30 ms ago
+           pod-3  waiting 30  running 40  KV 0.92  updated 30 ms ago
+           (pod-4 excluded: not ready)
+prefix     pod-1 0%  ·  pod-2 0%  ·  pod-3 98% hit     ← pod-3 served this prefix before
+adaptive   mean 10.7 · cv 1.00 (capped) · P 0.33 · count 3 · valid · expiresAt +1 s
+admitted   true (waited 0 ms)
+regime     last = balanced · cv 1.00 ≥ enter 0.5 → rule &quot;hotspot&quot;
+profile    load-oriented  (prefix 1 · KV 1 · queue 4)
+plugin     last = load-oriented          ← shared state, not on the request
+scores     pod-1 4.59 · pod-2 4.24 · pod-3 1.06     (prefix·1 + KV·1 + queue·4)
+result     pod-1
+log        r-7f3a rule=hotspot entered cv=1.00 P=0.33 profile=load-oriented pod=pod-1
+→ header   x-gateway-destination-endpoint: 10.0.3.11:8000   (pod-1)
+(request context is dropped once the response completes)
+response   TTFT, tokens … measured by the benchmark
+<span style="color:var(--nvidia-green);">index      blocks[1..16] → {pod-3, pod-1}</span></pre>
+      </div>
+    </div>
   </div>
 </div>
 
