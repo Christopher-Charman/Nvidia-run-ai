@@ -504,8 +504,8 @@ pod-3       0.00 → 0.00     0.20 → 0.40     0.98 → 2.94     <span class="s
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 6 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin: Produce</h2>
-    <p style="font-size:16px; margin-bottom:12px;">Our plugin walks the same three pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code> = σ / mean, capped at 1, 0 when the mean is below a small gate) and how <strong>much</strong> is waiting overall (<code>P</code> = waiting / (waiting + running)). If any pod's numbers are missing or older than <code>maxMetricAge</code>, it marks the summary invalid instead. No decision yet.</p>
+    <h2>Our plugin <code>adaptive-profile-handler</code>: Produce</h2>
+    <p style="font-size:16px; margin-bottom:12px;">Our plugin, a new <code>ProfileHandler</code> type named <code>adaptive-profile-handler</code> (one instance per EPP, replaces <code>single-profile-handler</code>), walks the same three pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code> = σ / mean, capped at 1, 0 when the mean is below a small gate) and how <strong>much</strong> is waiting overall (<code>P</code> = waiting / (waiting + running)). If any pod's numbers are missing or older than <code>maxMetricAge</code>, it marks the summary invalid instead. No decision yet.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
         <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;">Flow</div>
@@ -556,8 +556,8 @@ prefix     pod-1 0% · pod-2 0% · pod-3 98% hit   ← pod-3 served this prefix 
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 8 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin: Pick</h2>
-    <p style="font-size:16px; margin-bottom:12px;">The scheduler asks for a profile. Our plugin first asks: "which profile did I choose last time, and is the signal still inside that profile's stay band (above its exit threshold)?" If yes, keep it. If no, take the first rule whose enter threshold holds: very uneven → <code>load-oriented</code>, almost nothing waiting → <code>cache-oriented</code>; otherwise the default. It stores the choice on the plugin, so the next request starts from it.</p>
+    <h2>Our plugin <code>adaptive-profile-handler</code>: Pick</h2>
+    <p style="font-size:16px; margin-bottom:12px;">The scheduler asks for a profile. Our plugin first asks: "which profile did I choose last time, and is the signal still inside that profile's stay band (above its exit threshold)?" If yes, keep it. If no, take the first rule whose enter threshold holds: very uneven → <code>load-oriented</code>, almost nothing waiting → <code>cache-oriented</code>; otherwise the default. It stores the choice in a field on the plugin instance (in the EPP process, guarded by a mutex), so the next request's Pick starts from it. A restart resets it.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
         <div style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px;">Flow</div>
@@ -660,7 +660,7 @@ plugin     remembers: last = load-oriented   ← shared across requests
 <div class="slide">
   <div class="slide-content">
     <h3>The proposal · step 10 of 14 · <span style="color:var(--runai-purple); font-weight:600;">🆕 new step</span></h3>
-    <h2>Our plugin: log line</h2>
+    <h2>Our plugin <code>adaptive-profile-handler</code>: log line</h2>
     <p style="font-size:16px; margin-bottom:12px;">ProcessResults marks the chosen profile as primary and explains the decision in two places: one JSON line on the EPP pod's stdout (<code>kubectl logs</code>), and one Prometheus counter on the EPP's <code>/metrics</code>. Nothing is stored on the request.</p>
     <div style="display:grid; grid-template-columns: 330px 1fr; gap:20px; align-items:start;">
       <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:12px 14px;">
