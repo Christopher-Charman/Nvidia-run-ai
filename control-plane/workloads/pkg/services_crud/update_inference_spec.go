@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
-	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"net/http"
 	"reflect"
 	"sort"
@@ -351,8 +350,6 @@ func mergeUpdateSpecIntoFullSpec(ctx context.Context, fullSpec *workloadsApi.Sup
 	if err != nil {
 		return workloadsApi.NewError(http.StatusBadRequest, err.Error())
 	}
-
-	gpumode.StripEffectiveModes(updateSpecAsMap)
 
 	if err := restoreRedactedSensitiveEnvironmentVariableValues(updateSpecAsMap, fullSpecAsMap); err != nil {
 		return workloadsApi.NewError(http.StatusBadRequest, err.Error())

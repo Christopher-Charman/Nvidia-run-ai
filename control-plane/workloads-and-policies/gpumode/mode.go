@@ -49,27 +49,6 @@ func HasGPU(compute map[string]interface{}) bool {
 	return err == nil && quantity.Sign() > 0
 }
 
-// StripEffectiveModes makes response objects safe to reuse in create/update calls.
-func StripEffectiveModes(spec map[string]interface{}) {
-	VisitCompute(spec, func(compute map[string]interface{}) { delete(compute, "computeMode") })
-}
-
-// ResolveEffectiveModes records submitted configuration without turning the
-// implicit legacy fallback into an explicit runtime annotation.
-func ResolveEffectiveModes(spec map[string]interface{}) {
-	VisitCompute(spec, func(compute map[string]interface{}) {
-		delete(compute, "computeMode")
-		if !HasGPU(compute) {
-			return
-		}
-		mode, _ := compute["gpuComputeMode"].(string)
-		if mode == "" {
-			mode = TimeSlicing
-		}
-		compute["computeMode"] = mode
-	})
-}
-
 // PolicyFallback temporarily exposes the final fallback to policy constraints.
 // Cleanup preserves omission so old clusters and CPU submissions retain their
 // existing manifest; policy/defaultFrom values are never removed.
@@ -108,9 +87,8 @@ func ApplyModeDefaults(values, defaults map[string]interface{}) {
 	}
 }
 
-// ProjectResolvedModes copies only the mode selected by policy validation. Other
-// derived fields may have different update semantics, so effective mode must be
-// determined from the GPU allocation that will actually be saved.
+// ProjectResolvedModes copies only the mode selected by policy validation; other
+// derived fields retain their existing update semantics.
 func ProjectResolvedModes(resolved, submitted map[string]interface{}) {
 	source, _ := resolved["compute"].(map[string]interface{})
 	if target, ok := submitted["compute"].(map[string]interface{}); ok {
@@ -126,10 +104,9 @@ func ProjectResolvedModes(resolved, submitted map[string]interface{}) {
 			ProjectResolvedModes(sourceChild, child)
 		}
 	}
-	ResolveEffectiveModes(submitted)
 }
 
-// PreserveImplicitModeForUpdate exposes a trusted stored fallback to policy
+// PreserveImplicitModeForUpdate exposes the implicit time-slicing fallback to policy
 // validation when compute is unchanged. Cleanup keeps the legacy request omitted
 // so an unrelated update does not introduce a mode annotation or runtime gate.
 func PreserveImplicitModeForUpdate(values map[string]interface{}) func() {
@@ -137,11 +114,7 @@ func PreserveImplicitModeForUpdate(values map[string]interface{}) func() {
 	if !HasGPU(compute) || compute["gpuComputeMode"] != nil {
 		return func() {}
 	}
-	mode, _ := compute["computeMode"].(string)
-	if mode == "" {
-		mode = TimeSlicing
-	}
-	compute["gpuComputeMode"] = mode
+	compute["gpuComputeMode"] = TimeSlicing
 	return func() {
 		current, _ := values["compute"].(map[string]interface{})
 		delete(current, "gpuComputeMode")

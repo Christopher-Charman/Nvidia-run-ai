@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpucompat"
-	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"net/http"
 	"strings"
 
@@ -78,11 +77,9 @@ func (nsi *NimServicesImpl) CreateNimService(ctx context.Context, request api.Ni
 		return nil, complianceErr
 	}
 
-	gpumode.ResolveEffectiveModes(mutatedSpec)
 	if request.Spec.Compute != nil {
 		compute := *request.Spec.Compute
 		compute.GpuPortionRequest, compute.GpuPortionLimit = nil, nil
-		compute.ComputeMode = nil
 		request.Spec.Compute = &compute
 	}
 	copyErr := convutils.CopySpecs(&request.Spec, mutatedSpec)
@@ -534,8 +531,6 @@ func (nsi *NimServicesImpl) mergeUpdateSpecIntoFullSpec(ctx context.Context, upd
 		}
 		*source = canonical
 	}
-
-	gpumode.StripEffectiveModes(partialSpecMap)
 
 	// Merge at root level: overwrite full spec fields with partial spec fields
 	// If a field in the partial spec is an empty object or empty array, delete it from the full spec

@@ -798,11 +798,10 @@ var _ = Describe("NimServicesImpl", func() {
 		spec.Compute = &api.NimServiceSpecAllOfCompute{
 			GpuMemoryPortionRequest: convutils.Ref(0.25),
 			GpuComputeMode:          convutils.Ref(api.GPUCOMPUTEMODE_SM_SHARING),
-			ComputeMode:             convutils.Ref(api.COMPUTEMODE_TIME_SLICING),
 		}
 		request := api.NimServiceCreateRequest{Metadata: api.NimServiceMetadataCreateParams{Name: "mode-model", UseGivenNameAsPrefix: true, ProjectId: randoms.ProjectIdStr}, Spec: spec}
 		id, created := createNimServiceForTest(router, randoms, &request)
-		Expect(created.Spec.Compute.ComputeMode).To(Equal(convutils.Ref(api.COMPUTEMODE_SM_SHARING)))
+		Expect(created.Spec.Compute.GpuComputeMode).To(Equal(convutils.Ref(api.GPUCOMPUTEMODE_SM_SHARING)))
 		Expect(created.Metadata.Name).To(HavePrefix("mode-model-"))
 		get := func() api.NimServiceResponse {
 			req, err := http.NewRequest("GET", fmt.Sprintf("%s%s/%s", testHost, urlNimServices, id), nil)
@@ -811,12 +810,13 @@ var _ = Describe("NimServicesImpl", func() {
 			rec := httptest.NewRecorder()
 			router.ServeHTTP(rec, req)
 			Expect(rec.Code).To(Equal(http.StatusOK))
+			Expect(rec.Body.String()).NotTo(ContainSubstring(`"computeMode"`))
 			var result api.NimServiceResponse
 			Expect(json.Unmarshal(rec.Body.Bytes(), &result)).To(Succeed())
 			return result
 		}
 		loaded := get()
-		Expect(loaded.Spec.Compute.ComputeMode).To(Equal(convutils.Ref(api.COMPUTEMODE_SM_SHARING)))
+		Expect(loaded.Spec.Compute.GpuComputeMode).To(Equal(convutils.Ref(api.GPUCOMPUTEMODE_SM_SHARING)))
 		updates := getUpdatesForTest(createRouterForTest(), randoms, 0, 50, emptyClusterReports)
 		var manifest map[string]interface{}
 		for _, update := range updates.Workloads {
@@ -827,12 +827,11 @@ var _ = Describe("NimServicesImpl", func() {
 		Expect(manifest).NotTo(BeNil())
 		annotations := manifest["spec"].(map[string]interface{})["annotations"].(map[string]interface{})
 		Expect(annotations).To(HaveKeyWithValue("nvidia.com/container."+created.Metadata.Name+"-ctr.gpu-compute.mode", "sm-sharing"))
-		// Reusing a GET response cannot force the response-only mode.
 		loaded.Spec.Compute.GpuComputeMode = convutils.Ref(api.GPUCOMPUTEMODE_TIME_SLICING)
 		updated := updateNimServiceForTest(router, randoms, id, &api.NimServiceUpdateRequest{Spec: loaded.Spec})
-		Expect(updated.Spec.Compute.ComputeMode).To(Equal(convutils.Ref(api.COMPUTEMODE_TIME_SLICING)))
+		Expect(updated.Spec.Compute.GpuComputeMode).To(Equal(convutils.Ref(api.GPUCOMPUTEMODE_TIME_SLICING)))
 		loaded = get()
-		Expect(loaded.Spec.Compute.ComputeMode).To(Equal(convutils.Ref(api.COMPUTEMODE_TIME_SLICING)))
+		Expect(loaded.Spec.Compute.GpuComputeMode).To(Equal(convutils.Ref(api.GPUCOMPUTEMODE_TIME_SLICING)))
 		updates = getUpdatesForTest(createRouterForTest(), randoms, 0, 50, emptyClusterReports)
 		for _, update := range updates.Workloads {
 			if update.Id == id {

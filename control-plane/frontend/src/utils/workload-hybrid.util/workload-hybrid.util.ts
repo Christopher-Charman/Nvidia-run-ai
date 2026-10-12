@@ -1359,7 +1359,7 @@ function _getBaseFlatWorkloadSpecData(workloadSpec: IUISuperWorkloadSpec): Super
 
 function getComputeFieldFromUI(compute: WorkspaceSpecSpecAllOfCompute): WorkspaceSpecSpecAllOfCompute {
   return {
-    ...omit(compute, ["computeMode"]),
+    ...compute,
     gpuPortionRequest: compute.gpuPortionRequest === 1 ? undefined : compute.gpuPortionRequest,
     gpuRequestType: compute.gpuPortionRequest === 1 ? undefined : compute.gpuRequestType,
   };

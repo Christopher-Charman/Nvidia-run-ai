@@ -29,7 +29,6 @@ func resolveNimGpuModeAgainstPolicy(spec *api.NimServiceSpec, rules, defaults ma
 	if loadErr != nil {
 		return api.NewError(http.StatusInternalServerError, "failed to load NIM spec", loadErr)
 	}
-	gpumode.StripEffectiveModes(values)
 	gpumode.ApplyModeDefaults(values, defaults)
 	order, orderErr := policyCompliance.NewDefaultsFromOrder(rules)
 	if orderErr != nil {
@@ -61,7 +60,6 @@ func resolveNimGpuModeAgainstPolicy(spec *api.NimServiceSpec, rules, defaults ma
 	if spec.Compute != nil && resolved.Compute != nil {
 		compute := *spec.Compute
 		compute.GpuComputeMode = resolved.Compute.GpuComputeMode
-		compute.ComputeMode = resolved.Compute.ComputeMode
 		spec.Compute = &compute
 	}
 	return nil

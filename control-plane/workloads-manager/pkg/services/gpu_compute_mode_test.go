@@ -8,7 +8,6 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-manager/internal/generated/pkg/api"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-manager/pkg/middleware"
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/convutils"
@@ -18,14 +17,13 @@ import (
 
 func TestNimModeDefaultAndPersistence(t *testing.T) {
 	var src api.NimServiceSpec
-	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuMemoryPortionRequest":0.25,"computeMode":"time-slicing"}}`), &src))
+	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuMemoryPortionRequest":0.25}}`), &src))
 	defaults := map[string]interface{}{"compute": map[string]interface{}{"gpuComputeMode": "sm-sharing"}}
 	values, err := MutateWorkload(&src, nil, defaults)
 	require.Nil(t, err)
 	require.NotContains(t, values["compute"], "computeMode")
 	_, err = validateMutatedSpecVsPolicy(nil, defaults, values)
 	require.Nil(t, err)
-	gpumode.ResolveEffectiveModes(values)
 	var resolved api.NimServiceSpec
 	require.NoError(t, convutils.CopySpecs(&resolved, values))
 	service := &NimServicesImpl{}
@@ -33,9 +31,9 @@ func TestNimModeDefaultAndPersistence(t *testing.T) {
 	require.NoError(t, ctxErr)
 	var saved api.NimServiceCreateRequest
 	require.NoError(t, json.Unmarshal(middleware.GetRequestBody(ctx), &saved))
-	require.Equal(t, api.COMPUTEMODE_SM_SHARING, *saved.Spec.Compute.ComputeMode)
+	require.NotContains(t, string(middleware.GetRequestBody(ctx)), `"computeMode"`)
 	require.Equal(t, api.GPUCOMPUTEMODE_SM_SHARING, *saved.Spec.Compute.GpuComputeMode)
-	require.Equal(t, api.COMPUTEMODE_SM_SHARING, *legacyCompatibleNimSpec(saved.Spec).Compute.ComputeMode)
+	require.Equal(t, api.GPUCOMPUTEMODE_SM_SHARING, *legacyCompatibleNimSpec(saved.Spec).Compute.GpuComputeMode)
 }
 
 func TestNimModeUpdatePolicy(t *testing.T) {
@@ -54,7 +52,7 @@ func TestNimModeUpdatePolicy(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var src api.NimServiceSpec
-			require.NoError(t, json.Unmarshal([]byte(`{"image":"sm-sharing","compute":{"gpuMemoryPortionRequest":0.25,"computeMode":"sm-sharing"}}`), &src))
+			require.NoError(t, json.Unmarshal([]byte(`{"image":"sm-sharing","compute":{"gpuMemoryPortionRequest":0.25}}`), &src))
 			if tc.mode != "" {
 				src.Compute.GpuComputeMode = convutils.Ref(api.GpuComputeMode(tc.mode))
 			}
@@ -76,10 +74,14 @@ func TestNimModeUpdatePolicy(t *testing.T) {
 			} else if tc.def != "" || tc.name == "derived mode" {
 				expected = "sm-sharing"
 			}
-			require.Equal(t, expected, string(*src.Compute.ComputeMode))
 			if tc.name == "fallback" {
 				require.Nil(t, src.Compute.GpuComputeMode)
+			} else {
+				require.Equal(t, expected, string(*src.Compute.GpuComputeMode))
 			}
+			data, marshalErr := json.Marshal(src)
+			require.NoError(t, marshalErr)
+			require.NotContains(t, string(data), `"computeMode"`)
 		})
 	}
 }

@@ -149,7 +149,6 @@ func validateSpecAgainstPolicy(
 		return workloadApi.NewSubmissionErrorV2(http.StatusBadRequest, orderErr.Error())
 	}
 
-	gpumode.StripEffectiveModes(mutatedSpec)
 	applyFallback, cleanupFallback := gpumode.PolicyFallback()
 	defer cleanupFallback()
 	options := &policyCompliance.ValidateComplianceOptions{ApplyBuiltInDefaults: applyFallback}
@@ -336,7 +335,6 @@ func validateComplianceOfTemplate(ctx context.Context, task patchingTaskInfo) {
 	}
 	payloadAsMap = canonicalPayload
 
-	gpumode.StripEffectiveModes(payloadAsMap)
 	applyFallback, cleanupFallback := gpumode.PolicyFallback()
 	defer cleanupFallback()
 	options := &policyCompliance.ValidateComplianceOptions{ApplyBuiltInDefaults: applyFallback}

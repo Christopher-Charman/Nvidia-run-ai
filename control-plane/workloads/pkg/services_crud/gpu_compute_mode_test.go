@@ -22,7 +22,7 @@ func TestGpuModePolicyPipeline(t *testing.T) {
 		rules                            map[string]interface{}
 		fail                             bool
 	}{
-		{name: "fallback", want: "time-slicing"},
+		{name: "fallback"},
 		{name: "administrator default", def: "sm-sharing", want: "sm-sharing"},
 		{name: "editable explicit wins", request: "time-slicing", def: "sm-sharing", want: "time-slicing"},
 		{name: "locked equal", request: "sm-sharing", def: "sm-sharing", rules: map[string]interface{}{"canEdit": false}, want: "sm-sharing"},
@@ -32,7 +32,7 @@ func TestGpuModePolicyPipeline(t *testing.T) {
 		{name: "fallback checked against blocked", rules: map[string]interface{}{"blocked": true}, fail: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			compute := map[string]interface{}{"gpuMemoryPortionRequest": json.Number("0.25"), "computeMode": "sm-sharing"}
+			compute := map[string]interface{}{"gpuMemoryPortionRequest": json.Number("0.25")}
 			if tc.request != "" {
 				compute["gpuComputeMode"] = tc.request
 			}
@@ -55,8 +55,6 @@ func TestGpuModePolicyPipeline(t *testing.T) {
 				return
 			}
 			require.Nil(t, validationErr)
-			gpumode.ResolveEffectiveModes(mutated)
-			require.Equal(t, tc.want, mutated["compute"].(map[string]interface{})["computeMode"])
 			if tc.request == "" && tc.def == "" && tc.source == "" {
 				require.NotContains(t, mutated["compute"], "gpuComputeMode")
 			}
@@ -65,27 +63,29 @@ func TestGpuModePolicyPipeline(t *testing.T) {
 			params := createWorkloadParams{Response: workloadsApi.SupersetWorkload{Spec: spec}}
 			stored := NewWorkloadFromWorkloadParams(&params, nil)
 			response := WorkloadFromDbRecord(stored, workloadsApi.PHASE_CREATING)
-			require.Equal(t, tc.want, string(response.Spec.Compute.Get().GetComputeMode()))
+			require.Equal(t, tc.want, string(response.Spec.Compute.Get().GetGpuComputeMode()))
 			snapshot := NewWorkloadV2SnapshotFromWorkloadParams(&params, nil, "")
-			require.Equal(t, tc.want, string(snapshot.Spec.Compute.Get().GetComputeMode()))
+			require.Equal(t, tc.want, string(snapshot.Spec.Compute.Get().GetGpuComputeMode()))
+			data, marshalErr := json.Marshal(response)
+			require.NoError(t, marshalErr)
+			require.NotContains(t, string(data), `"computeMode"`)
 		})
 	}
 }
 
 func TestGpuModeUpdateAndLegacyGuard(t *testing.T) {
 	var full workloadsApi.SupersetSpec
-	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1,"gpuComputeMode":"sm-sharing","computeMode":"sm-sharing"}}`), &full))
+	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1,"gpuComputeMode":"sm-sharing"}}`), &full))
 	require.NotNil(t, validateNativeGpuMode(&full))
 	var update api.InferenceUpdateSpecSpec
-	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1,"computeMode":"sm-sharing"}}`), &update))
+	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1}}`), &update))
 	require.Nil(t, mergeUpdateSpecIntoFullSpec(context.Background(), &full, &update))
-	require.False(t, full.Compute.Get().ComputeMode.IsSet())
 	require.False(t, full.Compute.Get().GpuComputeMode.IsSet())
 	require.Nil(t, validateNativeGpuMode(&full))
 	require.Nil(t, validateNativeGpuMode((*workloadsApi.MasterSpec)(nil)))
 }
 
-func TestGpuModesForReplicasAndTemplates(t *testing.T) {
+func TestGpuModesForReplicas(t *testing.T) {
 	input := map[string]interface{}{
 		"worker": map[string]interface{}{"compute": map[string]interface{}{"gpuMemoryPortionRequest": 0.25, "gpuComputeMode": "sm-sharing"}},
 		"master": map[string]interface{}{"compute": map[string]interface{}{"gpuDevicesRequest": 1, "gpuComputeMode": "time-slicing"}},
@@ -98,41 +98,36 @@ func TestGpuModesForReplicasAndTemplates(t *testing.T) {
 			}
 			mutated, err := MutateWorkload(request, nil, same, nil, nil)
 			require.Nil(t, err)
-			gpumode.ResolveEffectiveModes(mutated)
 			worker, master, buildErr := buildResponseSpecFromMap[workloadsApi.SupersetSpec, workloadsApi.MasterSpec](Distributed, mutated)
 			require.Nil(t, buildErr)
-			require.Equal(t, workloadsApi.COMPUTEMODE_SM_SHARING, worker.Compute.Get().GetComputeMode())
-			expected := workloadsApi.COMPUTEMODE_TIME_SLICING
+			require.Equal(t, workloadsApi.GPUCOMPUTEMODE_SM_SHARING, worker.Compute.Get().GetGpuComputeMode())
+			expected := workloadsApi.GPUCOMPUTEMODE_TIME_SLICING
 			if same {
-				expected = workloadsApi.COMPUTEMODE_SM_SHARING
+				expected = workloadsApi.GPUCOMPUTEMODE_SM_SHARING
 			}
-			require.Equal(t, expected, master.Compute.Get().GetComputeMode())
+			require.Equal(t, expected, master.Compute.Get().GetGpuComputeMode())
 			if same {
 				require.Nil(t, preValidateMpiGpuFields(context.Background(), worker, true, master))
-				require.False(t, master.Compute.Get().ComputeMode.IsSet())
-				require.Equal(t, workloadsApi.COMPUTEMODE_SM_SHARING, worker.Compute.Get().GetComputeMode())
+				require.False(t, master.Compute.Get().GpuDevicesRequest.IsSet())
+				require.Equal(t, workloadsApi.GPUCOMPUTEMODE_SM_SHARING, worker.Compute.Get().GetGpuComputeMode())
 			}
 		})
 	}
-	var template api.SupersetTemplate
-	require.NoError(t, json.Unmarshal([]byte(`{"spec":{"compute":{"gpuComputeMode":"sm-sharing","computeMode":"time-slicing"}},"combinedSpec":{"compute":{"computeMode":"time-slicing"}}}`), &template))
-	cleaned, err := stripTemplateComputeModes(&template)
-	require.Nil(t, err)
-	require.Nil(t, cleaned.Spec.Compute.ComputeMode)
-	require.Nil(t, cleaned.CombinedSpec.Compute.ComputeMode)
-	require.Equal(t, api.GPUCOMPUTEMODE_SM_SHARING, *cleaned.Spec.Compute.GpuComputeMode)
 }
 
 func TestUnrelatedInferenceUpdateKeepsImplicitModeThroughPolicyNormalization(t *testing.T) {
-	values := map[string]interface{}{"compute": map[string]interface{}{"gpuDevicesRequest": 1, "computeMode": "time-slicing"}}
+	values := map[string]interface{}{"compute": map[string]interface{}{"gpuDevicesRequest": 1}}
 	defaults := map[string]interface{}{"compute": map[string]interface{}{"gpuComputeMode": "sm-sharing"}}
 	cleanup := gpumode.PreserveImplicitModeForUpdate(values)
 	require.Nil(t, validateSpecAgainstPolicy(Inference, nil, defaults, values))
 	cleanup()
 	require.NotContains(t, values["compute"], "gpuComputeMode")
 	var spec workloadsApi.SupersetSpec
-	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1,"computeMode":"time-slicing"}}`), &spec))
+	require.NoError(t, json.Unmarshal([]byte(`{"compute":{"gpuDevicesRequest":1}}`), &spec))
 	require.NoError(t, copyResolvedGpuModes(&spec, values))
 	require.False(t, spec.Compute.Get().GpuComputeMode.IsSet())
-	require.Equal(t, workloadsApi.COMPUTEMODE_TIME_SLICING, spec.Compute.Get().GetComputeMode())
+	data, err := json.Marshal(spec)
+	require.NoError(t, err)
+	require.NotContains(t, string(data), `"computeMode"`)
+	require.NotContains(t, string(data), `"gpuComputeMode"`)
 }

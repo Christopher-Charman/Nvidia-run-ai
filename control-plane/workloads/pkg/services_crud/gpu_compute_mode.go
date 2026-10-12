@@ -8,7 +8,6 @@ package services_crud
 import (
 	"fmt"
 	"github.com/dsx-ai-factory/run-ai/control-plane/workloads-and-policies/gpumode"
-	"github.com/dsx-ai-factory/run-ai/control-plane/workloads/internal/generated/pkg/api"
 	workloadsApi "github.com/dsx-ai-factory/run-ai/control-plane/workloads/pkg/client/generated"
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/convutils"
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/jsonutils/gojsonq"
@@ -46,17 +45,4 @@ func validateNativeGpuMode(spec any) *workloadsApi.SubmissionErrorV2 {
 		return workloadsApi.NewSubmissionErrorV2(http.StatusBadRequest, "compute.gpuComputeMode requires workloads v2 submission and an available GPU fractioning runtime")
 	}
 	return nil
-}
-
-func stripTemplateComputeModes(source *api.SupersetTemplate) (*api.SupersetTemplate, *api.Error) {
-	values, err := gojsonq.LoadJson(source)
-	if err != nil {
-		return nil, api.NewError(http.StatusBadRequest, "invalid template", err)
-	}
-	gpumode.StripEffectiveModes(values)
-	var result api.SupersetTemplate
-	if err := convutils.CopySpecs(&result, values); err != nil {
-		return nil, api.NewError(http.StatusBadRequest, "invalid template", err)
-	}
-	return &result, nil
 }

@@ -58,7 +58,6 @@ func validateMutatedSpecVsPolicy(rules map[string]interface{}, defaults map[stri
 		return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
 	}
 
-	gpumode.StripEffectiveModes(mutatedSpec)
 	applyFallback, cleanupFallback := gpumode.PolicyFallback()
 	defer cleanupFallback()
 	options := &policyCompliance.ValidateComplianceOptions{ApplyBuiltInDefaults: applyFallback}
@@ -183,7 +182,6 @@ func MutateWorkload[S WorkloadV2Spec](
 		if err != nil {
 			return nil, NewSubmissionError(http.StatusBadRequest, err.Error(), err)
 		}
-		gpumode.StripEffectiveModes(canonical)
 		*source = canonical
 	}
 
