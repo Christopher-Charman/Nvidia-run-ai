@@ -451,10 +451,14 @@
       <tr><th>Step</th><th>What the EPP knew</th><th>What it did with it</th></tr>
       <tr><td>4</td><td>pod-3 has 8 waiting, the others 0 and 2</td><td>Fed the numbers to the scorers. No one looked at the <em>shape</em> of the load.</td></tr>
       <tr><td>5</td><td>pod-3 holds the prefix</td><td>Prefix scorer gave pod-3 a 0.98, weight 3 → 2.94 points.</td></tr>
-      <tr><td>7</td><td>Fixed weights queue 2 · KV 2 · prefix 3</td><td>pod-3: 3.34, pod-1: 3.20. The hot pod wins by the prefix bonus.</td></tr>
+      <tr><td>7</td><td>Fixed weights queue 2 · KV 2 · prefix 3</td><td><strong>pod-3 is chosen</strong> (3.34) over the empty pod-1 (3.20). The prefix bonus alone, 0.98 × 3 = 2.94, outweighs "no queue + half-free KV" (2.00 + 1.20).</td></tr>
       <tr><td>11</td><td>pod-3 served the prefix again</td><td>Index reinforced. Next request: same result, longer queue.</td></tr>
     </table>
-    <div class="quote">The scores react to the metrics every request. The <strong>weights</strong> never do. That is the gap the three new steps fill.</div>
+    <pre style="font-size:13px; line-height:1.5; margin:12px 0 8px;">            queue ×2       KV ×2          prefix ×3      total
+pod-1       1.00 → 2.00    0.60 → 1.20    0.00 → 0.00    3.20
+pod-2       0.75 → 1.50    0.56 → 1.12    0.00 → 0.00    2.62
+pod-3       0.00 → 0.00    0.20 → 0.40    0.98 → 2.94    <span class="status-denied">3.34  ◄ chosen today</span></pre>
+    <div class="quote">The scores react to the metrics every request. The <strong>weights</strong> never do. Nothing asks "is the load uneven?"; each scorer sees only its own column.</div>
   </div>
 </div>
 
