@@ -800,16 +800,16 @@ with memory      1 in, 1 out</pre>
   <div class="slide-content">
     <h3>Proposal · worked examples</h3>
     <h2>Five pools through the rules</h2>
-    <table style="font-size:17px;">
-      <tr><th>waiting</th><th>running</th><th>cv</th><th>P</th><th>Rule</th><th>Profile</th></tr>
-      <tr><td><code>0, 0, 0</code></td><td><code>5, 5, 5</code></td><td>0.00</td><td>0.00</td><td>idle</td><td class="status-ok">cache-oriented</td></tr>
-      <tr><td><code>0, 2, 4</code></td><td><code>10, 10, 10</code></td><td>0 (gated, mean 2)</td><td>0.17</td><td>idle</td><td class="status-ok">cache-oriented</td></tr>
-      <tr><td><code>18, 20, 22</code></td><td><code>30, 30, 30</code></td><td>0.10</td><td>0.40</td><td>none</td><td class="status-ok">balanced</td></tr>
-      <tr><td><code>0, 0, 30</code></td><td><code>10, 10, 10</code></td><td>1.00</td><td>0.50</td><td>hotspot</td><td class="status-ok">load-oriented</td></tr>
-      <tr><td><code>5, 20, 35</code></td><td><code>30, 30, 30</code></td><td>0.75</td><td>0.40</td><td>hotspot</td><td class="status-ok">load-oriented</td></tr>
-      <tr><td><code>0, ?, 30</code></td><td><code>10, ?, 10</code></td><td>—</td><td>—</td><td>invalid summary</td><td class="status-redirect">balanced (default)</td></tr>
+    <table style="font-size:15px;">
+      <tr><th>waiting</th><th>running</th><th>cv</th><th>P</th><th>Rule</th><th>Profile</th><th>Why this profile</th></tr>
+      <tr><td><code>0, 0, 0</code></td><td><code>5, 5, 5</code></td><td>0.00</td><td>0.00</td><td>idle</td><td class="status-ok">cache-oriented</td><td style="font-size:14px;">Nothing waits anywhere (P 0 &lt; 0.2) → <code>idle</code>. Spread would gain nothing; keep the cache.</td></tr>
+      <tr><td><code>0, 2, 4</code></td><td><code>10, 10, 10</code></td><td>0 (gated, mean 2)</td><td>0.17</td><td>idle</td><td class="status-ok">cache-oriented</td><td style="font-size:14px;">Queues look uneven, but mean 2 is below the gate of 3 so cv is forced to 0: too little work to redistribute. P 0.17 &lt; 0.2 → <code>idle</code>.</td></tr>
+      <tr><td><code>18, 20, 22</code></td><td><code>30, 30, 30</code></td><td>0.10</td><td>0.40</td><td>none</td><td class="status-ok">balanced</td><td style="font-size:14px;">Busy (P 0.40) but even (cv 0.10): no rule matches. Spreading cannot help when every queue is the same → default.</td></tr>
+      <tr><td><code>0, 0, 30</code></td><td><code>10, 10, 10</code></td><td>1.00</td><td>0.50</td><td>hotspot</td><td class="status-ok">load-oriented</td><td style="font-size:14px;">One pod carries everything: cv 1.0 ≥ 0.5 → <code>hotspot</code>. Checked before <code>idle</code>, so order decides.</td></tr>
+      <tr><td><code>5, 20, 35</code></td><td><code>30, 30, 30</code></td><td>0.75</td><td>0.40</td><td>hotspot</td><td class="status-ok">load-oriented</td><td style="font-size:14px;">Same mean as row 3, but spread is large (cv 0.75 ≥ 0.5) → <code>hotspot</code>. Load, not just volume, triggers it.</td></tr>
+      <tr><td><code>0, ?, 30</code></td><td><code>10, ?, 10</code></td><td>—</td><td>—</td><td>invalid summary</td><td class="status-redirect">balanced (default)</td><td style="font-size:14px;">One pod has no fresh metric → whole summary invalid → default. Never guess a missing queue as 0.</td></tr>
     </table>
-    <p style="color:var(--text-dim); font-size:16px;">Rows 3 and 5 share mean 20 and get different, correct answers. Rows 1 and 4 share "mean 10 or less" and get different, correct answers. Last row: one pod without fresh metrics falls back to the default; relaxing that to partial coverage is a separate decision.</p>
+    <p style="color:var(--text-dim); font-size:15px;">Rules are checked in order: hotspot, then idle, then default. Rows 3 and 5 share mean 20; rows 1 and 4 share "mean ≤ 10". The mean cannot tell them apart; cv and P can.</p>
   </div>
 </div>
 
