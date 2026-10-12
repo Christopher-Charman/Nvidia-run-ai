@@ -791,7 +791,7 @@ with memory      1 in, 1 out</pre>
         <p style="font-size:16px; color:var(--text-dim);">"20 waiting requests" means nothing without capacity. <code>P</code> and <code>cv</code> carry the capacity inside the ratio, so <strong>one YAML works on every model and GPU</strong>. The only count left is the gate "is there anything worth redistributing".</p>
       </div>
     </div>
-    <p style="color:var(--text-dim); font-size:15px;">Profiles unchanged: cache 4/1/1 · balanced 2/1/1 · load 1/1/4. No new CRD. Startup validation: exit &lt; enter for gte, exit &gt; enter for lt.</p>
+    <p style="color:var(--text-dim); font-size:15px;">Profiles unchanged: cache 4/1/1 · balanced 2/1/1 · load 1/1/4. The only new plugin type is <code>adaptive-profile-handler</code>; it takes the single <code>ProfileHandler</code> seat that <code>single-profile-handler</code> fills by default today. Startup validation: exit &lt; enter for gte, exit &gt; enter for lt.</p>
   </div>
 </div>
 
