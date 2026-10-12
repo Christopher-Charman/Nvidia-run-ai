@@ -488,14 +488,14 @@ pod-3       0.00 → 0.00     0.20 → 0.40     0.98 → 2.94     <span class="s
 <div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 6. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Produce</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;"> 7. <span class="status-ok">✅</span> Admission</div></pre></div>
       <div><pre style="margin:0; background:var(--bg-card); font-family:inherit;"><div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;"> 8. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: Pick</div>
-<div style="color:var(--text); font-size:16px; line-height:1.65;"> 9. <span class="status-ok">✅</span> Run the chosen profile</div>
+<div style="color:var(--nvidia-green); font-weight:600; font-size:16px; line-height:1.65;"> 9. <span class="status-ok">✅</span> Run the chosen profile   ← the profile itself</div>
 <div style="color:var(--runai-purple); font-weight:600; font-size:16px; line-height:1.65;">10. <span style="color:var(--runai-purple); font-weight:600;">🆕</span> Our profile handler: log line</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">11. <span class="status-ok">✅</span> EPP answers the Gateway</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">12. <span class="status-ok">✅</span> Gateway forwards the request</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">13. <span class="status-ok">✅</span> vLLM serves it</div>
 <div style="color:var(--text); font-size:16px; line-height:1.65;">14. <span class="status-ok">✅</span> Prefix index updated</div></pre></div>
     </div>
-    <p style="color:var(--text-dim); font-size:15px; margin-top:10px;">Next four slides: each new step with the request before and after, then step 9 to see the different outcome on the same request.</p>
+    <p style="font-size:15px; margin-top:10px;"><span style="color:var(--runai-purple); font-weight:600;">Purple 6 · 8 · 10</span> = our profile handler <code>adaptive-profile-handler</code>, the plugin that decides. <span style="color:var(--nvidia-green); font-weight:600;">Green 9</span> = the profile: a YAML list of filters, weighted scorers and a picker, runs unchanged. <span style="color:var(--text-dim);">Everything else is existing plumbing: EPP request handling, Gateway, vLLM.</span></p>
   </div>
 </div>
 
