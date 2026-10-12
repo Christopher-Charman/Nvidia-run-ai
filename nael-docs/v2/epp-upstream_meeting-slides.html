@@ -443,6 +443,41 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════ 7b: FULL REQUEST PATH -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · full request path</h3>
+    <h2>One request, client to response, with the two new hooks in place</h2>
+    <pre style="font-size:11.5px; line-height:1.32; padding:14px 18px;">
+<span class="flow-node">🖥 Client</span>  POST /v1/completions  {shared 1024-token prefix + unique tail}
+   │ ① HTTP
+<span class="flow-node">✅ Gateway</span> (kgateway / Envoy) · HTTPRoute → InferencePool                 [ref:1]
+   │ ② ext-proc: headers + body ──────────────────────────────────────────────────────┐
+   ▼                                                                                  │ ⑧ header back:
+<span class="flow-node">✅ EPP</span> · ext-proc server → Director                                       [ref:2,3]   │   destination = pod-3
+   ③ parse body (model, prompt)                                                       │
+   ④ locate + screen candidates ──► <span class="flow-node">✅ data layer</span> snapshots per pod            [ref:4,5]     │
+        │                            WaitingQueueSize · RunningRequestsSize · KV · UpdateTime      │
+        │                            (filled by a background scraper, ~50 ms)                      │
+   ⑤ DataProducers: ✅ prefix-cache lookup [ref:6]                                                 │
+        │           <span class="flow-node">🆕 Produce</span>  one pass → mean, cv, P, expiresAt → stored on the request      │
+   ⑥ <span class="flow-node">✅ Admission / flow control</span>                                              [ref:7]       │
+        │ admitted                                                                                 │
+   ⑦ <span class="flow-node">✅ Scheduler</span>                                                             [ref:8]       │
+        ├─ ProfileHandler.Pick      ✅ today: always "default"               [ref:9]               │
+        │                          <span class="flow-node">🆕 ours: regime check → enter/exit rules → ONE profile</span>  ◄──► <span class="flow-node">🆕 remembers last choice</span>
+        ├─ Run profile  (unchanged) filters → scorers × FIXED weights → picker → pod-3             │
+        │                          ✅ "default" = queue 2 · kv 2 · prefix 3  [ref:10]              │
+        │                          <span class="flow-node">🆕 ours: cache-oriented / balanced / load-oriented</span>             │
+        └─ ProcessResults           ✅ mark primary · <span class="flow-node">🆕 log rule + signal + profile</span> ─────────────┘
+   │ ⑨ Gateway forwards the original request
+<span class="flow-node">✅ vLLM pod-3</span>  prefill (prefix hit?) → decode → stream                        [InferencePool]
+   │ ⑩ response
+<span class="flow-node">✅ Gateway → EPP response hooks</span> (prefix tracker: pod-3 now holds this prefix) <span class="flow-node">→ 🖥 Client</span>  [ref:11]</pre>
+    <p style="color:var(--text-dim); font-size:14px;">The two 🆕 boxes sit in hooks the framework already exposes: <code>DataProducer.Produce</code> (⑤) and <code>ProfileHandler.Pick / ProcessResults</code> (⑦). Refs are llm-d-router <code>main</code> paths, listed in the issue draft.</p>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════ 8: SIGNALS + KEY POINT 1 -->
 <div class="slide">
   <div class="slide-content">
