@@ -376,14 +376,15 @@
 <span class="flow-node">✅ ProfileHandler</span>        <span class="flow-desc">single-profile-handler: always the one configured profile</span>
 <span class="flow-arrow">        │  run "balanced"</span>
 <span class="flow-arrow">        ▼</span>
-<span class="flow-node">✅ Profile "balanced"</span>    <span class="flow-desc">decode-filter → prefix ×2 · KV ×1 · queue ×1 → max-score picker</span>
+<span class="flow-node">✅ Profile "balanced"</span>    <span class="flow-desc">queue ×2 · KV ×2 · prefix ×3 → max-score picker   (default-plugins.yaml, llm-d Router main)</span>
 <span class="flow-arrow">        │</span>
 <span class="flow-arrow">        ▼</span>
 <span class="flow-node">Selected pod</span>             <span class="flow-desc">score(p) = Σ w[j] × s[j,p]</span></pre>
     <ul>
       <li>Scores react to live metrics every request. <strong>Weights never change.</strong></li>
       <li>Under a hotspot, the prefix scorer keeps pulling traffic to the hot pod with the same weight as when the pool was idle.</li>
-      <li>Other handlers exist: <code>header-profile-handler</code> (caller chooses), <code>disagg-profile-handler</code> (prefill/decode). The loader allows one handler.</li>
+      <li>Other handlers exist on <code>main</code>: <code>headerprofile</code> (caller chooses), <code>disagg</code> (prefill/decode), <code>dataparallel</code>. The loader allows one handler.</li>
+      <li>The EPP code now lives in <code>llm-d/llm-d-router</code>; GAIE keeps only the InferencePool API.</li>
     </ul>
   </div>
 </div>
@@ -640,8 +641,8 @@ default                      → balanced</pre>
     <ol>
       <li><strong>Where should selection live?</strong> A separate ProfileHandler (request-scoped, but takes the only handler seat), or a <code>mode: discrete</code> inside the configurator (pool-scoped, coexists with disagg)?</li>
       <li><strong>Normalization of cv.</strong> Plain <code>σ / mean</code> capped at 1, or the detectors’ <code>(σ / mean) / √(N−1)</code>? Copying it makes a later change of signal source a no-op.</li>
-      <li><strong>Worth benchmarking</strong> discrete selection against continuous weights on the same hotspot setup (8 pods, Llama 8B, GuideLLM)?</li>
-      <li><strong>Which branch and settings</strong> produced the reported results, especially whether the pressure cap was active?</li>
+      <li><strong>Benchmark shape.</strong> Default profile vs adaptive handler on 4 GPUs with a real model and a shared-prefix hotspot. Is that the comparison that would convince the llm-d Router maintainers?</li>
+      <li><strong>Which branch and settings</strong> produced the reported configurator results, so they can be cited correctly as prior art?</li>
     </ol>
   </div>
 </div>
@@ -655,16 +656,16 @@ default                      → balanced</pre>
 <span class="flow-node">  1. This meeting</span>              <span class="flow-desc">agree on the four decisions</span>
 <span class="flow-arrow">         │</span>
 <span class="flow-arrow">         ▼</span>
-<span class="flow-node">  2. Open upstream issue</span>       <span class="flow-desc">in the #1992 thread: discrete profile selection on imbalance signals</span>
+<span class="flow-node">  2. Open upstream issue</span>       <span class="flow-desc">in llm-d/llm-d-router, cross-linking GAIE #1992: discrete profile selection on imbalance signals</span>
 <span class="flow-arrow">         │</span>
 <span class="flow-arrow">         ▼</span>
-<span class="flow-node">  3. Prototype</span>                 <span class="flow-desc">on adaptive-with-pressure, reusing the detectors' statistics</span>
+<span class="flow-node">  3. Prototype</span>                 <span class="flow-desc">on a branch of llm-d-router main, one plugin under profilehandler/adaptive</span>
 <span class="flow-arrow">         │</span>
 <span class="flow-arrow">         ▼</span>
-<span class="flow-node">  4. Benchmark, 3 modes</span>        <span class="flow-desc">static · continuous · discrete — TTFT p50/p99, throughput, profile switches</span>
+<span class="flow-node">  4. Benchmark, 3 modes</span>        <span class="flow-desc">default profile vs adaptive handler, 4 GPUs, real model — TTFT p99, tokens/s per GPU, spread, switches</span>
 <span class="flow-arrow">         │</span>
 <span class="flow-arrow">         ▼</span>
-<span class="flow-node">  5. PR or drop</span>                <span class="flow-desc">only if discrete is at least on par with continuous on the hotspot workload</span></pre>
+<span class="flow-node">  5. PR or drop</span>                <span class="flow-desc">only if the handler lowers TTFT p99 and raises tokens/s per GPU on the hotspot workload</span></pre>
   </div>
 </div>
 

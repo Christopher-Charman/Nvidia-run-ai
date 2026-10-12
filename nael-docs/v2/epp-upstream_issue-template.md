@@ -1,12 +1,12 @@
 # Upstream issue draft
 
-Target repository: `kubernetes-sigs/gateway-api-inference-extension`
-Template: Feature request (`.github/ISSUE_TEMPLATE/feature_request.md`, label `needs-triage`)
+Target repository: `llm-d/llm-d-router` (the EPP code moved here from GAIE; GAIE `main` keeps only the InferencePool API)
+Template: feature request. Cross-link GAIE #1992, where the alternative was first discussed.
 Status: **draft, not posted**. Review with Nir first. Everything below the line is the issue body.
 
 Suggested title:
 
-> Discrete scheduling-profile selection on normalized imbalance and pressure signals (alternative discussed in #1992)
+> Discrete scheduling-profile selection on normalized imbalance and pressure signals (the "select groups of scorers" alternative from GAIE #1992)
 
 ---
 
@@ -16,7 +16,7 @@ Suggested title:
 
 A `ProfileHandler` plugin that selects one of several operator-defined scheduling profiles **per request**, based on two normalized load signals computed over the request's candidate endpoints:
 
-| Signal | Formula | Answers | Source metrics (already on `datalayer.Metrics`) |
+| Signal | Formula | Answers | Source metrics (already on `datalayer.Metrics`, `pkg/epp/framework/interface/datalayer/metrics.go`) |
 |---|---|---|---|
 | `imbalance` (`cv`) | `min(1, σ / mean)` of `WaitingQueueSize` across candidates; `0` when `mean < minMeanQueue` | How **uneven** is the load? | `WaitingQueueSize` |
 | `pressure` (`P`) | `Σ waiting / Σ (waiting + running)` across candidates | How **much** of the work is waiting? | `WaitingQueueSize`, `RunningRequestsSize` |
@@ -84,7 +84,7 @@ How it fits the existing extension points:
 
 **Why is this needed**:
 
-Today a profile's scorer weights are fixed. Scores react to live metrics, weights do not, so under a hotspot the prefix-cache scorer keeps concentrating traffic on the hot endpoint. #1992 asks for adaptation and lists two directions: adjust each scorer's weight continuously (the approach in the `adaptive-routing` / `adaptive-with-pressure` branches, with prerequisites #2119 and #2207 already merged), or **select among groups of distributing vs concentrating scorers**. This issue proposes the second direction, built on the same signals as the first.
+Today the default profile (`queue-scorer` 2, `kv-cache-utilization-scorer` 2, `prefix-cache-scorer` 3 in `routerlib/templates/_config.yaml`) has fixed weights. Scores react to live metrics, weights do not, so under a hotspot the prefix-cache scorer keeps concentrating traffic on the hot endpoint. #1992 asks for adaptation and lists two directions: adjust each scorer's weight continuously (the approach in the `adaptive-routing` / `adaptive-with-pressure` branches, with prerequisites #2119 and #2207 already merged), or **select among groups of distributing vs concentrating scorers**. This issue proposes the second direction, built on the same signals as the first.
 
 Why these signals and not mean queue depth (the obvious first choice):
 
@@ -107,10 +107,11 @@ Why discrete selection in addition to continuous weight adaptation:
 
 **Relation to existing work**:
 
-- #1992 — dynamic adaptation of scorers/weights; this is the "select groups of scorers" alternative discussed there.
-- #2119 (merged) — scorer preference categories (affinity vs distribution).
-- #2207 (merged) — float scorer weights.
-- `adaptive-with-pressure` branch — imbalance and pressure detectors plus background configurator; this proposal reuses its statistics and smoothing constant.
+- GAIE #1992 — dynamic adaptation of scorers/weights; this is the "select groups of scorers" alternative discussed there.
+- GAIE #2119 (merged) — scorer preference categories (affinity vs distribution).
+- GAIE #2207 (merged) — float scorer weights.
+- `nirrozenbaum/gateway-api-inference-extension` branch `adaptive-with-pressure` — imbalance and pressure detectors plus a background configurator, never merged; this proposal reuses its statistics and smoothing constant.
+- Existing profile handlers on `main`: `single`, `headerprofile`, `disagg`, `dataparallel` under `pkg/epp/framework/plugins/scheduling/profilehandler/`; the proposed `adaptive` handler sits beside them.
 
 **Open questions**:
 
@@ -121,6 +122,6 @@ Why discrete selection in addition to continuous weight adaptation:
 
 **Validation plan**:
 
-Prototype on the `adaptive-with-pressure` branch and run its hotspot benchmark (8 endpoints, Llama 8B, GuideLLM) in three modes: static weights, continuous adaptation, discrete selection. Report TTFT p50/p99, throughput, and number of profile switches. A PR follows only if discrete selection is at least on par with continuous adaptation on that workload.
+Prototype on a branch of `main`, deploy with the `llm-d-router-gateway` chart on 4 GPUs with a real model and prefix caching, and run a shared-prefix hotspot workload (GuideLLM, `prefix_tokens=1024`, concurrency 8–96) against the default profile and against the adaptive handler. Report TTFT p50/p99, output tokens/s per GPU, per-pod queue spread, prefix-cache hit rate, and profile switches per minute. A PR follows only if the handler lowers TTFT p99 and raises tokens/s per GPU on that workload.
 
 **Status**: design only. No implementation, no benchmark results yet. All thresholds, weights and the gate value above are illustrative.

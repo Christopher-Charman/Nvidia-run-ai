@@ -10,7 +10,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EPP Real-GPU Lab</title>
-<meta name="description" content="Setup and run guides for benchmarking EPP routing modes on real GPUs with a real model: static, continuous (background configurator), discrete (predefined profiles).">
+<meta name="description" content="Setup and run guides for benchmarking the llm-d Router EPP on real GPUs with a real model: default profile versus a discrete adaptive profile handler, Gateway mode with kgateway.">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -76,7 +76,7 @@
     <button class="btn" id="themeToggle" type="button">Light mode</button>
   </div>
   <h1 class="page">Benchmarking EPP routing modes on <span class="accent">real GPUs</span>, <span class="purple">real model</span></h1>
-  <p class="sub">Two guides. <strong>001 Setup</strong> stands the environment up once. <strong>002 Run</strong> puts the hotspot workload on top of it and compares three EPP modes with one set of numbers.</p>
+  <p class="sub">Two guides. <strong>001 Setup</strong> stands the environment up once on llm-d Router <code>main</code> in Gateway mode. <strong>002 Run</strong> puts the hotspot workload on top of it and compares the default profile with our adaptive handler, one set of numbers.</p>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" data-tab="overview" type="button">Overview</button><button class="tab" role="tab" data-tab="setup" type="button">001 · Setup</button><button class="tab" role="tab" data-tab="run" type="button">002 · Run</button>
@@ -86,20 +86,20 @@
     <div class="card">
 <pre>  doc 001 (once)                                   doc 002 (per run)
   ────────────────────────────────                 ─────────────────────────────────────────
-  4 GPUs → 4 vLLM pods, real model                 GuideLLM: shared 1024-token prefix,
-  kgateway + InferencePool                          concurrency sweep 8 … 96, 3 repetitions
-  EPP image from adaptive-with-pressure            switch EPP mode → settle 60 s → sweep
-  Prometheus: EPP + vLLM                           export GuideLLM JSON + PromQL ranges</pre>
-      <p class="mini" style="margin-top:8px;">Setup is shared; only the EPP mode changes between runs.</p>
+  4 GPUs → 4 vLLM pods, real model                 hypothesis written first (H1–H4)
+  kgateway + llm-d-router-gateway chart            GuideLLM: shared 1024-token prefix,
+  EPP: release v0.11.0 (A) / our build (C)           concurrency sweep 8 … 96, 3 repetitions
+  Prometheus: EPP + vLLM                           switch A ↔ C → settle 60 s → sweep → export</pre>
+      <p class="mini" style="margin-top:8px;">Setup is shared; only the EPP image and plugins config change between runs.</p>
     </div>
     <div class="grid">
-      <div class="mode"><h4>A · static</h4><p class="mini">Fixed weights, prefix 2 · KV 1 · queue 1. The baseline everyone has.</p><p class="mini"><strong>✅ runs today</strong></p></div>
-      <div class="mode"><h4>B · continuous</h4><p class="mini">Background configurator on; weights follow the imbalance and pressure signals.</p><p class="mini"><strong>✅ runs today</strong></p></div>
+      <div class="mode"><h4>A · default profile</h4><p class="mini">llm-d Router <code>main</code>, release image, one profile: queue 2 · KV 2 · prefix 3. The baseline everyone runs.</p><p class="mini"><strong>✅ runs today</strong></p></div>
+      <div class="mode pl"><h4>Reference · continuous</h4><p class="mini">Nir's background configurator. Never merged into <code>main</code>; cited as prior art, not run.</p><p class="mini"><strong>⚪ not a run</strong></p></div>
       <div class="mode pl"><h4>C · discrete</h4><p class="mini">Predefined profiles, rules on cv and P with enter/exit bounds.</p><p class="mini"><strong>🔜 needs the prototype</strong></p></div>
     </div>
     <div class="card">
-      <p><strong>What "better" will mean here:</strong> on a shared-prefix hotspot workload, C reaches the same TTFT p99 and throughput as B, with a small number of profile switches per minute and a human-readable reason for each. If the numbers do not say that, the result is the result.</p>
-      <p class="mini" style="margin-top:8px;">Status: guides written 2026-10-12 from branch revision <code>6c0f8d8</code>; not yet executed end to end. Items marked <em>check</em> are versions or flag names to confirm at run time.</p>
+      <p><strong>What "better" will mean here:</strong> on a shared-prefix hotspot workload, C lowers TTFT p99 and raises tokens/s per GPU versus the default profile, keeps the prefix-cache hit rate close to it, and switches profile only a few times per minute. If the numbers do not say that, the result is the result.</p>
+      <p class="mini" style="margin-top:8px;">Status: guides written 2026-10-12 against <code>llm-d/llm-d-router</code> <code>main</code> (<code>c0795deb0</code>, release v0.11.0); not yet executed end to end. Items marked <em>check</em> are versions or flag names to confirm at run time.</p>
     </div>
   </section>
 
@@ -113,77 +113,80 @@
 </div>
 
 <script type="text/markdown" id="md-setup" data-file="001_setup_real-gpu-epp.md">
-# 001 · Setup: real GPUs, real model, EPP from the adaptive branch
+# 001 · Setup: real GPUs, real model, llm-d Router EPP from `main`, Gateway mode
 
 ## TL;DR (the whole thing in 3 lines)
 
-- One Kubernetes cluster with **4 GPUs** (one node is fine), **4 vLLM pods** serving one real model, an **Inference Gateway** (kgateway) in front, and the **EPP built from Nir's `adaptive-with-pressure` branch** behind it.
+- One Kubernetes cluster with **4 GPUs**, **4 vLLM pods** serving one real model with prefix caching on, **kgateway** as the Inference Gateway, and the **llm-d Router EPP** from the released `main` image behind it.
 - Prometheus scrapes the EPP and the vLLM pods. That is where the numbers come from.
-- Everything below copies manifests that already exist in the GAIE repo; only the GPU count, the model, and the EPP image are changed.
+- Everything copies manifests and chart values that exist in `llm-d/llm-d-router` today; only GPU count, model, and (for run C) the EPP image change.
 
-Status: setup guide, written 2026-10-12 from the pinned branch revision `6c0f8d8`. Not yet executed end to end on a cluster. Versions marked **check** must be confirmed at run time.
+Status: setup guide, written 2026-10-12 against `llm-d/llm-d-router` `main` (`c0795deb0`, release `v0.11.0`). Not yet executed end to end. Items marked **check** must be confirmed at run time.
+
+## Why llm-d Router and not GAIE
+
+The Endpoint Picker code moved. `kubernetes-sigs/gateway-api-inference-extension` `main` now holds only the `InferencePool` CRD and a lightweight conformance EPP. The real EPP, the plugin framework, the scorers and the profile handlers live in `llm-d/llm-d-router` (renamed from `llm-d-inference-scheduler`). A benchmark that upstream will accept has to run there.
 
 ## What you end up with
 
 ```text
  ┌──────────────────────────────┐
- │ 📈 Load generator (doc 002)  │   GuideLLM pod inside the cluster
+ │ 📈 GuideLLM (doc 002)        │   pod inside the cluster
  └──────────────┬───────────────┘
                 │ HTTP POST /v1/completions
  ╔══════════════▼═══════════════════════════════════════════════════════════╗
  ║ Kubernetes cluster · namespace epp-lab                                    ║
  ║                                                                           ║
  ║  ┌──────────────────┐  ext-proc gRPC   ┌───────────────────────────────┐  ║
- ║  │ ✅ Gateway        │────────────────►│ 🆕 EPP                         │  ║
- ║  │ kgateway          │◄────────────────│  image: adaptive-with-pressure │  ║
- ║  │ + HTTPRoute       │  chosen pod IP  │  env: ENABLE_EXPERIMENTAL_...  │  ║
- ║  └────────┬─────────┘                  │  plugins config (profiles)     │  ║
+ ║  │ ✅ Gateway        │────────────────►│ ✅ EPP  (run A)                │  ║
+ ║  │ kgateway          │◄────────────────│  ghcr.io/llm-d/               │  ║
+ ║  │ class: kgateway   │  chosen pod IP  │  llm-d-router-endpoint-picker │  ║
+ ║  │ + HTTPRoute       │                 │  :v0.11.0                      │  ║
+ ║  └────────┬─────────┘                  │ 🆕 EPP  (run C) our build      │  ║
  ║           │ forward request            └───────────────┬───────────────┘  ║
  ║           ▼                                            │ scrape /metrics   ║
  ║  ┌─────────────────────────────────────────────────────▼────────────────┐ ║
  ║  │ ✅ InferencePool "vllm-model" · 4 × vLLM pods · 1 GPU each            │ ║
- ║  │   real model, --enable-prefix-caching, --max-num-seqs 256            │ ║
- ║  │   exposes vllm:num_requests_waiting / running / gpu_cache_usage_perc │ ║
+ ║  │   real model, --enable-prefix-caching, --max-num-seq 256             │ ║
+ ║  │   vllm:num_requests_waiting / running / gpu_cache_usage_perc         │ ║
  ║  └──────────────────────────────────────────────────────────────────────┘ ║
  ║  ┌───────────────────────┐                                                ║
- ║  │ 📊 Prometheus         │  scrapes EPP (ServiceMonitor) + vLLM (PodMonitor)║
+ ║  │ 📊 Prometheus         │  EPP ServiceMonitor + vLLM PodMonitor           ║
  ║  └───────────────────────┘                                                ║
  ╚═══════════════════════════════════════════════════════════════════════════╝
 ```
 
-✅ = exists in GAIE / the cluster today · 🆕 = the only custom piece, the EPP image from the adaptive branch.
+✅ = exists today (released image, chart, manifests) · 🆕 = the only custom piece, our EPP build for run C.
 
 ## Prerequisites
 
 | Need | Minimum | Notes |
 |---|---|---|
-| Kubernetes cluster | 1.30+, one node with **4 GPUs** | 8 GPUs lets you reproduce Nir's 8-pod setup later. GPU Operator or device plugin installed, `nvidia.com/gpu` allocatable. |
-| GPU type | A100 40 GB / H100 / L40S | Fits an 8B model in bf16 with room for KV cache. L4 (24 GB) works with a 7–8B model in fp8 or a 3B model. |
-| Model | `Qwen/Qwen3-8B` (no gate) or `meta-llama/Llama-3.1-8B-Instruct` (HF token) | Nir's branch manifest uses `Qwen/Qwen3-32B` with TP=2 on 16 GPUs; that is the "later" step, not the minimum. |
-| Container registry | reachable from the cluster | For the EPP image you build. |
-| Local tools | `kubectl`, `helm`, `docker` (buildx), `git` | Present on this machine. |
+| Kubernetes cluster | 1.30+, one node with **4 GPUs** | GPU Operator or device plugin installed; `nvidia.com/gpu` allocatable. 8 GPUs lets you match the repo's 8-replica manifest later. |
+| GPU type | A100 40 GB / H100 / L40S | 8B model in bf16 with room for KV cache. L4 (24 GB): use a 3B model or fp8. |
+| Model | `Qwen/Qwen3-8B` (no gate) | The repo manifest uses `Qwen/Qwen3-32B`; that needs 80 GB per pod. |
+| Container registry | reachable from the cluster | Only for run C's image. Run A uses the public release image. |
+| Local tools | `kubectl`, `helm`, `docker`, `git`, `jq` | Present on this machine. |
 | Cluster access | `kc add --session` | Per the personal rules. |
 
 ## Sizing
 
-| GPUs available | Pods | Model | TP | Why |
-|---|---|---|---|---|
-| **4** (minimum) | 4 | 8B bf16 | 1 | Enough pods for a hotspot to be visible (1 hot, 3 cold) |
-| 8 | 8 | 8B bf16 | 1 | Nir's reported benchmark shape |
-| 16 | 8 | 32B | 2 | Nir's current branch manifest |
-
-Fewer than 4 pods makes "imbalance" almost meaningless: with 2 pods the CV of two numbers is a coin flip.
+| GPUs | Pods | Model | Why |
+|---|---|---|---|
+| **4** (minimum) | 4 | 8B bf16 | 1 hot pod vs 3 cold is visible; CV over 4 queues is meaningful |
+| 8 | 8 | 8B bf16 | Repo manifest shape, closer to the reported numbers |
+| 8 × 80 GB | 8 | 32B | Repo manifest as-is |
 
 ## Steps
 
-### 0. Namespace, variables, HF token
+### 0. Namespace, variables
 
 ```bash
 export NS=epp-lab
-export MODEL=Qwen/Qwen3-8B                 # or meta-llama/Llama-3.1-8B-Instruct
-export POOL=vllm-model                     # InferencePool name and pod label
-export REGISTRY=<your-registry>/epp-lab    # where the EPP image goes
-export EPP_TAG=adaptive-6c0f8d8
+export MODEL=Qwen/Qwen3-8B
+export POOL=vllm-model                         # InferencePool name and pod label
+export EPP_RELEASE=v0.11.0                     # run A image tag, verified pullable
+export REGISTRY=<your-registry>/epp-lab        # run C image only
 
 kubectl create namespace $NS
 kubectl config set-context --current --namespace=$NS
@@ -191,32 +194,54 @@ kubectl config set-context --current --namespace=$NS
 kubectl create secret generic hf-token --from-literal=token=<your-hf-token>
 ```
 
-### 1. Gateway API + Inference Extension CRDs
+### 1. CRDs: Gateway API + Inference Extension
 
 ```bash
-export IGW_LATEST_RELEASE=$(curl -s https://api.github.com/repos/kubernetes-sigs/gateway-api-inference-extension/releases \
-  | jq -r '[.[] | select(.prerelease == false)][0].tag_name')      # check: v1.x
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/download/${IGW_LATEST_RELEASE}/manifests.yaml
+git clone https://github.com/llm-d/llm-d-router.git && cd llm-d-router
+git checkout c0795deb0                         # main at writing time; or: git checkout v0.11.0
+kubectl apply -k deploy/components/crds-gateway-api
+kubectl apply -k deploy/components/crds-gie
 ```
 
-This is step "Install the Inference Extension CRDs" of the GAIE getting-started guide.
+The two kustomizations pin the Gateway API and InferencePool CRD versions the router was built against (GIE `v1.6.2`).
 
 ### 2. Gateway provider: kgateway
 
 ```bash
-KGTW_VERSION=v2.2.0-main      # check: the version named in site-src/guides/index.md at the pinned revision
-helm upgrade -i --create-namespace --namespace kgateway-system --version $KGTW_VERSION \
+KGTW_VERSION=v2.4.6                            # check: latest non-prerelease at writing time
+helm upgrade -i --create-namespace -n kgateway-system --version $KGTW_VERSION \
   kgateway-crds oci://cr.kgateway.dev/kgateway-dev/charts/kgateway-crds
-helm upgrade -i --namespace kgateway-system --version $KGTW_VERSION \
-  kgateway oci://cr.kgateway.dev/kgateway-dev/charts/kgateway --set inferenceExtension.enabled=true
-kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api-inference-extension/refs/tags/${IGW_LATEST_RELEASE}/config/manifests/gateway/kgateway/gateway.yaml
+helm upgrade -i -n kgateway-system --version $KGTW_VERSION \
+  kgateway oci://cr.kgateway.dev/kgateway-dev/charts/kgateway \
+  --set inferenceExtension.enabled=true        # check: key name in the v2.4.x chart; may be on by default
 ```
 
-Istio or NGINX Gateway Fabric work too; the guide has tabs for each. kgateway is the lightest.
+Gateway resource (what the router's own `kubernetes-kgateway` dev overlay creates):
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: inference-gateway
+  namespace: epp-lab
+spec:
+  gatewayClassName: kgateway
+  listeners:
+  - name: default
+    port: 80
+    protocol: HTTP
+```
+
+```bash
+kubectl apply -f gateway.yaml
+kubectl wait gateway/inference-gateway --for=condition=Programmed --timeout=120s
+```
+
+Istio is the router's default dev provider (`deploy/environments/dev/base-kind-istio`); kgateway is the documented alternative overlay. Either works with the same chart.
 
 ### 3. vLLM pods (real model)
 
-Adapted from `config/manifests/vllm/gpu-deployment.yaml` at the pinned revision: 4 replicas, 1 GPU each, no LoRA, prefix caching on, no node pin.
+Adapted from `config/manifests/vllm/gpu-prefix-cache-deployment.yaml` on `main`: 4 replicas instead of 8, 8B model instead of 32B, `max-num-seq` lowered so queues form, label kept so the pool selects the pods.
 
 ```yaml
 apiVersion: apps/v1
@@ -232,29 +257,32 @@ spec:
     metadata:
       labels:
         app: vllm-model
+        llm-d.ai/engine-type: vllm
     spec:
       containers:
       - name: vllm
-        image: vllm/vllm-openai:v0.13.0        # check: version used in the branch manifest
+        image: vllm/vllm-openai:v0.21.0          # as in the repo manifest
         command: ["python3", "-m", "vllm.entrypoints.openai.api_server"]
         args:
         - --model
-        - Qwen/Qwen3-8B                        # $MODEL
+        - Qwen/Qwen3-8B                          # $MODEL
+        - --enable-prefix-caching
+        - --tensor-parallel-size
+        - "1"
         - --port
         - "8000"
-        - --max-num-seqs
-        - "256"
-        - --enable-prefix-caching
-        - --gpu-memory-utilization
-        - "0.90"
+        - --max-num-seq
+        - "256"                                  # repo: 1024; lower so queues form under the sweep
+        - --max-model-len
+        - "16000"
         env:
-        - name: VLLM_USE_V1
-          value: "1"
-        # only if the model is gated:
+        - { name: VLLM_USE_V1, value: "1" }
+        - { name: PORT, value: "8000" }
+        # only if gated:
         # - name: HUGGING_FACE_HUB_TOKEN
         #   valueFrom: { secretKeyRef: { name: hf-token, key: token } }
         ports:
-        - { containerPort: 8000, name: http }
+        - { containerPort: 8000, name: http, protocol: TCP }
         readinessProbe:
           httpGet: { path: /health, port: http }
           periodSeconds: 2
@@ -262,80 +290,96 @@ spec:
           httpGet: { path: /health, port: http }
           failureThreshold: 600
           periodSeconds: 2
+        lifecycle:
+          preStop: { sleep: { seconds: 30 } }
         resources:
           limits: { nvidia.com/gpu: 1 }
           requests: { nvidia.com/gpu: 1 }
         volumeMounts:
         - { mountPath: /dev/shm, name: shm }
         - { mountPath: /root/.cache/huggingface, name: hf-cache }
+      terminationGracePeriodSeconds: 130
       volumes:
       - name: shm
         emptyDir: { medium: Memory }
       - name: hf-cache
-        emptyDir: {}                            # use a PVC if you will redeploy often
+        emptyDir: {}                              # PVC if you will redeploy often
 ```
 
 ```bash
 kubectl apply -f vllm-model.yaml
-kubectl rollout status deploy/vllm-model --timeout=20m     # first pull + model download
+kubectl rollout status deploy/vllm-model --timeout=25m   # pull + model download
 ```
 
-Why these flags matter for the experiment:
-
-| Flag | Effect on the signals |
+| Flag | Effect on the experiment |
 |---|---|
-| `--enable-prefix-caching` | Without it the prefix scorer never sees a hit and no hotspot forms. |
-| `--max-num-seqs 256` | Sets how many requests run before they queue. Lower = queues form sooner = pressure visible at lower load. |
-| 1 GPU per pod, 4 pods | 4 independent queues, so imbalance across pods is a real quantity. |
+| `--enable-prefix-caching` | Without it the prefix scorer never sees a hit, no hotspot forms, nothing to test. |
+| `--max-num-seq 256` | Requests above this per pod queue. Lower = pressure appears at lower load. |
+| 1 GPU × 4 pods | Four independent queues, so imbalance is a real quantity. |
 
-### 4. Build the EPP image from the adaptive branch
+### 4. EPP + InferencePool: the `llm-d-router-gateway` chart
 
-```bash
-git clone https://github.com/nirrozenbaum/gateway-api-inference-extension.git epp-adaptive
-cd epp-adaptive
-git checkout 6c0f8d8496b56d68c30369520f3c4477adf8cd42      # adaptive-with-pressure, pinned
-IMAGE_REGISTRY=$REGISTRY IMAGE_TAG=$REGISTRY/epp:$EPP_TAG make image-push
-```
-
-`make image-push` is the Makefile target `image-build` with `--push`. If the cluster can pull from your local Docker daemon (kind, or a single-node cluster you control), `make image-load` instead.
-
-### 5. Install the InferencePool + EPP with the chart from the same checkout
-
-Using the local chart guarantees the chart and the image come from the same revision.
+Run A uses the released image. No build.
 
 ```bash
-helm install $POOL ./config/charts/inferencepool \
-  --set inferencePool.modelServers.matchLabels.app=$POOL \
-  --set inferencePool.targetPorts[0].number=8000 \
+helm install $POOL ./config/charts/llm-d-router-gateway \
+  --set router.modelServers.matchLabels.app=$POOL \
+  --set router.epp.image.registry=ghcr.io/llm-d \
+  --set router.epp.image.repository=llm-d-router-endpoint-picker \
+  --set router.epp.image.tag=$EPP_RELEASE \
+  --set router.epp.resources.requests.cpu=2 \
+  --set router.epp.resources.requests.memory=2Gi \
   --set provider.name=none \
-  --set experimentalHttpRoute.enabled=true \
-  --set experimentalHttpRoute.inferenceGatewayName=inference-gateway \
-  --set inferenceExtension.image.hub=$REGISTRY \
-  --set inferenceExtension.image.name=epp \
-  --set inferenceExtension.image.tag=$EPP_TAG \
-  --set inferenceExtension.monitoring.prometheus.enabled=true \
-  --set inferenceExtension.flags.v=2 \
-  --set-json 'inferenceExtension.env=[{"name":"ENABLE_EXPERIMENTAL_ADAPTIVE_CONFIGURATOR","value":"false"}]'
+  --set httpRoute.create=true \
+  --set httpRoute.inferenceGatewayName=inference-gateway \
+  --set router.monitoring.prometheus.enabled=true    # check: value path in routerlib (monitoring.prometheus.enabled)
+kubectl rollout status deploy/$POOL-epp              # check: deployment name from the chart NOTES
 ```
 
-`provider.name=none` is what the guide uses for kgateway and NGINX; `experimentalHttpRoute` creates the HTTPRoute to the Gateway named `inference-gateway` (created in step 2).
+`provider.name=none` is the right value for kgateway (the chart's `istio` and `gke` providers add provider-specific objects). `httpRoute.create=true` creates the HTTPRoute from `inference-gateway` to the InferencePool. The chart's default CPU request is 8 cores, hence the override.
 
-The adaptive configurator is **off** by default here. Doc 002 switches it per run.
+**What the default EPP config is** (from `routerlib/templates/_config.yaml`, this is run A):
+
+```yaml
+schedulingProfiles:
+- name: default
+  plugins:
+  - pluginRef: queue-scorer
+    weight: 2
+  - pluginRef: kv-cache-utilization-scorer
+    weight: 2
+  - pluginRef: prefix-cache-scorer
+    weight: 3
+```
+
+One profile, fixed weights, `single-profile-handler` injected by default. This is the baseline the whole experiment compares against.
+
+### 5. Run C image (our prototype, later)
+
+```bash
+git checkout -b adaptive-profile-handler            # on top of main
+# add pkg/epp/framework/plugins/scheduling/profilehandler/adaptive/ and register it
+IMAGE_REGISTRY=$REGISTRY make image-build-epp image-push-epp
+helm upgrade $POOL ./config/charts/llm-d-router-gateway --reuse-values \
+  --set router.epp.image.registry=$REGISTRY \
+  --set router.epp.image.tag=adaptive-<sha> \
+  --set router.epp.pluginsConfigFile=adaptive-profiles.yaml \
+  --set-file router.epp.pluginsCustomConfig.adaptive-profiles\\.yaml=adaptive-profiles.yaml
+```
+
+`adaptive-profiles.yaml` is the configuration from the issue draft, with the three profiles built as variations of the default weights above.
 
 ### 6. Prometheus
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm upgrade -i kube-prometheus-stack prometheus-community/kube-prometheus-stack \
-  --namespace monitoring --create-namespace \
+  -n monitoring --create-namespace \
   --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
   --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false
-
-# EPP metrics need the metrics-reader secret the chart's ServiceMonitor refers to
-kubectl apply -f config/manifests/metrics-reader.yaml
 ```
 
-Scrape the vLLM pods too:
+The chart's ServiceMonitor (step 4) covers the EPP. For the vLLM pods, the router's `deploy/components/monitoring/vllm-sim-pod-monitor.yaml` is the pattern; ours points at the `http` port:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -356,88 +400,89 @@ spec:
 
 ```bash
 IP=$(kubectl get gateway/inference-gateway -o jsonpath='{.status.addresses[0].value}')
-PORT=80
-curl -s ${IP}:${PORT}/v1/completions -H 'Content-Type: application/json' -d "{
-  \"model\": \"$MODEL\",
-  \"prompt\": \"Write as if you were a critic: San Francisco\",
-  \"max_tokens\": 32
+curl -s ${IP}:80/v1/completions -H 'Content-Type: application/json' -d "{
+  \"model\": \"$MODEL\", \"prompt\": \"Write as if you were a critic: San Francisco\", \"max_tokens\": 32
 }" | jq .
-
-# EPP picked a pod?
-kubectl logs deploy/$POOL-epp --tail=20 | grep -i -E 'selected|profile|pod'
+kubectl logs deploy/$POOL-epp --tail=30 | grep -i -E 'scor|profile|selected|endpoint'
 ```
 
 ## Verify before moving to doc 002
 
 | Check | Command | Expect |
 |---|---|---|
-| 4 vLLM pods ready, 1 GPU each | `kubectl get pods -l app=vllm-model -o wide` | 4 × `1/1 Running`, spread over GPUs |
+| 4 vLLM pods ready | `kubectl get pods -l app=vllm-model -o wide` | 4 × `1/1 Running`, one GPU each |
 | InferencePool accepted | `kubectl get inferencepool $POOL -o yaml \| yq .status` | `Accepted=True`, `ResolvedRefs=True` |
 | HTTPRoute attached | `kubectl get httproute -o yaml \| yq '.items[].status'` | parent `inference-gateway`, `Accepted=True` |
-| EPP sees 4 endpoints | `kubectl logs deploy/$POOL-epp \| grep -c 'pod added'` or EPP metric `inference_pool_ready_pods` | 4 |
-| Prometheus scrapes both | Prometheus UI → Targets | EPP ServiceMonitor and vLLM PodMonitor `UP` |
-| Prefix caching active | `curl <pod-ip>:8000/metrics \| grep prefix_cache` | `vllm:prefix_cache_hits` / `queries` counters increase after two identical prompts |
+| Gateway programmed | `kubectl get gateway inference-gateway` | `PROGRAMMED=True`, address set |
+| EPP sees 4 endpoints | EPP `/metrics` → `inference_pool_ready_pods` (**check** name on main) or logs | 4 |
+| Prometheus targets | UI → Status → Targets | EPP ServiceMonitor and vLLM PodMonitor `UP` |
+| Prefix caching live | two identical prompts, then `curl <pod-ip>:8000/metrics \| grep prefix_cache` | hit counter increases (**check** exact vLLM metric names for v0.21.0) |
 
 ## Switching EPP behavior (used by doc 002)
 
 | Run | What changes | How |
 |---|---|---|
-| **A · static** | fixed weights, default plugins config | `ENABLE_EXPERIMENTAL_ADAPTIVE_CONFIGURATOR=false` |
-| **B · continuous (Nir)** | configurator on, defaults | `ENABLE_EXPERIMENTAL_ADAPTIVE_CONFIGURATOR=true`; note defaults make the pressure cap inactive (`CONSERVATIVE_MAX_WEIGHT=1`); set `ADAPTIVE_CONFIGURATOR_CONSERVATIVE_MAX_WEIGHT=0.6` for a second variant |
-| **C · discrete (ours)** | predefined profiles + rules | requires the prototype; delivered as a plugins config file via `inferenceExtension.pluginsConfigFile` plus the image with the handler |
-
-```bash
-# flip a run without reinstalling
-helm upgrade $POOL ./config/charts/inferencepool --reuse-values \
-  --set-json 'inferenceExtension.env=[{"name":"ENABLE_EXPERIMENTAL_ADAPTIVE_CONFIGURATOR","value":"true"}]'
-kubectl rollout status deploy/$POOL-epp
-```
+| **A · static** | default profile, release image | step 4 as written |
+| **C · discrete (ours)** | our image + `adaptive-profiles.yaml` | step 5 |
+| Reference only | Nir's background configurator | never merged into `main`; not runnable here. His reported numbers are cited, not reproduced. |
 
 ## Teardown
 
 ```bash
 helm uninstall $POOL
-kubectl delete -f vllm-model.yaml
-kubectl delete -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api-inference-extension/refs/tags/${IGW_LATEST_RELEASE}/config/manifests/gateway/kgateway/gateway.yaml
+kubectl delete -f vllm-model.yaml -f gateway.yaml
 helm uninstall kgateway kgateway-crds -n kgateway-system
 helm uninstall kube-prometheus-stack -n monitoring
+kubectl delete -k deploy/components/crds-gie; kubectl delete -k deploy/components/crds-gateway-api
 kubectl delete namespace $NS
 ```
 
 ## Code references
 
-All GAIE paths are at revision `6c0f8d8496b56d68c30369520f3c4477adf8cd42` of `nirrozenbaum/gateway-api-inference-extension`.
+All paths are in `llm-d/llm-d-router` at `main` (`c0795deb0`, 2026-10-08) unless noted.
 
 | Ref | Location | Used for |
 |---|---|---|
-| 1 | `site-src/guides/index.md` | CRD install, kgateway install, gateway manifest, smoke test |
-| 2 | `config/manifests/vllm/gpu-deployment.yaml` | Base for the vLLM deployment (Nir's uses Qwen3-32B, TP=2, 8 replicas, node-pinned) |
-| 3 | `config/charts/inferencepool/values.yaml` | Image, env, `pluginsConfigFile`, monitoring knobs |
-| 4 | `site-src/_includes/epp.md` | `helm install` flags per provider |
-| 5 | `config/manifests/metrics-reader.yaml` | Secret the EPP ServiceMonitor authenticates with |
-| 6 | `cmd/epp/runner/runner.go:98-103` | The six `ADAPTIVE_CONFIGURATOR_*` env vars |
-| 7 | `Makefile:198-233` | `image-build`, `image-push`, `image-load`, `image-kind` |
-| 8 | `hack/adaptive-metrics.sh` | Nir's loop that curls the EPP `/metrics` for `adaptive*` series |
+| 1 | `deploy/components/crds-gateway-api/`, `deploy/components/crds-gie/` | CRD install (step 1) |
+| 2 | `deploy/environments/dev/kubernetes-kgateway/patch-gateways.yaml` | Gateway with `gatewayClassName: kgateway` (step 2) |
+| 3 | `config/manifests/vllm/gpu-prefix-cache-deployment.yaml` | Base for the vLLM deployment (step 3) |
+| 4 | `config/charts/llm-d-router-gateway/values.yaml`, `config/charts/routerlib/values.yaml` | `router.epp.image.*`, `router.epp.env`, `pluginsConfigFile`, `pluginsCustomConfig`, `httpRoute.*`, `provider.*` |
+| 5 | `config/charts/routerlib/templates/_config.yaml` | The default profile: queue 2 · KV 2 · prefix 3 |
+| 6 | `deploy/components/monitoring/epp-service-monitor.yaml`, `vllm-sim-pod-monitor.yaml` | Monitoring patterns (step 6) |
+| 7 | `Makefile:455-491` | `image-build-epp`, `image-push-epp`; `IMAGE_REGISTRY`, `EPP_IMAGE_NAME` |
+| 8 | `pkg/epp/framework/plugins/scheduling/profilehandler/{single,headerprofile,disagg,dataparallel}` | Where our `adaptive` handler goes |
+| 9 | `pkg/epp/framework/interface/datalayer/metrics.go:35-46` | `RunningRequestsSize`, `WaitingQueueSize`, `KVCacheUsagePercent`, `UpdateTime` |
+| 10 | `ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.11.0` | Run A image, manifest verified pullable on 2026-10-12 |
 
 ## 🔧 If you only do one thing
 
-Get step 7's curl to return a completion through the gateway with the adaptive-branch EPP image. Everything else is tuning.
+Get step 7's curl to return a completion through kgateway with the `v0.11.0` EPP. Everything else is tuning.
 
 ## 🧠 Remember it as
 
-Four real GPUs, four real queues, one EPP you built, one Prometheus watching all five.
+Four real GPUs, four real queues, the EPP everyone already runs, one Prometheus watching all five.
 
 </script>
 <script type="text/markdown" id="md-run" data-file="002_run_hotspot-benchmark.md">
-# 002 · Run: the hotspot benchmark, three EPP modes, one set of numbers
+# 002 · Run: the hotspot benchmark, baseline vs our handler, one set of numbers
 
 ## TL;DR (the whole thing in 3 lines)
 
-- One workload that **creates a hotspot on purpose**: every request shares a long prefix, so the prefix scorer pulls them all to one pod.
-- Run it three times with only the EPP mode changed: **A static**, **B continuous (Nir)**, **C discrete (ours)**. Same pods, same model, same load, same seed.
-- Collect TTFT p50/p99, throughput, and the per-pod queue spread. If C is not at least on par with B on this workload, there is nothing to submit.
+- One workload that **creates a hotspot on purpose**: every request shares a long prefix, so the prefix scorer (weight 3 in the default profile) pulls them all to one pod.
+- Two runs with only the EPP changed: **A · default profile on `main`** and **C · our adaptive profile handler**. Same pods, same model, same load, same seed.
+- The claim to prove: C **lowers TTFT p99 and raises served tokens/s per GPU** on this workload, while keeping the prefix-cache hit rate close to A. If the numbers do not say that, there is nothing to submit.
 
-Status: run plan, written 2026-10-12. Run C needs the prototype from the v2 proposal and cannot be executed yet. Runs A and B can.
+Status: run plan, written 2026-10-12. Run A can be executed today. Run C needs the prototype.
+
+## The hypothesis, written down before running anything
+
+| | Statement |
+|---|---|
+| **H1 · latency** | At concurrency ≥ 32 on the shared-prefix workload, C has lower TTFT p99 than A. |
+| **H2 · efficiency** | At the same concurrency, C serves more output tokens/s per GPU than A (the three cold GPUs do work). |
+| **H3 · cost of H1/H2** | C's prefix-cache hit rate stays within 20 points of A at the concurrency where A is not yet hot (8), and is allowed to drop where A is saturated. |
+| **H4 · stability** | C switches profile fewer than 3 times per minute at steady load (hysteresis works). |
+| Kill criterion | If H1 and H2 both fail at every concurrency, the discrete handler adds nothing over the default profile on this workload. |
 
 ## The runs
 
@@ -446,40 +491,68 @@ Status: run plan, written 2026-10-12. Run C needs the prototype from the v2 prop
   same setup     │  4 × vLLM pods · 1 model · prefix caching on (doc 001)      │
   (doc 001)      └────────────────────────────┬───────────────────────────────┘
                                               │
-            ┌─────────────────────────────────┼─────────────────────────────────┐
-            ▼                                 ▼                                 ▼
-  ┌──────────────────────┐        ┌──────────────────────┐        ┌──────────────────────┐
-  │ A · static           │        │ B · continuous       │        │ C · discrete         │
-  │ fixed weights        │        │ configurator ON      │        │ profiles + rules     │
-  │ prefix 2 · KV 1 · q 1│        │ weights follow I, P  │        │ cv / P → one profile │
-  │ ✅ runs today        │        │ ✅ runs today        │        │ 🔜 needs prototype   │
-  └──────────┬───────────┘        └──────────┬───────────┘        └──────────┬───────────┘
-             │                               │                               │
-             └───────────────────────────────┼───────────────────────────────┘
-                                             ▼
-                   same hotspot workload · same concurrency sweep · 3 repetitions each
-                                             ▼
-                   TTFT p50 / p99 · throughput · queue spread · profile switches (C)
+                          ┌───────────────────┴───────────────────┐
+                          ▼                                       ▼
+            ┌──────────────────────────┐            ┌──────────────────────────┐
+            │ A · default profile       │            │ C · adaptive handler      │
+            │ queue 2 · KV 2 · prefix 3 │            │ cache / balanced / load   │
+            │ release image v0.11.0     │            │ rules on cv and P,        │
+            │ ✅ runs today             │            │ enter/exit bounds         │
+            └──────────────┬───────────┘            │ 🔜 needs prototype        │
+                           │                        └──────────────┬───────────┘
+                           └────────────────┬───────────────────────┘
+                                            ▼
+                  same hotspot workload · same concurrency sweep · 3 repetitions each
+                                            ▼
+                  TTFT p50 / p99 · tokens/s per GPU · queue spread · hit rate · switches (C)
 ```
 
-A is the baseline everyone has. B is what Nir reported. C is the question.
+Reference, not a run: Nir's background configurator never merged into `main`; his reported hotspot result is cited in the issue draft as prior art.
 
 ## 1. The workload
 
-**Goal:** make the prefix scorer concentrate traffic. All requests carry the same long system prompt, so under cache-oriented weights the EPP sends them to the one pod that already holds that prefix. That pod's queue grows while three sit idle: the hotspot.
+**Goal:** make the prefix scorer concentrate traffic. All requests carry the same 1024-token prefix. Under the default profile the EPP keeps sending them to the pod that already holds the prefix; its queue grows while three pods idle. That is the hotspot.
 
-GuideLLM is the tool Nir used (`config/manifests/guidellm.yaml`, image `ghcr.io/vllm-project/guidellm:v0.5.3`). Deploy it as a long-running pod and `exec` into it.
+GuideLLM is the load tool. Deploy it as a long-running pod and `exec` in.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: guidellm
+  namespace: epp-lab
+spec:
+  containers:
+  - name: guidellm
+    image: ghcr.io/vllm-project/guidellm:v0.8.1      # check: latest release at writing time
+    command: ["/bin/bash", "-c", "sleep infinity"]
+    resources:
+      requests: { cpu: "2", memory: 4Gi }
+    volumeMounts:
+    - { mountPath: /data, name: results }
+  volumes:
+  - name: results
+    persistentVolumeClaim: { claimName: guidellm-results }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: guidellm-results
+  namespace: epp-lab
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 5Gi } }
+```
 
 ```bash
-kubectl apply -f config/manifests/pvc.yaml            # guidellm-results-pvc, from the branch
-kubectl apply -f config/manifests/guidellm.yaml       # edit namespace: nrozenba → epp-lab
+kubectl apply -f guidellm.yaml
 kubectl exec -it guidellm -- bash
 ```
 
-Inside the pod, one sweep:
+One sweep:
 
 ```bash
-GATEWAY=http://inference-gateway.epp-lab.svc:80       # or the IP from doc 001 step 7
+GATEWAY=http://$(kubectl get gateway/inference-gateway -o jsonpath='{.status.addresses[0].value}'):80
 MODEL=Qwen/Qwen3-8B
 
 guidellm benchmark \
@@ -495,119 +568,118 @@ guidellm benchmark \
 
 | Argument | Why this value |
 |---|---|
-| `--rate-type concurrent --rate 8,…,96` | Concurrency sweep. With 4 pods × `max-num-seqs 256` queues form well before 96 only if the hotspot does; that is the point. |
-| `prefix_tokens=1024` | The shared prefix. Long enough that a cache hit is worth a lot to the prefix scorer. **check**: confirm the key name with `guidellm benchmark --help` for v0.5.3; if absent, use a dataset file where every row repeats the same 1024-token system prompt. |
+| `--rate-type concurrent --rate 8,…,96` | Concurrency sweep. With `max-num-seq 256` per pod the only way a queue forms below 96 is a hotspot, which is the point. |
+| `prefix_tokens=1024` | The shared prefix. Long enough that a cache hit is worth a lot to the prefix scorer. Documented in GuideLLM `docs/en/guides/datasets.md` (synthetic data). |
 | `prompt_tokens=128, output_tokens=128` | Short unique tail and short generation, so the experiment is about routing, not decode time. |
-| `--max-seconds 120` | Long enough for the background configurator (B) to react several times. |
+| `--max-seconds 120` | Long enough to reach steady state at each level. |
 
-Run each sweep **3 times** per mode and report the median. Name files `run-<A|B|C>-rep<n>.json`.
+Run each sweep **3 times** per run type and report the median. Name files `run-<A|C>-rep<n>.json`.
 
-## 2. Switching modes between runs
+## 2. Switching between A and C
 
-| Mode | Command (from the `epp-adaptive` checkout, doc 001 step 5) |
+| | Command (from the `llm-d-router` checkout, doc 001) |
 |---|---|
-| A static | `helm upgrade $POOL ./config/charts/inferencepool --reuse-values --set-json 'inferenceExtension.env=[{"name":"ENABLE_EXPERIMENTAL_ADAPTIVE_CONFIGURATOR","value":"false"}]'` |
-| B continuous | same with `"value":"true"`. Record the five `ADAPTIVE_CONFIGURATOR_*` values in effect; with defaults the pressure cap is inactive. Optional B2: add `{"name":"ADAPTIVE_CONFIGURATOR_CONSERVATIVE_MAX_WEIGHT","value":"0.6"}`. |
-| C discrete | image with the handler + `--set inferenceExtension.pluginsConfigFile=adaptive-profiles.yaml` (the YAML from the v2 proposal). 🔜 |
+| **A** | `helm upgrade $POOL ./config/charts/llm-d-router-gateway --reuse-values --set router.epp.image.registry=ghcr.io/llm-d --set router.epp.image.tag=v0.11.0 --set router.epp.pluginsConfigFile=default-plugins.yaml` |
+| **C** | doc 001 step 5: our image + `--set router.epp.pluginsConfigFile=adaptive-profiles.yaml` |
 
-After every switch: `kubectl rollout status deploy/$POOL-epp`, then **wait 60 s** so the configurator's smoothed signals and the vLLM prefix caches start from a comparable state, then start the sweep.
+After every switch: `kubectl rollout status deploy/$POOL-epp`, then **wait 60 s** so the EPP has scraped every pod a few times and the vLLM prefix caches start from a comparable state, then start the sweep.
 
-Between repetitions of the same mode, restart the vLLM pods **only if** you want cold caches every time. Decide once and write it in the results log. Recommended: do not restart; warm caches are the realistic case.
+Cache policy: do **not** restart the vLLM pods between repetitions. Warm caches are the realistic case. Write this in the results log.
 
 ## 3. What to record
 
 ### From GuideLLM (per run file)
 
-| Metric | Where in the report | Shows |
+| Metric | Where | Shows |
 |---|---|---|
-| TTFT p50 / p99 per concurrency | `benchmarks[].metrics.time_to_first_token_ms` | The user-facing cost of a hotspot (queueing before prefill) |
-| Output tokens/s per concurrency | `benchmarks[].metrics.output_tokens_per_second` | That spreading did not cost throughput |
+| TTFT p50 / p99 per concurrency | `benchmarks[].metrics.time_to_first_token_ms` | H1 |
+| Output tokens/s per concurrency | `benchmarks[].metrics.output_tokens_per_second` | H2 (divide by 4 for per GPU) |
 | Request latency p99 | `benchmarks[].metrics.request_latency` | Tail behavior |
-| Error / timeout count | `benchmarks[].metrics.requests_per_second` and error totals | Must be 0 for a run to count |
+| Errors / timeouts | error totals | Must be 0 for a run to count |
 
-### From Prometheus (PromQL, over each run's time window)
+### From Prometheus (PromQL over each run's window)
 
 | Name | Query | Shows |
 |---|---|---|
-| Queue per pod | `vllm:num_requests_waiting{namespace="epp-lab"}` | The hotspot itself: one line up, three flat |
-| **Queue spread** (the imbalance you can see) | `max(vllm:num_requests_waiting{namespace="epp-lab"}) - min(vllm:num_requests_waiting{namespace="epp-lab"})` | Should be large in A, small in B and C |
+| Queue per pod | `vllm:num_requests_waiting{namespace="epp-lab"}` | The hotspot: one line up, three flat |
+| **Queue spread** | `max(vllm:num_requests_waiting{namespace="epp-lab"}) - min(vllm:num_requests_waiting{namespace="epp-lab"})` | Large in A, small in C |
 | KV usage per pod | `vllm:gpu_cache_usage_perc{namespace="epp-lab"}` | Whether the hot pod is also memory-hot |
-| Prefix hit rate per pod | `rate(vllm:prefix_cache_hits[30s]) / rate(vllm:prefix_cache_queries[30s])` | The price of distribution: hits drop when traffic spreads. **check** metric names against the vLLM version. |
-| Pool averages (EPP) | `inference_pool_average_queue_size`, `inference_pool_average_kv_cache_utilization` | Sanity, note integer truncation of the queue average |
-| Nir's signals (B) | `adaptive_*` series from the EPP, see `hack/adaptive-metrics.sh` | When the configurator reacted, and how far it moved D |
-| Our decisions (C) | `adaptive_profile_selections_total{profile,rule,reason}` 🔜 | How often each profile was chosen and how often the regime switched |
+| Prefix hit rate per pod (vLLM side) | `rate(vllm:prefix_cache_hits_total[30s]) / rate(vllm:prefix_cache_queries_total[30s])` | H3. **check** names for vLLM v0.21.0 |
+| Prefix prediction (EPP side) | `llm_d_router_endpoint_picker_prefix_predicted_cached_tokens`, `…_prefix_prompt_tokens` | What the EPP believed about cache reuse when it chose |
+| Pool averages (EPP) | `inference_pool_average_queue_size`, `inference_pool_average_kv_cache_utilization` | Sanity. **check** these names still exist on `main` |
+| Our decisions (C) | `adaptive_profile_selections_total{profile,rule,reason}` 🔜 | H4: selections and regime switches |
 
-Export each query for the run window with the Prometheus HTTP API, for example:
+Export each query for the run window:
 
 ```bash
-PROM=http://localhost:9090          # kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090
-START=<unix-seconds>; END=<unix-seconds>
+PROM=http://localhost:9090   # kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090
+START=<unix>; END=<unix>
 curl -sG "$PROM/api/v1/query_range" \
   --data-urlencode 'query=max(vllm:num_requests_waiting{namespace="epp-lab"}) - min(vllm:num_requests_waiting{namespace="epp-lab"})' \
   --data-urlencode "start=$START" --data-urlencode "end=$END" --data-urlencode "step=5" \
   > spread-run-A-rep1.json
 ```
 
-## 4. How to present "better"
+## 4. How to present the result
 
-One table, medians of 3 repetitions, one row per concurrency level, three column groups:
+One table, medians of 3 repetitions:
 
-| Concurrency | A static TTFT p99 | B continuous TTFT p99 | C discrete TTFT p99 | A tok/s | B tok/s | C tok/s | A spread (mean) | B spread | C spread | C profile switches / min |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 8 | | | | | | | | | | |
-| 16 | | | | | | | | | | |
-| 32 | | | | | | | | | | |
-| 64 | | | | | | | | | | |
-| 96 | | | | | | | | | | |
+| Concurrency | A TTFT p99 | C TTFT p99 | Δ | A tok/s per GPU | C tok/s per GPU | Δ | A hit rate | C hit rate | A spread | C spread | C switches/min |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 8 | | | | | | | | | | | |
+| 16 | | | | | | | | | | | |
+| 32 | | | | | | | | | | | |
+| 64 | | | | | | | | | | | |
+| 96 | | | | | | | | | | | |
 
-Plus three charts, each with the three modes overlaid:
+Three charts, A and C overlaid:
 
-1. **Queue per pod over time** at concurrency 64. This is the picture: A shows one line climbing, B and C show four lines close together.
-2. **TTFT p99 vs concurrency.**
-3. **Prefix hit rate vs concurrency.** Shows what distribution costs; the honest counterweight.
+1. **Queue per pod over time at concurrency 64.** The picture: A shows one line climbing, C shows four lines close together.
+2. **TTFT p99 and tokens/s per GPU vs concurrency.** H1 and H2 on one page.
+3. **Prefix hit rate vs concurrency.** H3, the honest counterweight: what distribution costs.
 
-The claim to make, and nothing more: *on a shared-prefix hotspot workload, discrete profile selection reaches the same tail latency as continuous weight adaptation, with N profile switches per minute and a human-readable reason for each.* If the numbers do not support it, say that instead.
+Say exactly what the table supports: *on a shared-prefix hotspot workload with 4 pods, the adaptive handler reduced TTFT p99 by X% and increased tokens/s per GPU by Y% at concurrency ≥ 32, at the cost of Z points of prefix hit rate, with N profile switches per minute.* If X or Y is not positive, say that.
 
 ## 5. Pitfalls that invalidate a run
 
 | Pitfall | Symptom | Fix |
 |---|---|---|
-| Prefix caching off or prefix too short | No hotspot in A; all three modes look identical | Check `vllm:prefix_cache_hits` increases; use `prefix_tokens ≥ 1024` |
-| `max-num-seqs` too high for the load | Queues stay 0, pressure stays 0, nothing to adapt to | Lower to 64, or raise concurrency |
-| Changing two things at once | Cannot attribute a difference | Only the EPP env / config differs between A, B, C |
+| Prefix caching off or prefix too short | No hotspot in A; A and C look identical | Check vLLM prefix-hit counters increase; `prefix_tokens ≥ 1024` |
+| `max-num-seq` too high for the load | Queues stay 0, pressure stays 0 | Lower to 64 or raise concurrency |
+| Changing two things at once | Cannot attribute the difference | Only image + plugins config differ between A and C |
 | One repetition | Jitter dominates | 3 repetitions, median, show spread |
-| Comparing B with unknown pressure settings | Unfair to Nir's design | Record the five env values; run B and B2 (`Cmax 0.6`) |
-| Configurator still warming up | B's first 30 s look like A | 60 s settle time after every switch |
-| Model download during a run | TTFT spikes unrelated to routing | `kubectl rollout status` before starting; keep the HF cache on a PVC |
+| EPP or caches still warming | First 30 s of a run look different | 60 s settle time after every switch |
+| Model download during a run | TTFT spikes unrelated to routing | `rollout status` first; HF cache on a PVC |
+| C tuned on the same data it is judged on | Thresholds overfit | Pick `enter/exit` and the gate from a **different** run (concurrency 48), then freeze them |
 
 ## 6. Results log
 
-Keep one file per campaign under `nael-docs/v2/results/<YYYY-MM-DD>-hotspot/`: the GuideLLM JSONs, the exported PromQL JSONs, and a `README.md` with the table from section 4 and these header lines:
+One directory per campaign: `nael-docs/v2/results/<YYYY-MM-DD>-hotspot/` with the GuideLLM JSONs, the PromQL exports, and a `README.md` holding the table from section 4 plus:
 
 ```text
-Date · cluster · GPU type × count · model · vLLM version · EPP image tag (6c0f8d8 / ours)
-Mode A env · Mode B env (all five ADAPTIVE_* values) · Mode C plugins config
-Workload line (the exact guidellm command) · repetitions · cache policy (warm / cold)
+Date · cluster · GPU type × count · model · vLLM version · EPP image (v0.11.0 / adaptive-<sha>)
+Run A plugins config (default-plugins.yaml, weights) · Run C plugins config (full YAML)
+Exact guidellm command · repetitions · cache policy (warm) · settle time
 ```
 
 ## Code references
 
 | Ref | Location | Used for |
 |---|---|---|
-| 1 | `config/manifests/guidellm.yaml`, `config/manifests/pvc.yaml` (branch `6c0f8d8`) | Load generator pod and its results PVC |
-| 2 | `hack/adaptive-metrics.sh` (branch `6c0f8d8`) | Reading Nir's `adaptive*` metrics from the EPP |
-| 3 | `cmd/epp/runner/runner.go:98-103` | The env vars that define modes A and B |
-| 4 | `pkg/epp/backend/metrics/logger.go:77-104` | How `inference_pool_average_*` are computed (integer division on the queue) |
-| 5 | `nael-docs/v2/epp-upstream_issue-template.md` | Mode C plugins config and the `adaptive_profile_selections_total` metric |
-| 6 | `config/manifests/benchmark/benchmark.yaml` (branch `6c0f8d8`) | Alternative load tool (`latency_throughput_curve.sh`, ShareGPT); not used here because it has no shared-prefix knob |
+| 1 | `llm-d-router` `config/charts/routerlib/templates/_config.yaml` | Run A profile: queue 2 · KV 2 · prefix 3 |
+| 2 | `llm-d-router` `pkg/epp/metrics/metrics.go` | EPP `llm_d_router_endpoint_picker_prefix_*` metric names |
+| 3 | `llm-d-router` `config/manifests/benchmark/benchmark.yaml` | Alternative load tool (ShareGPT sweep); no shared-prefix knob, not used |
+| 4 | GuideLLM `docs/en/guides/datasets.md` | `prefix_tokens` synthetic data option |
+| 5 | `nael-docs/v2/epp-upstream_issue-template.md` | Run C plugins config and `adaptive_profile_selections_total` |
+| 6 | Nir's reported hotspot benchmark (8 × A100, Llama 8B, GuideLLM), see `nael-docs/v1/` | Prior art cited, not reproduced |
 
 ## 🔧 If you only do one thing
 
-Run A once at concurrency 64 and look at `vllm:num_requests_waiting` per pod. If you do not see one pod's queue climbing while the others stay flat, fix the workload before running anything else.
+Run A once at concurrency 64 and watch `vllm:num_requests_waiting` per pod. If one pod's queue does not climb while the others stay flat, fix the workload before anything else.
 
 ## 🧠 Remember it as
 
-Make the hotspot on purpose, then change one switch at a time and watch four queues.
+Write the hypothesis first, make the hotspot on purpose, change one switch, watch four queues.
 
 </script>
 
