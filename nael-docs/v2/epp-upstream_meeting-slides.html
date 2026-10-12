@@ -443,32 +443,38 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ 7b: FULL REQUEST PATH -->
+<!-- ═══════════════════════════════════════════════ 7b: REQUEST STEPS 1-7 -->
 <div class="slide">
   <div class="slide-content">
-    <h3>Proposal · full request path</h3>
-    <h2>One request, client to response</h2>
-    <pre style="font-size:14px; line-height:1.5; padding:18px 22px;">
-<span class="flow-node">Client</span> ── ① POST /v1/completions (shared prefix + unique tail)
-   │
-<span class="flow-node">Gateway</span> ── ② ext-proc: headers + body ──►  <span class="flow-node">EPP</span>              ◄── ⑧ header: destination = pod-3
-   │                                     │
-   │                                     ③ parse body (model, prompt)
-   │                                     ④ candidates + per-pod snapshots   <span class="flow-desc">(queue · running · KV · time)</span>
-   │                                     ⑤ DataProducers
-   │                                          prefix-cache lookup                                ✅
-   │                                          <span class="flow-node">Produce → cv, P, expiresAt</span>                     🆕
-   │                                     ⑥ Admission / flow control                             ✅
-   │                                     ⑦ Scheduler
-   │                                          Pick · today: always "default"                     ✅
-   │                                          <span class="flow-node">Pick · ours: rules → ONE profile (remembered)</span>    🆕
-   │                                          Run profile: filters → scorers × fixed w → picker  ✅
-   │                                          <span class="flow-node">ProcessResults: log rule + signal + profile</span>     🆕
-   │ ⑨ forward to pod-3
-   ▼
-<span class="flow-node">vLLM pod-3</span> ── prefill (prefix hit?) → decode ── ⑩ response ──► Gateway ──► Client
-                                                           └──► EPP response hooks <span class="flow-desc">(prefix tracker)</span></pre>
-    <p style="color:var(--text-dim); font-size:15px;">Left: the data path. Right: what the EPP does while the Gateway waits. The two 🆕 lines are the only change; ⑤ is <code>DataProducer.Produce</code>, ⑦ is <code>ProfileHandler.Pick / ProcessResults</code>.</p>
+    <h3>Proposal · one request, step by step (1 of 2)</h3>
+    <h2>Before the decision</h2>
+    <ol style="font-size:17px; line-height:1.5;">
+      <li><span class="status-ok">✅</span> The <strong>client</strong> sends a request: "model X, here is my prompt".</li>
+      <li><span class="status-ok">✅</span> The <strong>Gateway</strong> catches it, holds it, and asks the EPP: "which pod should this go to?"</li>
+      <li><span class="status-ok">✅</span> The EPP reads the body and notes the <strong>model</strong> and the <strong>prompt</strong>.</li>
+      <li><span class="status-ok">✅</span> The EPP lists the pods that can serve this model and are ready. For each it takes the latest numbers already in memory: <strong>waiting</strong>, <strong>running</strong>, <strong>KV usage</strong>, and when they were refreshed.</li>
+      <li><span class="status-ok">✅</span> The <strong>prefix lookup</strong> checks which of those pods has already seen the start of this prompt.</li>
+      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> walks the same pods once and writes two numbers on the request: how <strong>uneven</strong> the queues are (<code>cv</code>) and how <strong>much</strong> is waiting overall (<code>P</code>).<span style="color:var(--text-dim); display:block; font-size:16px; margin-top:2px;">If any pod's numbers are stale, it marks the summary invalid instead.</span></li>
+      <li><span class="status-ok">✅</span> <strong>Admission</strong> asks: is there room right now? If not, the request waits in line.</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7c: REQUEST STEPS 8-14 -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>Proposal · one request, step by step (2 of 2)</h3>
+    <h2>The decision, and after</h2>
+    <ol style="font-size:17px; line-height:1.5; counter-reset: ol-counter 7;">
+      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> asks: "which profile did I choose last time, and is the signal still inside that profile's stay band?"<span style="color:var(--text-dim); display:block; font-size:16px; margin-top:2px;">→ yes: keep the same profile. → no: first matching rule (very uneven → load-oriented, almost nothing waiting → cache-oriented), else the default. It remembers the choice. Today this step does not exist: the one fixed profile always runs.</span></li>
+      <li><span class="status-ok">✅</span> The chosen <strong>profile runs exactly as today</strong>: filters drop unfit pods, scorers rate the rest with that profile's fixed weights, the picker takes the best → pod-1.</li>
+      <li><span style="color:var(--runai-purple); font-weight:600;">🆕</span> <strong>Our plugin</strong> writes one log line: which rule fired, at what signal value, which profile, which pod.</li>
+      <li><span class="status-ok">✅</span> The EPP answers the Gateway with <strong>one header</strong>: "send it to pod-1". Nothing else it computed leaves the EPP.</li>
+      <li><span class="status-ok">✅</span> The Gateway forwards the <strong>original, untouched</strong> request to pod-1.</li>
+      <li><span class="status-ok">✅</span> <strong>vLLM</strong> on pod-1 runs prefill (fast if the prefix is cached) and decode, and streams the answer back through the Gateway to the client.</li>
+      <li><span class="status-ok">✅</span> The EPP notes "<strong>pod-1 has now seen this prefix</strong>" for next time.</li>
+    </ol>
+    <p style="color:var(--text-dim); font-size:15px; margin-top:8px;">Two new steps (6 and 8) and one new log line (10). Everything else is today's EPP.</p>
   </div>
 </div>
 
