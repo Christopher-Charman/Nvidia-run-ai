@@ -139,9 +139,10 @@ var _ = Describe("Top-owner label plugin upgrade safety", Serial, Ordered, func(
 			},
 		}
 		Expect(k8sClient.Create(managerCtx, job)).To(Succeed())
-		Expect(k8sClient.Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
+		Expect(k8sManager.GetAPIReader().Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
 
 		template := job.DeepCopy()
+		template.TypeMeta = metav1.TypeMeta{APIVersion: "batch/v1", Kind: "Job"}
 		template.ResourceVersion = ""
 		template.UID = ""
 		template.CreationTimestamp = metav1.Time{}
@@ -190,7 +191,7 @@ var _ = Describe("Top-owner label plugin upgrade safety", Serial, Ordered, func(
 		plugin := topownerlabel.NewPlugin(k8sManager.GetAPIReader())
 		Expect(plugin.MutateResource(managerCtx, runner, resource, karta, reconcile.New())).To(Succeed())
 		Expect(k8sClient.Create(managerCtx, resource)).To(Succeed())
-		Expect(k8sClient.Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
+		Expect(k8sManager.GetAPIReader().Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
 		originalTemplate := job.Spec.Template.DeepCopy()
 
 		runner.Annotations[commonconstants.ControlPlaneWorkloadIdAnnotationForWorkload] = "changed-id"
@@ -198,7 +199,7 @@ var _ = Describe("Top-owner label plugin upgrade safety", Serial, Ordered, func(
 		Expect(plugin.MutateResource(managerCtx, runner, resource, karta, reconcile.New())).To(Succeed())
 		// The API server rejects this update if the plugin changes the pod template.
 		Expect(k8sClient.Update(managerCtx, resource)).To(Succeed())
-		Expect(k8sClient.Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
+		Expect(k8sManager.GetAPIReader().Get(managerCtx, client.ObjectKeyFromObject(job), job)).To(Succeed())
 		Expect(job.Spec.Template).To(Equal(*originalTemplate))
 		Expect(job.Labels).To(HaveKeyWithValue(commonconstants.TopOwnerWorkloadIdLabel, "original-id"))
 	})
@@ -208,5 +209,7 @@ var _ = Describe("Top-owner label plugin upgrade safety", Serial, Ordered, func(
 func toUnstructuredJob(job *batchv1.Job) *unstructured.Unstructured {
 	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(job)
 	Expect(err).NotTo(HaveOccurred())
+	content["apiVersion"] = "batch/v1"
+	content["kind"] = "Job"
 	return &unstructured.Unstructured{Object: content}
 }
