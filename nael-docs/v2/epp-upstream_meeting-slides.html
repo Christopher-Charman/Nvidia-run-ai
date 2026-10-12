@@ -726,6 +726,38 @@ result     pod-1   ← the empty pod wins
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════ 9b: WHAT IT BUYS YOU -->
+<div class="slide">
+  <div class="slide-content">
+    <h3>The proposal · why these three steps</h3>
+    <h2>What the three steps buy you</h2>
+    <div class="columns" style="gap:24px; margin:6px 0 10px;">
+      <div class="col" style="border-color: var(--nvidia-green); padding:16px 20px;">
+        <h4>1 · Stable, not twitchy</h4>
+        <pre style="font-size:13px; line-height:1.45; margin:0 0 8px; padding:10px 12px;">cv  0 ────────┼──────────────┼────────► 1
+           exit 0.35      enter 0.5
+  balanced  │  stay as you are  │  load-oriented
+
+same noise  0.48 0.52 0.47 0.55 0.40 0.30
+without memory   4 flips in 6 requests
+with memory      1 in, 1 out</pre>
+        <p style="font-size:15px; margin:0;">Sticky to the <strong>profile</strong> until the signal leaves its band. Sticky to the <strong>pod</strong> only as long as the profile lets the prefix win.</p>
+      </div>
+      <div class="col" style="padding:16px 20px;">
+        <h4>2 · Explainable</h4>
+        <p style="font-size:15px; margin:0 0 10px;">One log line and one counter per request: <code>rule=hotspot entered cv=1.00 → load-oriented → pod-1</code>. Not a derived weight vector.</p>
+        <h4>3 · Operator-controlled</h4>
+        <p style="font-size:15px; margin:0 0 10px;">Humans write the three profiles; the system only chooses among them. Bounded by construction.</p>
+        <h4>4 · Portable</h4>
+        <p style="font-size:15px; margin:0 0 10px;">Thresholds are ratios in 0..1. One YAML for an 8B model on one GPU and a 70B on eight.</p>
+        <h4>5 · Cheap</h4>
+        <p style="font-size:15px; margin:0;">Same metrics, one extra pass per request, no new CRD, no new scraping.</p>
+      </div>
+    </div>
+    <p style="color:var(--text-dim); font-size:15px;">Number 1 is the one the background configurator does not have: it smooths the signal but has no memory of the decision.</p>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════════ 10: CONFIG + KEY POINT 3 -->
 <div class="slide">
   <div class="slide-content">
