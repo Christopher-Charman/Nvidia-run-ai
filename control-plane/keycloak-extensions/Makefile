@@ -12,8 +12,8 @@ GRADLE_IMAGE=${DOCKERHUB_PROXY}library/gradle:8.12.0-jdk21
 # Renovate bumps the version and rewrites the sha256; the NOTICE lists the agent.
 # attribution: shipped
 # renovate: datasource=github-releases depName=open-telemetry/opentelemetry-java-instrumentation
-OTEL_AGENT_VERSION ?= v2.29.0
-OTEL_AGENT_SHA256 ?= 546531ca690a8603d2923b6db26bbda35c6409327b1e610430ae33c2f8f68050
+OTEL_AGENT_VERSION ?= v2.32.0
+OTEL_AGENT_SHA256 ?= f787eb6c7f3d18e69a431e108a15278d25ee37f83d68b678f621e063f3988f82
 
 ##@ Basic Commands
 REPORTS_DIR=runai-custom-providers/build/reports/tests/test/classes/
