@@ -27,23 +27,24 @@ func HandleKeyCloakError(err error) error {
 		return nil
 	}
 	keycloakError, ok := err.(*gocloak.APIError)
-	if ok {
-		switch keycloakError.Code {
-		case http.StatusNotFound:
-			return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrNotFound)
-		case http.StatusConflict:
-			return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrConflict)
-		case http.StatusBadRequest:
-			if strings.Contains(err.Error(), "Invalid user credentials") {
-				return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrUnauthorized)
-			}
-			return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrInvalidInput)
-		case http.StatusUnauthorized, http.StatusForbidden:
-			return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrUnauthorized)
-		default:
-			return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrInternal)
-		}
-	} else {
+	if !ok {
 		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrInternal)
 	}
+
+	if keycloakError.Code == http.StatusNotFound || strings.Contains(keycloakError.Message, "not found") {
+		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrNotFound)
+	}
+	if keycloakError.Code == http.StatusConflict || strings.Contains(keycloakError.Message, "conflict") {
+		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrConflict)
+	}
+	if keycloakError.Code == http.StatusBadRequest || strings.Contains(keycloakError.Message, "bad request") {
+		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrInvalidInput)
+	}
+	if keycloakError.Code == http.StatusUnauthorized || strings.Contains(keycloakError.Message, "unauthorized") {
+		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrUnauthorized)
+	}
+	if keycloakError.Code == http.StatusForbidden || strings.Contains(keycloakError.Message, "forbidden") {
+		return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrUnauthorized)
+	}
+	return fmt.Errorf("keycloak error: %s: %w", err.Error(), ErrInternal)
 }
