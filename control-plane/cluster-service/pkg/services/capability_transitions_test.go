@@ -165,6 +165,24 @@ var _ = Describe("Nodepool scheduling capability transitions", Ordered, func() {
 		Expect(stored.AdjustableWeights).To(BeTrue())
 	})
 
+	It("names the resets already done when the nodepool save fails", func() {
+		taken := createNodepool(clusterId)
+		np := createNodepool(clusterId)
+		turnOnCpuQuotaAndWeights(np.Id)
+		expectReset(np.Id, openapi.NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DESERVED, nil)
+
+		fields := api.NodepoolUpdateFields{
+			LabelKey:               ptr.To(taken.LabelKey),
+			LabelValue:             ptr.To(taken.LabelValue),
+			SchedulingCapabilities: api.SchedulingCapabilitiesNullable{AdjustableWeights: ptr.To(false)},
+		}
+		response, err := nodepoolService.UpdateNodepool(ctx, np.Id, fields)
+		Expect(err).To(BeNil())
+		Expect(response.Code).To(Equal(http.StatusConflict))
+		Expect(response.Body.(api.Error).Message).To(ContainSubstring("Already reset: WEIGHTS_TO_DESERVED"))
+		Expect(storedCapabilities(np.Id).AdjustableWeights).To(BeTrue())
+	})
+
 	It("refuses to turn quota off while cpuQuota stays on", func() {
 		np := createNodepool(clusterId)
 		turnOnCpuQuotaAndWeights(np.Id)

@@ -25,23 +25,31 @@ const maxBlockingOrgUnitsInMessage = 10
 
 // applyCapabilityTransitions must run after the request is merged into the node pool and before it is
 // saved. All checks run before any reset, so a refused change leaves the org units untouched; resets run
-// before the save, so the stored org-unit values always agree with the saved flags.
-func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, before, after models.Nodepool) *api.Error {
+// before the save, so the stored org-unit values always agree with the saved flags. The returned resets are
+// already committed in org-unit-service and cannot be rolled back, so a failed save must report them.
+func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, before, after models.Nodepool) ([]string, *api.Error) {
 	if before.AllowQuota && !after.AllowQuota {
 		if apiErr := s.validateCanTurnOff(ctx, after, "quota",
 			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_HAS_QUOTA, "QUOTAS_TO_DEFAULT"); apiErr != nil {
-			return apiErr
+			return nil, apiErr
 		}
 	}
 
 	if before.AllowRanks && !after.AllowRanks {
 		if apiErr := s.validateCanTurnOff(ctx, after, "ranks",
 			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_NON_DEFAULT_RANK, "RANKS_TO_DEFAULT"); apiErr != nil {
-			return apiErr
+			return nil, apiErr
 		}
 	}
 
 	return s.resetTurnedOffCapabilities(ctx, before, after)
+}
+
+func resetsAppliedHint(applied []string) string {
+	if len(applied) == 0 {
+		return ""
+	}
+	return fmt.Sprintf(". Already reset: %s. Send the request again to finish", strings.Join(applied, ", "))
 }
 
 // validateCanTurnOff refuses to disable a capability while org units depend on it.
@@ -78,7 +86,7 @@ func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
 
 // resetTurnedOffCapabilities resets org-unit CPU quotas and weights when their
 // capabilities turn off. On failure it reports completed resets so callers can retry.
-func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, before, after models.Nodepool) *api.Error {
+func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, before, after models.Nodepool) ([]string, *api.Error) {
 	resets := []struct {
 		turnedOff bool
 		action    openapi.NodepoolResourcesResetAction
@@ -96,13 +104,10 @@ func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, be
 		err := s.orgUnitClient.NodePoolResetResources(ctx, after.ClusterId.String(), strconv.Itoa(int(after.ID)), reset.action)
 		if err != nil {
 			logging.WithCtx(runaictx.LoggerHook(ctx)).Errorf("Failed to reset %s on nodepool %s. error: %v", reset.action, after.Name, err)
-			message := fmt.Sprintf("failed to reset %s on the org units of nodepool %s", reset.action, after.Name)
-			if len(applied) > 0 {
-				message += fmt.Sprintf(". Already reset: %s. Send the request again to finish", strings.Join(applied, ", "))
-			}
-			return api.NewError(http.StatusServiceUnavailable, message, err)
+			return applied, api.NewError(http.StatusServiceUnavailable,
+				fmt.Sprintf("failed to reset %s on the org units of nodepool %s%s", reset.action, after.Name, resetsAppliedHint(applied)), err)
 		}
 		applied = append(applied, string(reset.action))
 	}
-	return nil
+	return applied, nil
 }
