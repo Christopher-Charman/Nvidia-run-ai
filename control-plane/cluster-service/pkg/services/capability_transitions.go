@@ -28,14 +28,14 @@ const maxBlockingOrgUnitsInMessage = 10
 // before the save, so the stored org-unit values always agree with the saved flags.
 func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, before, after models.Nodepool) *api.Error {
 	if before.AllowQuota && !after.AllowQuota {
-		if apiErr := s.refuseIfInUse(ctx, after, "quota",
+		if apiErr := s.validateCanTurnOff(ctx, after, "quota",
 			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_HAS_QUOTA, "QUOTAS_TO_DEFAULT"); apiErr != nil {
 			return apiErr
 		}
 	}
 
 	if before.AllowRanks && !after.AllowRanks {
-		if apiErr := s.refuseIfInUse(ctx, after, "ranks",
+		if apiErr := s.validateCanTurnOff(ctx, after, "ranks",
 			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_NON_DEFAULT_RANK, "RANKS_TO_DEFAULT"); apiErr != nil {
 			return apiErr
 		}
@@ -44,7 +44,7 @@ func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, be
 	return s.resetTurnedOffCapabilities(ctx, before, after)
 }
 
-func (s *NodePoolsApiService) refuseIfInUse(ctx context.Context, nodepool models.Nodepool, capability string,
+func (s *NodePoolsApiService) validateCanTurnOff(ctx context.Context, nodepool models.Nodepool, capability string,
 	summaryType openapi.OrgUnitsNodepoolSummaryType, resetAction string,
 ) *api.Error {
 	blocking, err := s.orgUnitClient.NodePoolSummary(ctx, strconv.Itoa(int(nodepool.ID)), summaryType)
