@@ -260,21 +260,31 @@ func ByteArrayToReader(data []byte) io.Reader {
 }
 
 func ValidateSamlMetadata(metadata []byte) error {
-	// 1. Read bytes to memory to avoid destroying the stream
-	fileBytes, err := io.ReadAll(ByteArrayToReader(metadata))
-	if err != nil {
-		return fmt.Errorf("failed to read file data: %w", err)
-	}
-
-	// 2. Attempt to parse the metadata into the standard SAML EntityDescriptor object
+	// 1. Attempt to parse as a standard single EntityDescriptor
 	var entity saml.EntityDescriptor
-	if err := xml.Unmarshal(fileBytes, &entity); err != nil {
-		return fmt.Errorf("invalid XML formatting or layout schema: %w", err)
+	entityErr := xml.Unmarshal(metadata, &entity)
+	if entityErr == nil {
+		if entity.EntityID == "" {
+			return fmt.Errorf("SAML structural validation error: missing mandatory 'entityID' attribute")
+		}
+		return nil
 	}
 
-	// 3. Optional: Catch missing required top-level attributes (like an empty EntityID)
-	if entity.EntityID == "" {
-		return fmt.Errorf("SAML structural validation error: missing mandatory 'entityID' attribute")
+	// 2. Fallback: Parse as an EntitiesDescriptor aggregate
+	var entities saml.EntitiesDescriptor
+	if err := xml.Unmarshal(metadata, &entities); err != nil {
+		// Report the single-descriptor failure as it's the most common format
+		return fmt.Errorf("invalid XML formatting or layout schema: %w", entityErr)
+	}
+
+	// 3. Ensure the aggregate actually contains descriptors to read
+	if len(entities.EntityDescriptors) == 0 {
+		return fmt.Errorf("SAML structural validation error: EntitiesDescriptor aggregate contains no child EntityDescriptor blocks")
+	}
+
+	// 4. Validate the first child element
+	if entities.EntityDescriptors[0].EntityID == "" {
+		return fmt.Errorf("SAML structural validation error: the first entity descriptor in the aggregate is missing a mandatory 'entityID'")
 	}
 
 	return nil

@@ -269,12 +269,27 @@ func TestValidateSamlMetadata(t *testing.T) {
 			metadata: `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.example.com"></md:EntityDescriptor>`,
 		},
 		{
-			name:     "entities descriptor",
+			name:     "entities descriptor aggregate",
+			metadata: `<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"><EntityDescriptor entityID="https://idp.example.com"/></EntitiesDescriptor>`,
+		},
+		{
+			name:     "entities descriptor without children",
 			metadata: `<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"></EntitiesDescriptor>`,
+			wantErr:  true,
+		},
+		{
+			name:     "entities descriptor child without entity id",
+			metadata: `<EntitiesDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"><EntityDescriptor/></EntitiesDescriptor>`,
+			wantErr:  true,
 		},
 		{
 			name:     "leading declaration and comment",
-			metadata: `<?xml version="1.0"?><!-- exported --><EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"/>`,
+			metadata: `<?xml version="1.0"?><!-- exported --><EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.example.com"/>`,
+		},
+		{
+			name:     "entity descriptor without entity id",
+			metadata: `<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"/>`,
+			wantErr:  true,
 		},
 		{
 			name:     "plain text",
