@@ -49,11 +49,9 @@ func resetsAppliedHint(applied []string) string {
 	if len(applied) == 0 {
 		return ""
 	}
-	return fmt.Sprintf(". Already reset: %s. Send the request again to finish", strings.Join(applied, ", "))
+	return fmt.Sprintf(". Already reset: %s. Fix the error, then send the request again", strings.Join(applied, ", "))
 }
 
-// validateCanTurnOff refuses to disable a capability while org units depend on it.
-// It returns a retryable service error if the dependency summary cannot be fetched.
 func (s *NodePoolsApiService) validateCanTurnOff(ctx context.Context, nodepool models.Nodepool, capability string,
 	summaryType openapi.OrgUnitsNodepoolSummaryType, resetAction string,
 ) *api.Error {
@@ -71,8 +69,6 @@ func (s *NodePoolsApiService) validateCanTurnOff(ctx context.Context, nodepool m
 		capability, nodepool.Name, len(blocking), describeOrgUnits(blocking), resetAction), nil)
 }
 
-// describeOrgUnits bounds the org-unit list in refusal messages to ten names
-// and reports how many additional org units were omitted.
 func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
 	names := make([]string, 0, min(len(orgUnits), maxBlockingOrgUnitsInMessage))
 	for _, orgUnit := range orgUnits[:min(len(orgUnits), maxBlockingOrgUnitsInMessage)] {
@@ -84,8 +80,6 @@ func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
 	return strings.Join(names, ", ")
 }
 
-// resetTurnedOffCapabilities resets org-unit CPU quotas and weights when their
-// capabilities turn off. On failure it reports completed resets so callers can retry.
 func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, before, after models.Nodepool) ([]string, *api.Error) {
 	resets := []struct {
 		turnedOff bool
@@ -94,7 +88,7 @@ func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, be
 		{before.AllowCpuQuota && !after.AllowCpuQuota, openapi.NODEPOOLRESOURCESRESETACTION_CPU_QUOTAS_TO_DEFAULT},
 		// reads derive the weight from deserved while weights are off, but the stored weights stay and
 		// would come back if weights are turned on again
-		{before.AllowAdjustableWeights && !after.AllowAdjustableWeights, openapi.NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DESERVED},
+		{before.AllowAdjustableWeights && !after.AllowAdjustableWeights, openapi.NODEPOOLRESOURCESRESETACTION_WEIGHTS_TO_DEFAULT},
 	}
 	var applied []string
 	for _, reset := range resets {
