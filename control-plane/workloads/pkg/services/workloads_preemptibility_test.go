@@ -153,7 +153,7 @@ var _ = Describe("Workloads Preemptibility tests", Ordered, func() {
 			Expect(filteredWorkloads[0].Preemptibility).ToNot(BeNil())
 			Expect(*filteredWorkloads[0].Preemptibility).To(Equal("semi-preemptible"))
 
-			apiResponse, err = workloadsService.GetWorkloads(ctx, false, 0, 0, "asc", "preemptibility", []string{}, "")
+			apiResponse, err = workloadsService.GetWorkloads(ctx, false, 0, 0, "asc", "preemptibility", []string{}, "", "")
 			Expect(err).To(BeNil())
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			sortedWorkloads := httpResponseBodyToWorkloadsResponse(apiResponse).Workloads

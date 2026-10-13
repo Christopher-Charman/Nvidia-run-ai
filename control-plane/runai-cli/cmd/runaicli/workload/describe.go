@@ -136,7 +136,7 @@ func DescribeInitializerCMD(args []string, options DescribeCmdOptions, txn *tran
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	describeClients := describe.NewService(workloadClient, workloadV2Client, podsClient, eventsClient)
+	describeClients := describe.NewService(workloadClient.WithSlimList(), workloadV2Client, podsClient, eventsClient)
 
 	workloadDescribeOptions := displayer.DisplayOptions{
 		ShowGeneral:       options.ShowGeneral,

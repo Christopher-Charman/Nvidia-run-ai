@@ -799,6 +799,7 @@ Class | Method | HTTP request | Description
  - [WorkloadTypeStatusFields](docs/WorkloadTypeStatusFields.md)
  - [WorkloadTypeUpdateFields](docs/WorkloadTypeUpdateFields.md)
  - [WorkloadTypesForSync](docs/WorkloadTypesForSync.md)
+ - [WorkloadVerbosity](docs/WorkloadVerbosity.md)
  - [WorkloadsExtendedResource](docs/WorkloadsExtendedResource.md)
  - [WorkloadsSettingsGetResponse](docs/WorkloadsSettingsGetResponse.md)
  - [WorkloadsSettingsKeyEnum](docs/WorkloadsSettingsKeyEnum.md)

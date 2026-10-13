@@ -605,6 +605,7 @@ docs/WorkloadTypeStatus.md
 docs/WorkloadTypeStatusFields.md
 docs/WorkloadTypeUpdateFields.md
 docs/WorkloadTypesForSync.md
+docs/WorkloadVerbosity.md
 docs/WorkloadsAPI.md
 docs/WorkloadsBatchAPI.md
 docs/WorkloadsExtendedResource.md
@@ -1196,6 +1197,7 @@ model_workload_type_status.go
 model_workload_type_status_fields.go
 model_workload_type_update_fields.go
 model_workload_types_for_sync.go
+model_workload_verbosity.go
 model_workloads_extended_resource.go
 model_workloads_settings_get_response.go
 model_workloads_settings_key_enum.go

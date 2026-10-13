@@ -959,7 +959,14 @@ func (c *WorkloadsAPIController) GetWorkloads(w http.ResponseWriter, r *http.Req
 		searchParam = param
 	} else {
 	}
-	result, err := c.service.GetWorkloads(r.Context(), deletedParam, offsetParam, limitParam, sortOrderParam, sortByParam, filterByParam, searchParam)
+	var verbosityParam WorkloadVerbosity
+	if query.Has("verbosity") {
+		param := WorkloadVerbosity(query.Get("verbosity"))
+
+		verbosityParam = param
+	} else {
+	}
+	result, err := c.service.GetWorkloads(r.Context(), deletedParam, offsetParam, limitParam, sortOrderParam, sortByParam, filterByParam, searchParam, verbosityParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result, nil)

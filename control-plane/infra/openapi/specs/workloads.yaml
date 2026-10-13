@@ -335,6 +335,7 @@ paths:
         - $ref: '#/components/parameters/WorkloadsSort'
         - $ref: '#/components/parameters/WorkloadsFilter'
         - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/WorkloadsQueryVerbosity'
       responses:
         '200':
           description: Executed successfully.
@@ -5584,6 +5585,19 @@ components:
       schema:
         type: string
         example: test project
+    WorkloadsQueryVerbosity:
+      name: verbosity
+      in: query
+      required: false
+      x-internal: true
+      description: |
+        Response verbosity level. Defaults to full.
+        slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately,
+        and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty.
+        With slim, filterBy and sortBy accept only fields stored on the workload itself.
+      example: slim
+      schema:
+        $ref: '#/components/schemas/WorkloadVerbosity'
     WorkloadId:
       name: workloadId
       in: path
@@ -7834,6 +7848,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrgUnitRankingItem'
+    WorkloadVerbosity:
+      type: string
+      enum:
+        - full
+        - slim
+      default: full
     Workloads:
       type: array
       items:

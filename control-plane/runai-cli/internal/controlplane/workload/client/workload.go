@@ -37,9 +37,10 @@ type typedWorkloadResponse interface {
 }
 
 type BackendWorkloadServiceClient struct {
-	apiClient *openapi.APIClient
-	urlStr    string
-	token     string
+	apiClient     *openapi.APIClient
+	urlStr        string
+	token         string
+	listVerbosity *openapi.WorkloadVerbosity
 }
 
 func NewWorkloadServiceClient(urlStr, token string) (*BackendWorkloadServiceClient, error) {
@@ -54,11 +55,24 @@ func NewWorkloadServiceClient(urlStr, token string) (*BackendWorkloadServiceClie
 	}, nil
 }
 
+// WithSlimList makes List request verbosity=slim, for looking workloads up by name: the control plane reads the
+// workloads table instead of the workloads view (so new workloads are found immediately) and returns only id, name,
+// type, project, cluster and external workload name. Control planes that don't know the parameter ignore it and
+// return full workloads.
+func (bsc *BackendWorkloadServiceClient) WithSlimList() *BackendWorkloadServiceClient {
+	slim := openapi.WORKLOADVERBOSITY_SLIM
+	bsc.listVerbosity = &slim
+	return bsc
+}
+
 func (bsc *BackendWorkloadServiceClient) List(ctx context.Context, limit, offset int32, filters []string, deleted bool) (*openapi.GetWorkloads200Response, error) {
 	request := bsc.apiClient.WorkloadsAPI.GetWorkloads(ctx)
 	request = request.Limit(limit)
 	request = request.Offset(offset)
 	request = request.Deleted(deleted)
+	if bsc.listVerbosity != nil {
+		request = request.Verbosity(*bsc.listVerbosity)
+	}
 
 	if len(filters) != 0 {
 		request = request.FilterBy(filters)

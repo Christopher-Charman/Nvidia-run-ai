@@ -166,7 +166,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			// list endpoint should include topology for the first workload (filter by id is not supported)
 			waitForGetWorkloadsLength(ctx, workloadsService, 5, []string{})
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			list := httpResponseBodyToWorkloadsResponse(apiResponse)
 			var found *api.Workload
@@ -224,7 +224,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			// the materialized view refreshes async (20ms cadence), and a
 			// length check alone can race with the next snapshot swap.
 			EventuallyWithOffset(1, func(g Gomega) {
-				apiResp, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResp, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResp.Code).To(Equal(http.StatusOK))
 				ls := httpResponseBodyToWorkloadsResponse(apiResp)
 				var lWithRef, lGroupOnly, lWithoutRef *api.Workload
@@ -309,7 +309,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			// list endpoint should include nodeAffinities
 			waitForGetWorkloadsLength(ctx, workloadsService, 5, []string{})
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			list := httpResponseBodyToWorkloadsResponse(apiResponse)
 			var foundWithAffinity *api.Workload
@@ -412,7 +412,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			waitForGetWorkloadsLength(ctx, workloadsService, 1, []string{fmt.Sprintf("projectId==%s", DefaultProjectId)})
 
 			// Validate that deletion in one project does not affect another project
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", AnotherProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", AnotherProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(3))
@@ -429,7 +429,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			})
 			Expect(apiResponse.Code).To(Equal(http.StatusNoContent))
 
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(3)) // No deletions
@@ -461,7 +461,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			})
 			Expect(apiResponse.Code).To(Equal(http.StatusNoContent))
 
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(3)) // No deletions
@@ -701,7 +701,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			// validate list endpoint - use Eventually because the materialized view needs to refresh
 			// after the upsert (count doesn't change, so waitForGetWorkloadsLength won't help)
 			Eventually(func(g Gomega) {
-				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				list := httpResponseBodyToWorkloadsResponse(apiResponse)
 				var found *api.Workload
@@ -825,7 +825,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			var workload2 *api.Workload
 			Eventually(func(g Gomega) {
-				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 				for _, w := range workloadsResponse.Workloads {
@@ -994,7 +994,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			Expect(*pm[1].UserMessage).To(Equal("GPU quota exceeded.\nRequested: 3 devices\nDepartment quota: 3 devices, with 2 devices already allocated"))
 
 			Eventually(func(g Gomega) {
-				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 				var testWorkload *api.Workload = nil
@@ -1114,7 +1114,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			Expect(*pm[1].UserMessage).To(Equal("CPU quota exceeded.\nRequested: 3 cores\nDepartment quota: 3 cores, with 2 cores already allocated"))
 
 			Eventually(func(g Gomega) {
-				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 				var testWorkload *api.Workload = nil
@@ -1229,7 +1229,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			Expect(*pm[1].UserMessage).To(Equal("CPU memory quota exceeded.\nRequested: 3 MB\nDepartment quota: 3 MB, with 2 MB already allocated"))
 
 			Eventually(func(g Gomega) {
-				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "")
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "")
 				g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 				var testWorkload *api.Workload = nil
@@ -1293,7 +1293,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			limits := []int32{3, 2, 3, 999}
 
 			for i := 0; i < 4; i++ {
-				apiResponse, _ := workloadsService.GetWorkloads(ctx, false, offsets[i], limits[i], "", "", []string{}, "")
+				apiResponse, _ := workloadsService.GetWorkloads(ctx, false, offsets[i], limits[i], "", "", []string{}, "", "")
 				Expect(apiResponse.Code).To(Equal(http.StatusOK))
 				workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 				Expect(len(workloadsResponse.Workloads)).To(Equal(int(math.Min(float64(limits[i]), float64(6-offsets[i])))))
@@ -1304,6 +1304,82 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 				Expect(workloadsResponse.Next).To(Equal(nextRecord))
 			}
+		})
+		Context("Slim verbosity", func() {
+			slimFilter := []string{fmt.Sprintf("clusterId==%s", testing.ClusterUuid1), fmt.Sprintf("name==%s", DefaultWorkloadName)}
+
+			getSlimWorkloads := func(deleted bool, filterBy []string) []api.Workload {
+				apiResponse, _ := workloadsService.GetWorkloads(ctx, deleted, 0, 0, "", "", filterBy, "", api.WORKLOADVERBOSITY_SLIM)
+				Expect(apiResponse.Code).To(Equal(http.StatusOK))
+				return httpResponseBodyToWorkloadsResponse(apiResponse).Workloads
+			}
+
+			It("fills only the identity fields", func() {
+				workloads := getSlimWorkloads(false, slimFilter)
+				Expect(workloads).To(HaveLen(3))
+				for _, workload := range workloads {
+					Expect(workload.Name).To(Equal(DefaultWorkloadName))
+					Expect(workload.Type).To(Equal(DefaultType))
+					Expect(workload.ProjectId).To(Equal(DefaultProjectId))
+					Expect(workload.ProjectName).To(Equal(DefaultProjectName))
+					Expect(workload.ClusterId).To(Equal(testing.ClusterUuid1))
+					Expect(workload.ExternalWorkloadName).To(Equal(fmt.Sprintf("ew-training-%s", workload.Id)))
+					// not read by slim
+					Expect(workload.Phase).To(BeEmpty())
+					Expect(workload.SubmittedBy).To(BeEmpty())
+				}
+			})
+			It("returns a workload as soon as it's created", func() {
+				newWorkload := SetupBaseWorkload(testing.TestUuid7, DefaultProjectId, testing.ClusterUuid1)
+				newWorkload.Name = "slim-new-workload"
+				apiResponse, _ := workloadsService.SyncWorkloads(ctx, []string{}, api.WorkloadsSyncRequest{
+					ProjectId: DefaultProjectId,
+					Workloads: []api.WorkloadSyncFields{
+						newWorkload,
+						SetupBaseWorkload(testing.TestUuid1, DefaultProjectId, testing.ClusterUuid1),
+						SetupBaseWorkload(testing.TestUuid2, DefaultProjectId, testing.ClusterUuid1),
+						SetupBaseWorkload(testing.TestUuid3, DefaultProjectId, testing.ClusterUuid1),
+					},
+				})
+				Expect(apiResponse.Code).To(Equal(http.StatusNoContent))
+				createdWorkloadsIds = append(createdWorkloadsIds, testing.TestUuid7)
+
+				workloads := getSlimWorkloads(false, []string{fmt.Sprintf("clusterId==%s", testing.ClusterUuid1), "name==slim-new-workload"})
+				Expect(workloads).To(HaveLen(1))
+				Expect(workloads[0].Id).To(Equal(testing.TestUuid7))
+			})
+			It("returns deleted workloads only when asked to", func() {
+				_, err := runaidb.DB().Table(dao.WorkloadsTableName).Where("id = ?", testing.TestUuid3).Update("deleted_at", time.Now())
+				Expect(err).To(BeNil())
+				DeferCleanup(func() {
+					_, err := runaidb.DB().Table(dao.WorkloadsTableName).Where("id = ?", testing.TestUuid3).Update("deleted_at", nil)
+					Expect(err).To(BeNil())
+				})
+
+				workloads := getSlimWorkloads(false, slimFilter)
+				Expect(workloads).To(HaveLen(2))
+				for _, workload := range workloads {
+					Expect(workload.Id).ToNot(Equal(testing.TestUuid3))
+				}
+
+				// earlier tests may leave other deleted workloads with the same name behind
+				deletedIds := []string{}
+				for _, workload := range getSlimWorkloads(true, slimFilter) {
+					deletedIds = append(deletedIds, workload.Id)
+				}
+				Expect(deletedIds).To(ContainElement(testing.TestUuid3))
+			})
+			It("rejects filters and sorts on fields that aren't stored on the workload", func() {
+				apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{"allocatedGPU>=1"}, "", api.WORKLOADVERBOSITY_SLIM)
+				Expect(apiResponse.Code).To(Equal(http.StatusBadRequest))
+
+				apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "category", []string{}, "", api.WORKLOADVERBOSITY_SLIM)
+				Expect(apiResponse.Code).To(Equal(http.StatusBadRequest))
+			})
+			It("rejects an unknown verbosity", func() {
+				apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{}, "", "verbose")
+				Expect(apiResponse.Code).To(Equal(http.StatusBadRequest))
+			})
 		})
 		Describe("Idle GPUs", func() {
 			BeforeEach(func() {
@@ -1397,7 +1473,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 			waitForGetWorkloadsLength(ctx, workloadsService, 2, []string{fmt.Sprintf("projectId==%s", DefaultProjectId)})
 
 			// it exists in history
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, true, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, true, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 			found := false
@@ -2269,7 +2345,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			// Test with user1 (should redact user2's workload but not user1's)
 			user1Ctx := testing.SetContext(testing.TestTenant, "user1", []string{})
-			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 
@@ -2303,7 +2379,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			// Verify the value is preserved by both the list and details APIs.
 			user1Ctx := testing.SetContext(testing.TestTenant, "user1", []string{})
-			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 
@@ -3315,7 +3391,7 @@ var _ = Describe("Workloads API tests", Ordered, func() {
 
 			// Test with user1 (should redact user2's workload but not user1's)
 			user1Ctx := testing.SetContext(testing.TestTenant, "user1", []string{})
-			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "")
+			apiResponse, _ = workloadsService.GetWorkloads(user1Ctx, false, 0, 0, "", "", []string{fmt.Sprintf("projectId==%s", DefaultProjectId)}, "", "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 
@@ -3384,7 +3460,7 @@ func testWorkloadsFilter(ctx context.Context, workloadsService api.WorkloadsAPIS
 
 	var workloadsResponse api.GetWorkloads200Response
 	Eventually(func(g Gomega) {
-		apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "ASC", sortBy, filters, "")
+		apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "ASC", sortBy, filters, "", "")
 		g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 		workloadsResponse = httpResponseBodyToWorkloadsResponse(apiResponse)
 		g.Expect(len(workloadsResponse.Workloads)).To(Equal(expectedCount))
@@ -3406,7 +3482,7 @@ func testWorkloadsSearch(ctx context.Context, workloadsService api.WorkloadsAPIS
 
 	var workloadsResponse api.GetWorkloads200Response
 	Eventually(func(g Gomega) {
-		apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "ASC", "", []string{}, search)
+		apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "ASC", "", []string{}, search, "")
 		g.ExpectWithOffset(1, apiResponse.Code).To(Equal(http.StatusOK))
 		workloadsResponse = httpResponseBodyToWorkloadsResponse(apiResponse)
 		g.ExpectWithOffset(1, len(workloadsResponse.Workloads)).To(Equal(expectedCount))
@@ -3616,7 +3692,7 @@ func waitForGetWorkloadsLength(ctx context.Context, workloadsService api.Workloa
 	filterBy []string,
 ) {
 	EventuallyWithOffset(1, func(g Gomega) {
-		apiResponse, err := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", filterBy, "")
+		apiResponse, err := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", filterBy, "", "")
 		g.Expect(err).To(BeNil())
 		g.Expect(apiResponse.Code).To(Equal(http.StatusOK))
 		workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)

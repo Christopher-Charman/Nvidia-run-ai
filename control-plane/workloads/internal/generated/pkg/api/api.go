@@ -531,7 +531,7 @@ type WorkloadsAPIServicer interface {
 	InternalCreateWorkload(context.Context, WorkloadCreationFields) (ImplResponse, error)
 	InternalSyncWorkloads(context.Context, []string, InternalWorkloadsSyncRequest) (ImplResponse, error)
 	InternalEnrichOrgUnitRanking(context.Context, InternalEnrichOrgUnitRankingRequest) (ImplResponse, error)
-	GetWorkloads(context.Context, bool, int32, int32, string, string, []string, string) (ImplResponse, error)
+	GetWorkloads(context.Context, bool, int32, int32, string, string, []string, string, WorkloadVerbosity) (ImplResponse, error)
 	SyncWorkloads(context.Context, []string, WorkloadsSyncRequest) (ImplResponse, error)
 	GetWorkloadAncestors(context.Context, string) (ImplResponse, error)
 	GetWorkload(context.Context, string) (ImplResponse, error)
