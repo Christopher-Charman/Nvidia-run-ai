@@ -613,6 +613,7 @@ pkg/api/model_workload_type_status.go
 pkg/api/model_workload_type_status_fields.go
 pkg/api/model_workload_type_update_fields.go
 pkg/api/model_workload_types_for_sync.go
+pkg/api/model_workload_verbosity.go
 pkg/api/model_workloads_extended_resource.go
 pkg/api/model_workloads_settings_get_response.go
 pkg/api/model_workloads_settings_key_enum.go

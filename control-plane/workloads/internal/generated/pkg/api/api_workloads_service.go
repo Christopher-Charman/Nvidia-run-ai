@@ -108,7 +108,7 @@ func (s *WorkloadsAPIService) InternalEnrichOrgUnitRanking(ctx context.Context, 
 }
 
 // GetWorkloads - List workloads.
-func (s *WorkloadsAPIService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string) (ImplResponse, error) {
+func (s *WorkloadsAPIService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string, verbosity WorkloadVerbosity) (ImplResponse, error) {
 	// TODO - update GetWorkloads with the required logic for this service method.
 	// Add api_workloads_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
 

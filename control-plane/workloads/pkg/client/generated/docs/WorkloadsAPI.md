@@ -838,7 +838,7 @@ Name | Type | Description  | Notes
 
 ## GetWorkloads
 
-> GetWorkloads200Response GetWorkloads(ctx).Deleted(deleted).Offset(offset).Limit(limit).SortOrder(sortOrder).SortBy(sortBy).FilterBy(filterBy).Search(search).Execute()
+> GetWorkloads200Response GetWorkloads(ctx).Deleted(deleted).Offset(offset).Limit(limit).SortOrder(sortOrder).SortBy(sortBy).FilterBy(filterBy).Search(search).Verbosity(verbosity).Execute()
 
 List workloads.
 
@@ -864,10 +864,11 @@ func main() {
 	sortBy := "sortBy_example" // string | Sort results by a parameter. (optional)
 	filterBy := []string{"Inner_example"} // []string | Filter results by a parameter. Use the format field-name operator value. Operators are `==` Equals, `!=` Not equals, `<=` Less than or equal, `>=` Greater than or equal, `=@` contains, `!@` Does not contain, `=^` Starts with and `=$` Ends with. Dates are in ISO 8601 timestamp format and available for operators `==`, `!=`, `<=` and `>=`. (optional)
 	search := "test project" // string | Filter results by a free text search. (optional)
+	verbosity := openapiclient.WorkloadVerbosity("full") // WorkloadVerbosity | Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.  (optional) (default to "full")
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.WorkloadsAPI.GetWorkloads(context.Background()).Deleted(deleted).Offset(offset).Limit(limit).SortOrder(sortOrder).SortBy(sortBy).FilterBy(filterBy).Search(search).Execute()
+	resp, r, err := apiClient.WorkloadsAPI.GetWorkloads(context.Background()).Deleted(deleted).Offset(offset).Limit(limit).SortOrder(sortOrder).SortBy(sortBy).FilterBy(filterBy).Search(search).Verbosity(verbosity).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `WorkloadsAPI.GetWorkloads``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -895,6 +896,7 @@ Name | Type | Description  | Notes
  **sortBy** | **string** | Sort results by a parameter. | 
  **filterBy** | **[]string** | Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with. Dates are in ISO 8601 timestamp format and available for operators &#x60;&#x3D;&#x3D;&#x60;, &#x60;!&#x3D;&#x60;, &#x60;&lt;&#x3D;&#x60; and &#x60;&gt;&#x3D;&#x60;. | 
  **search** | **string** | Filter results by a free text search. | 
+ **verbosity** | [**WorkloadVerbosity**](WorkloadVerbosity.md) | Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.  | [default to &quot;full&quot;]
 
 ### Return type
 

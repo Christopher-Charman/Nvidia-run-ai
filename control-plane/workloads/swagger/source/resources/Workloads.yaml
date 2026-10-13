@@ -19,6 +19,7 @@ get:
     - $ref: '../parameters/query/WorkloadsSort.yaml'
     - $ref: '../parameters/query/WorkloadsFilter.yaml'
     - $ref: "../../../../infra/openapi/docs/parameters/query/optional/Search.yaml"
+    - $ref: '../parameters/query/WorkloadsQueryVerbosity.yaml'
   responses:
     200:
       description: Executed successfully.

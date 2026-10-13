@@ -669,6 +669,20 @@ paths:
           example: test project
           type: string
         style: form
+      - description: |
+          Response verbosity level. Defaults to full.
+          slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately,
+          and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty.
+          With slim, filterBy and sortBy accept only fields stored on the workload itself.
+        example: slim
+        explode: true
+        in: query
+        name: verbosity
+        required: false
+        schema:
+          $ref: '#/components/schemas/WorkloadVerbosity'
+        style: form
+        x-internal: true
       responses:
         "200":
           content:
@@ -13475,6 +13489,21 @@ components:
         example: test project
         type: string
       style: form
+    WorkloadsQueryVerbosity:
+      description: |
+        Response verbosity level. Defaults to full.
+        slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately,
+        and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty.
+        With slim, filterBy and sortBy accept only fields stored on the workload itself.
+      example: slim
+      explode: true
+      in: query
+      name: verbosity
+      required: false
+      schema:
+        $ref: '#/components/schemas/WorkloadVerbosity'
+      style: form
+      x-internal: true
     WorkloadId:
       description: The  Universally Unique Identifier (UUID) of the workload.
       explode: false
@@ -20219,6 +20248,12 @@ components:
       required:
       - items
       type: object
+    WorkloadVerbosity:
+      default: full
+      enum:
+      - full
+      - slim
+      type: string
     Workloads:
       items:
         $ref: '#/components/schemas/Workload'

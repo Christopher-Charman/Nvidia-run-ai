@@ -2399,6 +2399,7 @@ type ApiGetWorkloadsRequest struct {
 	sortBy     *string
 	filterBy   *[]string
 	search     *string
+	verbosity  *WorkloadVerbosity
 }
 
 // Return only deleted resources when &#x60;true&#x60;.
@@ -2440,6 +2441,12 @@ func (r ApiGetWorkloadsRequest) FilterBy(filterBy []string) ApiGetWorkloadsReque
 // Filter results by a free text search.
 func (r ApiGetWorkloadsRequest) Search(search string) ApiGetWorkloadsRequest {
 	r.search = &search
+	return r
+}
+
+// Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.
+func (r ApiGetWorkloadsRequest) Verbosity(verbosity WorkloadVerbosity) ApiGetWorkloadsRequest {
+	r.verbosity = &verbosity
 	return r
 }
 
@@ -2511,6 +2518,12 @@ func (a *WorkloadsAPIService) GetWorkloadsExecute(r ApiGetWorkloadsRequest) (*Ge
 	}
 	if r.search != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "search", r.search, "form", "")
+	}
+	if r.verbosity != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "verbosity", r.verbosity, "form", "")
+	} else {
+		var defaultValue WorkloadVerbosity = "full"
+		r.verbosity = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
