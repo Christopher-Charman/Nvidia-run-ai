@@ -408,11 +408,12 @@ func (s *IdpsApiService) updateIdp(ctx context.Context, realm string, idpRequest
 
 func (s *IdpsApiService) getIdpConfig(ctx context.Context, realm string, idpRequest *models.IdpData) (map[string]string, error) {
 	if isIdpXmlWithFileType(*idpRequest) {
-		reader, err := utils.DecodeBase64ToReader(idpRequest.Resource)
+		metadata, err := getValidatedSamlMetadata(idpRequest.Resource)
 		if err != nil {
-			return nil, fmt.Errorf("%w:%w", utils.Error{Code: http.StatusBadRequest, Message: "failed to decode base64 string"}, err)
+			return nil, err
 		}
-		return s.getConfigFromFile(ctx, realm, reader, idpRequest.ResourceName, string(models.SAML))
+
+		return s.getConfigFromFile(ctx, realm, metadata, idpRequest.ResourceName, string(models.SAML))
 	}
 	if shouldGetConfigFromUrl(*idpRequest) {
 		return s.getConfigFromUrl(ctx, realm, idpRequest.Resource, string(idpRequest.Idp))
@@ -682,4 +683,15 @@ func (s *IdpsApiService) getIdpMappersForRealm(ctx context.Context, realm string
 		}
 		return &internalCache.IdpMappers{Mappers: mappers}, nil
 	})
+}
+
+func getValidatedSamlMetadata(idpRequestMetadata string) (io.Reader, error) {
+	metadata, err := utils.DecodeBase64String(idpRequestMetadata)
+	if err != nil {
+		return nil, fmt.Errorf("%w:%w", utils.Error{Code: http.StatusBadRequest, Message: "failed to decode base64 string"}, err)
+	}
+	if err := utils.ValidateSamlMetadata(*metadata); err != nil {
+		return nil, fmt.Errorf("%w:%w", utils.Error{Code: http.StatusBadRequest, Message: "metadata file is not valid saml metadata"}, err)
+	}
+	return utils.ByteArrayToReader(*metadata), nil
 }

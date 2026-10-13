@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"math/big"
@@ -24,6 +25,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/crewjam/saml"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
 	"github.com/google/uuid"
@@ -255,6 +257,27 @@ func DecodeBase64String(encodedBase64 string) (*[]byte, error) {
 
 func ByteArrayToReader(data []byte) io.Reader {
 	return bytes.NewReader(data)
+}
+
+func ValidateSamlMetadata(metadata []byte) error {
+	// 1. Read bytes to memory to avoid destroying the stream
+	fileBytes, err := io.ReadAll(ByteArrayToReader(metadata))
+	if err != nil {
+		return fmt.Errorf("failed to read file data: %w", err)
+	}
+
+	// 2. Attempt to parse the metadata into the standard SAML EntityDescriptor object
+	var entity saml.EntityDescriptor
+	if err := xml.Unmarshal(fileBytes, &entity); err != nil {
+		return fmt.Errorf("invalid XML formatting or layout schema: %w", err)
+	}
+
+	// 3. Optional: Catch missing required top-level attributes (like an empty EntityID)
+	if entity.EntityID == "" {
+		return fmt.Errorf("SAML structural validation error: missing mandatory 'entityID' attribute")
+	}
+
+	return nil
 }
 
 func DecodeBase64ToReader(encodedBase64 string) (io.Reader, error) {
