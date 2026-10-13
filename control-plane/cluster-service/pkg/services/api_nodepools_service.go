@@ -118,6 +118,7 @@ func (s *NodePoolsApiService) GetNodepoolMetrics(ctx context.Context, clusterId 
 	return api.Response(responseCode, responseStruct), nil
 }
 
+// CreateNodepool validates and creates a node pool with capability defaults from tenant settings.
 func (s *NodePoolsApiService) CreateNodepool(ctx context.Context, fields api.NodepoolCreateFields) (api.ImplResponse, error) {
 	logging.WithCtx(runaictx.LoggerHook(ctx)).Infof("Create nodepool %s request received", fields.Name)
 	tenantId, subjectId, err := ParseAuthData(ctx)
@@ -451,6 +452,8 @@ func (s *NodePoolsApiService) CountNodepools(ctx context.Context, filterBy []str
 	return api.Response(http.StatusOK, api.CountNodes200Response{Count: count}), nil
 }
 
+// PatchNodepool merges supplied fields into a node pool and applies capability checks
+// and org-unit resets before saving it.
 func (s *NodePoolsApiService) PatchNodepool(ctx context.Context, nodepoolId string, fields api.NodepoolUpdateFields) (api.ImplResponse, error) {
 	logging.WithCtx(runaictx.LoggerHook(ctx)).Infof("Patch nodepool with id %s request received", nodepoolId)
 	tenantId, subjectId, err := ParseAuthData(ctx)
@@ -569,6 +572,8 @@ func parseNodepoolsForSync(request api.SyncNodepoolsStatusRequest) []models.Node
 	return nodepoolsForSync
 }
 
+// UpdateNodepool applies PUT fields while preserving omitted capability flags.
+// Capability checks and org-unit resets must succeed before the node pool is saved.
 func (s *NodePoolsApiService) UpdateNodepool(ctx context.Context, nodepoolId string, fields api.NodepoolUpdateFields) (api.ImplResponse, error) {
 	logging.WithCtx(runaictx.LoggerHook(ctx)).Infof("Update nodepool with id %s request received", nodepoolId)
 	tenantId, subjectId, err := ParseAuthData(ctx)
@@ -667,6 +672,8 @@ func (s *NodePoolsApiService) ClusterNotification(ctx context.Context, clusterNo
 	return api.Response(http.StatusBadRequest, fmt.Sprintf("Unsupported notification operation %s", clusterNotification.Operation)), nil
 }
 
+// createDefaultNodepool creates the default pool for a cluster notification using
+// tenant capability defaults and notifies org-unit-service of the new pool.
 func (s *NodePoolsApiService) createDefaultNodepool(ctx context.Context, clusterNotification api.ClusterNotification) (api.ImplResponse, error) {
 	logging.WithCtx(runaictx.LoggerHook(ctx)).Infof("Create default nodepool request received")
 	tenantId, subjectId, err := ParseAuthData(ctx)
@@ -734,6 +741,8 @@ func deleteClusterNodepools(ctx context.Context, clusterNotification api.Cluster
 	return api.Response(http.StatusNoContent, nil), nil
 }
 
+// mapUpdateFieldsToModel copies the stored node pool and applies PUT defaults
+// for configuration fields while retaining capability flags omitted from the request.
 func mapUpdateFieldsToModel(ctx context.Context, nodepoolModel models.Nodepool, updateFields api.NodepoolUpdateFields, capChecker clients_local.ClusterCapabilityChecker) (*models.Nodepool, *api.Error) {
 	result := &models.Nodepool{}
 	(&nodepoolModel).DeepCopyInto(result)
@@ -756,6 +765,8 @@ func mapUpdateFieldsToModel(ctx context.Context, nodepoolModel models.Nodepool, 
 	return result, nil
 }
 
+// mapPatchFieldsToModel copies the stored node pool and merges supplied PATCH fields
+// so omitted capability flags retain their stored values.
 func mapPatchFieldsToModel(ctx context.Context, nodepoolModel models.Nodepool, patchFields api.NodepoolUpdateFields, capChecker clients_local.ClusterCapabilityChecker) (*models.Nodepool, *api.Error) {
 	result := &models.Nodepool{}
 	(&nodepoolModel).DeepCopyInto(result)

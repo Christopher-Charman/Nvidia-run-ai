@@ -103,6 +103,8 @@ func (client *OrgUnitClient) UpdateOrgUnitSettings(ctx context.Context, name str
 	return nil
 }
 
+// NodePoolSummary retrieves org units matching the requested node-pool summary type.
+// Failed requests and missing response bodies are returned as errors to the caller.
 func (client *OrgUnitClient) NodePoolSummary(ctx context.Context, nodePoolId string, summaryType openapi.OrgUnitsNodepoolSummaryType) ([]openapi.OrgUnitsNodepoolSummaryInner, error) {
 	response, resp, err := client.ApiClient.OrgUnitAPI.OrgsNodePoolSummary(ctx, nodePoolId).
 		NodepoolSummaryType(summaryType).Execute()
@@ -118,6 +120,8 @@ func (client *OrgUnitClient) NodePoolSummary(ctx context.Context, nodePoolId str
 	return response.OrgUnitsNodepoolSummary, nil
 }
 
+// NodePoolResetResources resets the selected resources for a cluster and node pool,
+// returning an error when the org-unit-service request fails.
 func (client *OrgUnitClient) NodePoolResetResources(ctx context.Context, clusterId string, nodePoolId string, action openapi.NodepoolResourcesResetAction) error {
 	resp, err := client.ApiClient.OrgUnitAPI.NodePoolResetResources(ctx).
 		OrgUnitsNodepoolResourcesResetRequest(openapi.OrgUnitsNodepoolResourcesResetRequest{

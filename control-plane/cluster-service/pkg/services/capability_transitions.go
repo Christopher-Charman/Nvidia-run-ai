@@ -44,6 +44,8 @@ func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, be
 	return s.resetTurnedOffCapabilities(ctx, before, after)
 }
 
+// validateCanTurnOff refuses to disable a capability while org units depend on it.
+// It returns a retryable service error if the dependency summary cannot be fetched.
 func (s *NodePoolsApiService) validateCanTurnOff(ctx context.Context, nodepool models.Nodepool, capability string,
 	summaryType openapi.OrgUnitsNodepoolSummaryType, resetAction string,
 ) *api.Error {
@@ -61,6 +63,8 @@ func (s *NodePoolsApiService) validateCanTurnOff(ctx context.Context, nodepool m
 		capability, nodepool.Name, len(blocking), describeOrgUnits(blocking), resetAction), nil)
 }
 
+// describeOrgUnits bounds the org-unit list in refusal messages to ten names
+// and reports how many additional org units were omitted.
 func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
 	names := make([]string, 0, min(len(orgUnits), maxBlockingOrgUnitsInMessage))
 	for _, orgUnit := range orgUnits[:min(len(orgUnits), maxBlockingOrgUnitsInMessage)] {
@@ -72,6 +76,8 @@ func describeOrgUnits(orgUnits []openapi.OrgUnitsNodepoolSummaryInner) string {
 	return strings.Join(names, ", ")
 }
 
+// resetTurnedOffCapabilities resets org-unit CPU quotas and weights when their
+// capabilities turn off. On failure it reports completed resets so callers can retry.
 func (s *NodePoolsApiService) resetTurnedOffCapabilities(ctx context.Context, before, after models.Nodepool) *api.Error {
 	resets := []struct {
 		turnedOff bool

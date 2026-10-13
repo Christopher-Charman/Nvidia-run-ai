@@ -64,6 +64,8 @@ func isAdjustableWeightsFFOn(ctx context.Context) bool {
 	return setting.Enabled
 }
 
+// validateCreateParams checks requested scheduling settings and GPU network detection
+// against cluster support before a node pool is created.
 func validateCreateParams(ctx context.Context, fields api.NodepoolCreateFields, capChecker clients_local.ClusterCapabilityChecker) error {
 	validationErr := gpuNetworkAccelerationDetectionValidation(ctx, fields.GpuNetworkAccelerationDetection, capChecker)
 	if validationErr != nil {
@@ -91,6 +93,8 @@ func validatePatchParams(ctx context.Context, dbNodepool models.Nodepool, fields
 	return validateUpdatePatchParamsInner(ctx, fields, false, &dbNodepool, capChecker)
 }
 
+// validateUpdatePatchParamsInner validates scheduling and GPU network settings for
+// PUT or PATCH, including requests that change only scheduling capabilities.
 func validateUpdatePatchParamsInner(ctx context.Context, fields api.NodepoolUpdateFields,
 	isUpdate bool, dbNodepool *models.Nodepool, capChecker clients_local.ClusterCapabilityChecker,
 ) error {
@@ -344,6 +348,8 @@ func validateTimeBasedFairShareWindowTypeAndStartTime(
 	return nil
 }
 
+// validateSchedulingCapabilities rejects requests that explicitly enable CPU quota
+// while disabling quota; omitted flags are left for model validation after merging.
 func validateSchedulingCapabilities(sc api.SchedulingCapabilitiesNullable) error {
 	if sc.CpuQuota != nil && *sc.CpuQuota && sc.Quota != nil && !*sc.Quota {
 		return fmt.Errorf("SchedulingCapabilities.CpuQuota can only be enabled when SchedulingCapabilities.Quota is enabled")
@@ -657,6 +663,8 @@ func setTimeBasedFairSharePatch(
 	return result
 }
 
+// setSchedulingCapabilitiesOnCreate initializes capabilities from model and tenant
+// defaults, ignoring request flags, and disables CPU quota when quota is disabled.
 func setSchedulingCapabilitiesOnCreate(ctx context.Context,
 	nodePool *models.Nodepool,
 	fields api.SchedulingCapabilitiesNullable,
@@ -683,6 +691,8 @@ func setSchedulingCapabilitiesOnCreate(ctx context.Context,
 	}
 }
 
+// setSchedulingCapabilitiesOnUpdate applies supplied flags for both PUT and PATCH
+// while preserving stored values for omitted flags. A nil node pool is ignored.
 func setSchedulingCapabilitiesOnUpdate(dbNodepool *models.Nodepool, fields api.SchedulingCapabilitiesNullable) {
 	if dbNodepool == nil {
 		return
