@@ -77,7 +77,7 @@ func (k *KeycloakIdpRepository) UpdateIdp(ctx context.Context, realm string, idp
 	}
 	kcIdp, err := k.kcClient.GetIdentityProvider(ctx, *token, realm, *idp.Alias)
 	if err != nil {
-		return fmt.Errorf("failed to get idp %s in realm %s. err: %s", *idp.Alias, realm, err.Error())
+		return fmt.Errorf("failed to get idp %s in realm %s: %w", *idp.Alias, realm, iamError.HandleKeyCloakError(err))
 	}
 	kcIdp = k.fromIdpModel(&idp, kcIdp)
 	err = k.kcClient.UpdateIdentityProvider(ctx, *token, realm, *idp.Alias, *kcIdp)

@@ -847,6 +847,22 @@ func TestUpdateIdp_MetadataRejectedByKeycloak(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, err.(utils.Error).Code)
 }
 
+func TestUpdateIdp_IdpNotFound(t *testing.T) {
+	MocksList, testSubject, ctx := initIdpServiceTests(t)
+	iamMock := MocksList.IamServicesContainerMock
+	authMock := MocksList.AuthManagerMock
+	authMock.On("GetRealmAndTenantID", mock.Anything, mock.Anything).Return(ptr.To(realm), ptr.To(tenantID), nil)
+	iamMock.MockIdpService.On("GetIdpConfigFromFile", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(map[string]string{}, nil)
+	iamMock.MockIdpService.On("UpdateIdp", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(fmt.Errorf("failed to get idp: %w", iamError.HandleKeyCloakError(&gocloak.APIError{Code: http.StatusNotFound, Message: "404 Not Found"})))
+
+	res, err := testSubject.UpdateIdp(ctx, mock.Anything, getSAMLIdpCreationRequest(utils.File, XML_FILE), "")
+
+	assert.NotNil(t, err)
+	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusNotFound, err.(utils.Error).Code)
+}
+
 func TestUpdateIdp_KeycloakServerError(t *testing.T) {
 	MocksList, testSubject, ctx := initIdpServiceTests(t)
 	iamMock := MocksList.IamServicesContainerMock

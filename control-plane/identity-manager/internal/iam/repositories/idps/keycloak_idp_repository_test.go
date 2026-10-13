@@ -576,6 +576,20 @@ func TestGetIdpConfig_KeycloakServerError(t *testing.T) {
 	goCloakMock.AssertExpectations(t)
 }
 
+func TestUpdateIdp_IdpNotFound(t *testing.T) {
+	authMock, goCloakMock, testSubject := initTest(t)
+	ctx := context.Background()
+	token := kcMocks.GetMockAccessToken()
+	idp := getMockIdps()[0]
+	authMock.On("GetAdminToken", ctx).Return(token, nil)
+	goCloakMock.On("GetIdentityProvider", ctx, *token, realm, *idp.Alias).Return(nil, getKcApiError(http.StatusNotFound))
+	err := testSubject.UpdateIdp(ctx, realm, *idp)
+	assert.NotNil(t, err)
+	assert.True(t, errors.Is(err, iamError.ErrNotFound))
+	authMock.AssertExpectations(t)
+	goCloakMock.AssertExpectations(t)
+}
+
 func getKcApiError(code int) error {
 	return &gocloak.APIError{Code: code, Message: fmt.Sprintf("%d %s", code, http.StatusText(code))}
 }
