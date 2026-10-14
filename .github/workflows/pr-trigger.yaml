@@ -56,7 +56,8 @@ jobs:
         with:
           workflow: pr.yaml
           repo: run-ai/saas-configuration
-          ref: ${{ (env.BASE_REF == 'main' || env.BASE_REF == 'master' || env.BASE_REF == '') && 'master' || env.BASE_REF }}
+          # TEST ONLY (DO NOT MERGE): run saas-configuration#317's pr.yaml.
+          ref: ci/pr-build-failure-owners-comment
           token: ${{ secrets.GIT_HUB_OSS }}
           inputs: |
             {
