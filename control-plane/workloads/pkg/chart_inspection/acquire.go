@@ -274,7 +274,7 @@ func (f *remoteFetcher) download(ctx context.Context, client *http.Client, u *ur
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		return nil, acquisitionError(422, "chart_download_failed", fmt.Sprintf("Chart source returned HTTP %d.", resp.StatusCode))
+		return nil, acquisitionError(http.StatusBadGateway, "chart_download_failed", fmt.Sprintf("Chart source returned HTTP %d.", resp.StatusCode))
 	}
 	if resp.ContentLength > limit {
 		return nil, acquisitionError(422, "chart_source_too_large", "Chart source exceeds the inspection size limit.")

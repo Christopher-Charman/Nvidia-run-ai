@@ -149,7 +149,9 @@ func ParseArchive(data []byte) (*Result, error) {
 	if values, ok := files["values.yaml"]; ok {
 		defaults, err = yamlObject(values)
 		if err != nil {
-			return nil, fmt.Errorf("parse values.yaml: %w", err)
+			// Defaults are advisory; nil suppresses checks that require readable defaults.
+			defaults = nil
+			out.Warnings = append(out.Warnings, Warning{Code: "UNREADABLE_DEFAULTS", Message: "values.yaml could not be read for default checks", Path: "$"})
 		}
 	}
 	questionsFile := "questions.yaml"

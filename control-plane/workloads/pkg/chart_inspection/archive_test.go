@@ -9,6 +9,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -330,4 +331,51 @@ func TestParseArchiveRejectsHiddenArchiveSuffixes(t *testing.T) {
 			t.Fatal("hidden second tar chart accepted")
 		}
 	})
+}
+
+func TestParseArchiveUnreadableDefaultsDoNotFailQuestionsInspection(t *testing.T) {
+	var manyNodes strings.Builder
+	for index := 0; index < 50001; index++ {
+		_, _ = fmt.Fprintf(&manyNodes, "key%d: value\n", index)
+	}
+	for _, values := range []struct{ name, body string }{
+		{"malformed YAML", "replicas: [\n"},
+		{"non-string key", "80: http\n"},
+		{"duplicate keys", "replicas: 1\nreplicas: 2\n"},
+		{"custom tag", "replicas: !custom 1\n"},
+		{"node budget", manyNodes.String()},
+		{"alias budget", "large: &large " + strings.Repeat("x", 32<<10) + "\ncopies: [" + strings.TrimSuffix(strings.Repeat("*large,", 130), ",") + "]\n"},
+	} {
+		for _, questions := range []struct{ name, body, status string }{
+			{"absent", "", QuestionsAbsent},
+			{"usable", "questions:\n- variable: replicas\n  type: int\n  default: 1\n  show_if: enabled=true\n  ignored_property: example\n", QuestionsUsable},
+			{"unusable", "questions:\n- variable: replicas\n  type: int\n  default: invalid\n", QuestionsUnusable},
+		} {
+			t.Run(values.name+"/"+questions.name, func(t *testing.T) {
+				entries := []archiveEntry{
+					{name: "demo/Chart.yaml", body: "name: demo\nversion: 1.0.0\n"},
+					{name: "demo/values.yaml", body: values.body},
+				}
+				if questions.body != "" {
+					entries = append(entries, archiveEntry{name: "demo/questions.yaml", body: questions.body})
+				}
+				got, err := ParseArchive(chartArchive(t, entries...))
+				if err != nil {
+					t.Fatalf("advisory defaults failed inspection: %v", err)
+				}
+				if got.ChartName != "demo" || got.QuestionsStatus != questions.status || got.HasQuestions != (questions.body != "") || !hasWarning(got, "UNREADABLE_DEFAULTS") {
+					t.Fatalf("wrong inspection outcome: %#v", got)
+				}
+				if hasWarning(got, "MISSING_DEFAULT_PATH") || hasWarning(got, "UNKNOWN_CONDITION_REFERENCE") {
+					t.Fatalf("unreadable defaults caused speculative path warnings: %#v", got.Warnings)
+				}
+				if questions.status == QuestionsUsable && (len(got.Questions) != 1 || !hasWarning(got, "IGNORED_PROPERTY")) {
+					t.Fatalf("usable question diagnostics were lost: %#v", got)
+				}
+				if questions.status == QuestionsUnusable && (len(got.Questions) != 0 || len(got.Groups) != 0 || !hasWarning(got, "UNUSABLE_QUESTIONS")) {
+					t.Fatalf("invalid question defaults were accepted: %#v", got)
+				}
+			})
+		}
+	}
 }

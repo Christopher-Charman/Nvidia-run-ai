@@ -314,7 +314,7 @@ func (v *declarationValidator) question(value any, depth int, parent, parentGrou
 		question["show_subquestion_if"] = gate
 	}
 	v.ignoreUnknown(raw, questionProperties, where)
-	if _, exists := readPath(v.defaults, segments); !exists {
+	if _, exists := readPath(v.defaults, segments); v.defaults != nil && !exists {
 		v.warnings = append(v.warnings, Warning{Code: "MISSING_DEFAULT_PATH", Message: "Field path is absent from the chart defaults", Path: variable})
 	}
 	references := []string{}
@@ -387,7 +387,7 @@ func (v *declarationValidator) checkConditions() error {
 			key := canonicalPath(segments)
 			if known[key] {
 				edges[q.key] = append(edges[q.key], key)
-			} else if _, exists := readPath(v.defaults, segments); !exists {
+			} else if _, exists := readPath(v.defaults, segments); v.defaults != nil && !exists {
 				v.warnings = append(v.warnings, Warning{Code: "UNKNOWN_CONDITION_REFERENCE", Message: "Condition path is absent from chart defaults and declared fields", Path: reference})
 			}
 		}

@@ -249,3 +249,27 @@ func TestFetchRemotePreservesEscapedRepositoryPath(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestFetchRemoteUpstreamHTTPFailuresReturnBadGateway(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusInternalServerError, http.StatusServiceUnavailable} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			fetcher, base, _ := testRemoteFetcher(t, func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(status)
+				_, _ = io.WriteString(w, "upstream-sensitive-body")
+			})
+			for _, selection := range []Selection{
+				{ChartURL: base + "/chart.tgz?signature=upstream-sensitive-query"},
+				{Repo: base, ChartName: "app", ChartVersion: "1"},
+			} {
+				_, err := fetcher.fetch(context.Background(), selection, "synthetic-test-key")
+				var sourceErr *Error
+				if !errors.As(err, &sourceErr) || sourceErr.StatusCode != http.StatusBadGateway || sourceErr.Code != "chart_download_failed" {
+					t.Fatalf("upstream HTTP %d returned %v", status, err)
+				}
+				if strings.Contains(err.Error(), "upstream-sensitive") || strings.Contains(err.Error(), "synthetic-test-key") {
+					t.Fatalf("upstream failure exposed source material: %v", err)
+				}
+			}
+		})
+	}
+}
