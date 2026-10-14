@@ -1049,6 +1049,10 @@ func CreationRequestToPodModel(ctx context.Context, tenantId uint, projectId str
 		Ip:                 pod.Ip,
 		Task:               pod.Task,
 		NodeAffinity:       NodeAffinityApiToModel(pod.NodeAffinity),
+		// DRA usage reported as-is by cluster-sync. Managed/ownership
+		// resolution against the k8s-object store happens at API read time,
+		// not here — this ingest path performs no cross-service lookup.
+		ResourceClaims: podResourceClaimsApiToModel(pod.ResourceClaims),
 		// temp
 		RequestedGPULimit:         nil,
 		RequestedGPURequest:       nil,
@@ -1244,6 +1248,26 @@ func tolerationApiToModel(toleration api.PodToleration) models.Toleration {
 	}
 }
 
+// podResourceClaimsApiToModel is a straight pass-through from the API wire
+// shape into the jsonb-backed model slice. Returns nil for a nil/empty input
+// so the resulting pod row has NULL in resource_claims (rather than an empty
+// jsonb array), matching the "report nothing" case.
+func podResourceClaimsApiToModel(claims *[]api.PodResourceClaim) models.PodResourceClaimArray {
+	if claims == nil || len(*claims) == 0 {
+		return nil
+	}
+	result := make(models.PodResourceClaimArray, 0, len(*claims))
+	for _, c := range *claims {
+		result = append(result, models.PodResourceClaim{
+			Name:                       c.Name,
+			ResourceClaimTemplateName:  c.ResourceClaimTemplateName,
+			ResourceClaimName:          c.ResourceClaimName,
+			AllocatedResourceClaimName: c.AllocatedResourceClaimName,
+		})
+	}
+	return result
+}
+
 func PodModelToApi(pod models.Pod, projectId string) api.Pod {
 	apiPod := api.Pod{
 		Name:               pod.Name,
@@ -1286,6 +1310,7 @@ func PodModelToApi(pod models.Pod, projectId string) api.Pod {
 		Task:              pod.Task,
 		NodeAffinity:      NodeAffinityModelToApi(pod.NodeAffinity),
 		Elements:          podElementsModelToApi(pod.Elements),
+		ResourceClaims:    podResourceClaimsModelToApi(pod.ResourceClaims),
 	}
 
 	return apiPod
@@ -1310,6 +1335,25 @@ func podElementsModelToApi(elements []*models.PodElement) *[]api.PodElement {
 		result = append(result, api.PodElement{
 			ElementId:      e.ElementID,
 			HierarchyLevel: int32(e.Level),
+		})
+	}
+	return &result
+}
+
+// podResourceClaimsModelToApi mirrors podResourceClaimsApiToModel for the
+// read side. nil in → nil out, so a pod with no DRA usage is omitted from
+// the response rather than serialized as an empty array.
+func podResourceClaimsModelToApi(claims models.PodResourceClaimArray) *[]api.PodResourceClaim {
+	if len(claims) == 0 {
+		return nil
+	}
+	result := make([]api.PodResourceClaim, 0, len(claims))
+	for _, c := range claims {
+		result = append(result, api.PodResourceClaim{
+			Name:                       c.Name,
+			ResourceClaimTemplateName:  c.ResourceClaimTemplateName,
+			ResourceClaimName:          c.ResourceClaimName,
+			AllocatedResourceClaimName: c.AllocatedResourceClaimName,
 		})
 	}
 	return &result
