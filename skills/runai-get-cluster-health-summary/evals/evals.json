@@ -5,13 +5,13 @@
     {
       "id": "A1-lab-cluster-verdict-per-pool",
       "prompt": "Is cluster 20000000-0000-4000-8000-0000000000c1 healthy? Give me a verdict per node pool.",
-      "expected_output": "Cluster verdict STUCK. infer-pool STUCK: 16 free GPUs (0/16/16 allocated/allocatable/total) while embed-1 (47m) and embed-2 (41m), 1 GPU each, wait with no scheduler reason (SCHEDULER_SUSPECT). edge-pool STUCK: pool phase Unschedulable and its only GPU node node-edge-01 is Unknown, so 0 of 8 GPUs are allocatable. train-pool DEGRADED: node-train-03 NotReady and node-train-04 Unknown (cordoned with runai=drain, likely maintenance) remove 16 of 32 GPUs; 12/16 allocated, 4 free; pinned-h200 pending is a spec problem: its spec pins node type gpu-h200 (found with get_workload_spec, although its events name only a GPU shortage), not a pool fault. default DEGRADED: full at 32/32 with capacity backlog (batch-7 8 GPUs 35m, svc-a 4 GPUs 22m), not stuck. cpu-pool HEALTHY with a note that CPU-only cpu-node-01 is NotReady. archive-pool phase Empty is a note, not a fault. 2 failed workloads route to runai-get-workload-health-summary. Read-only.",
+      "expected_output": "Cluster verdict STUCK. infer-pool STUCK: 16 free GPUs (0/16/16 allocated/allocatable/total) while embed-1 (47m) and embed-2 (41m), 1 GPU each, wait with no scheduler reason (SCHEDULER_SUSPECT). edge-pool STUCK: pool phase Unschedulable and its only GPU node node-edge-01 is Unknown, so 0 of 8 GPUs are allocatable. train-pool DEGRADED: node-train-03 NotReady and node-train-04 Unknown (cordoned with runai=drain, likely maintenance) remove 16 of 32 GPUs; 12/16 allocated, 4 free; pinned-h200 pending is a spec problem: its spec pins node type gpu-h200 (found with get_workload_spec; its recent events name only a GPU shortage, and its history shows the earlier node-affinity mismatch), not a pool fault. default DEGRADED: full at 32/32 with capacity backlog (batch-7 8 GPUs 35m, svc-a 4 GPUs 22m), not stuck. cpu-pool HEALTHY with a note that CPU-only cpu-node-01 is NotReady. archive-pool phase Empty is a note, not a fault. 2 failed workloads route to runai-get-workload-health-summary. Read-only.",
       "expected_skill": "runai-get-cluster-health-summary",
       "expected_script": null,
       "expected_behavior": [
         "calls list_node_pools, get_cluster_infrastructure_health, get_cluster_physical_inventory, and get_workloads_summary for the cluster",
         "samples the oldest pending workloads with list_workloads sorted by totalPendingTimeSeconds and checks them with get_workload_status",
-        "checks pinned-h200's spec with get_workload_spec because its request fits train-pool's free GPUs",
+        "checks pinned-h200's spec with get_workload_spec and its history with get_workload_history because its request fits train-pool's free GPUs",
         "gives one verdict per pool and an overall STUCK verdict",
         "classifies infer-pool as STUCK because free GPUs are not scheduled",
         "classifies edge-pool as STUCK because no GPU node is schedulable",
@@ -244,11 +244,11 @@
     {
       "id": "C3-free-gpus-but-spec-pending",
       "prompt": "train-pool on cluster 20000000-0000-4000-8000-0000000000c1 has free GPUs but work is still pending. Is the pool broken?",
-      "expected_output": "The pending workload in train-pool, pinned-h200, is blocked by its own placement: its spec pins node type gpu-h200 although train-pool has 4 free GPUs and its events name only a GPU shortage. It is a workload problem, so the free GPUs do not make the pool stuck. train-pool is DEGRADED for another reason: 2 of 4 nodes are down and 16 of 32 GPUs are unschedulable. Route pinned-h200 to runai-diagnose-pending-workload.",
+      "expected_output": "The pending workload in train-pool, pinned-h200, is blocked by its own placement: its spec pins node type gpu-h200 although train-pool has 4 free GPUs; its recent events name only a GPU shortage, but its history shows the earlier node-affinity mismatch. It is a workload problem, so the free GPUs do not make the pool stuck. train-pool is DEGRADED for another reason: 2 of 4 nodes are down and 16 of 32 GPUs are unschedulable. Route pinned-h200 to runai-diagnose-pending-workload.",
       "expected_skill": "runai-get-cluster-health-summary",
       "expected_script": null,
       "expected_behavior": [
-        "checks pinned-h200's spec with get_workload_spec and finds the nodeType pin",
+        "checks pinned-h200's spec and history and finds the nodeType pin and the earlier affinity mismatch",
         "classifies pinned-h200 as SPEC, not SCHEDULER_SUSPECT",
         "reports train-pool DEGRADED for the unhealthy nodes",
         "routes the pending workload to a pending-workload diagnostic"

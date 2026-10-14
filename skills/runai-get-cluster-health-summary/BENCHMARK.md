@@ -149,38 +149,54 @@ job `CAPACITY`:
   none of the events `get_workload_status` returns showed the pin.
 
 Revision 5 adds one `get_workload_spec` call when a not-enough-resources
-workload asks for no more GPUs than are free; a placement pin then makes it
-`SPEC`.
+workload asks for no more GPUs than are free. The workload is classed `SPEC`
+only when the spec pins placement and an event proves the pin matches no
+node. When the recent status events no longer show that, one
+`get_workload_history` call reads the older events. A pin without such an
+event stays `CAPACITY`, with the pin named as an unconfirmed cause: node
+labels are not exposed, and the pinned nodes may simply be full.
 
-**Mock.** The mock now mirrors both behaviors:
+A first draft classed any pin as `SPEC`. Review pointed out that this
+misclassifies a job pinned to nodes that exist but are full, so the history
+proof was added. The results below are for the final text.
 
-- The pinned job's events name only the GPU shortage, and the pin is in its
-  spec.
+**Mock.** The mock now mirrors these behaviors:
+
+- The pinned job's status events name only the GPU shortage. Its spec holds
+  the pin, and its history holds the earlier affinity mismatch.
 - `get_cluster_metrics` returns cluster-wide series for any `nodePoolName`,
-  as the real backend does.
+  as the real backend does. Its description still advertises pool scoping, as
+  the real server's does.
 
-The five affected cases (A1, A3, A7, A8, C3), both arms, three models:
+The four cases about the pinned job (A1, A3, A8, C3), both arms, three
+models:
 
 | Model | MCP-only pass | MCP+skill pass | Pinned job classed `SPEC` (skill) |
 | --- | ---: | ---: | --- |
-| Codex GPT-5.6 Sol (+ AGENTS guidance) | 3/5 | 5/5 | 5/5, one spec call each |
-| Claude Sonnet 5 | 0/5 | 5/5 | 5/5, one spec call each |
-| Claude Opus 4.8 | 1/5 | 5/5 | 5/5, one spec call each |
+| Codex GPT-5.6 Sol (+ AGENTS guidance) | 1/4 | 4/4 | 4/4, spec and history calls |
+| Claude Sonnet 5 | 1/4 | 4/4 | 4/4, one spec and one history call each |
+| Claude Opus 4.8 | 0/4 | 3/4 | 4/4, one spec and one history call each |
 
-No skill-arm run passed `nodePoolName` to `get_cluster_metrics`. The MCP-only
-runs did on 1 to 3 cases per model.
+- **Codex A1:** the first run hit the 600 s harness timeout and was rerun.
+- **Opus A8:** it missed an unrelated hand-off.
+- **Untested path:** the mock has no pinned job without a mismatch event, so
+  the "pin stays `CAPACITY`" branch is not exercised.
+- **Pool scoping:** no skill-arm run passed `nodePoolName` to
+  `get_cluster_metrics`. The MCP-only runs did on 1 to 3 cases per model.
+- **A7:** the per-pool utilization case was checked on the first draft (5/5
+  on every model with the skill). It is unaffected by the history change.
 
 **Live**, against the same cluster with "Is the cluster healthy? Give me a
 verdict per node pool." (2 Sonnet 5 runs, 1 Opus 4.8 run; read-only MCP
 server without write tools):
 
-- Every run loaded the skill and made one spec call for the pinned job.
-- Every run classed it `SPEC` and gave the cluster `DEGRADED`, with 2
-  `CAPACITY` and 1 `SPEC` in the default pool.
+- Every run loaded the skill and made one spec and one history call for the
+  pinned job.
+- Every run classed it `SPEC`, citing the history's affinity-mismatch events
+  (10-08 to 10-12).
+- Every run gave the cluster `DEGRADED`, with 2 `CAPACITY` and 1 `SPEC` in
+  the default pool.
 - No run scoped `get_cluster_metrics` to a pool.
-- The answers state that no node matches the pin. The MCP does not expose node
-  labels, so that comes from the GPU model in the inventory and the pin in the
-  spec.
 
 ### Revision 2 (2026-10-08)
 
@@ -305,7 +321,9 @@ and `codex` (`azure/openai/gpt-5.6-sol`) through NVIDIA inference, Docker,
   to `list_node_pools`, which rejects it.
 - **Revision 4 → 5** (from a live answer on 2026-10-14):
   - A not-enough-resources workload whose request fits the free GPUs gets one
-    `get_workload_spec` call. A `nodeType` or affinity pin makes it `SPEC`.
+    `get_workload_spec` call. A `nodeType` or affinity pin makes it `SPEC`
+    when an event, from the status or one `get_workload_history` call, shows
+    the pin matches no node; otherwise it stays `CAPACITY`.
   - `get_cluster_metrics` is no longer scoped to a pool, because the current
     server ignores `nodePoolName` for allocation and utilization. Utilization
     per pool is routed to `runai-get-utilization-overview`.
@@ -347,7 +365,7 @@ exercises little.
 
 - Not NVCARPS-certified; one attempt per case on the mock; LLM judge.
 - Revision 4 was checked with 5 live prompts on one model, not re-run on the
-  mock or in a full live round. Revision 5 was checked on the 5 affected mock
+  mock or in a full live round. Revision 5 was checked on the affected mock
   cases and with 3 live runs of one prompt; the full mock run and the live
   rounds measured earlier revisions on the earlier mock.
 - Mock fault scenarios are synthetic; only the healthy cluster is a live

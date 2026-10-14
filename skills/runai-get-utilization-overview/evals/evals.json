@@ -343,7 +343,7 @@
       "expected_behavior": [
         "retries get_org_unit_metrics without gpuMemoryUtilization after the version error",
         "classifies legacy-cv as IDLE and legacy-nlp as WELL_UTILIZED",
-        "does not call legacy-asr bursty and reports it idle since about 10-06",
+        "does not call legacy-asr's single spike bursty, and reports legacy-asr idle since about 10-06",
         "says GPU memory utilization is unavailable on this cluster version",
         "makes no mutating calls"
       ]
@@ -369,7 +369,7 @@
       "expected_script": null,
       "expected_behavior": [
         "reports that legacy-asr has been idle since about 10-06",
-        "does not call the single spike bursty use",
+        "does not call the single spike bursty",
         "states the low sample coverage",
         "makes no mutating calls"
       ]

@@ -8,7 +8,8 @@ description: >-
   idle GPUs and GPU-hours, and names idle workloads. Use for "which projects
   hold GPUs but aren't using them?", "GPU utilization by project or
   department", "where are we wasting GPU cycles?", "is llm-serving actually
-  busy? its GPU memory is full", "which workloads in project X are idle?",
+  busy? its GPU memory is full", "is project X actually using its GPUs?",
+  "which workloads in project X are idle?",
   "which node pool wastes the most GPUs?", or "idle GPU-hours per project
   last quarter". For "find the idle GPUs and stop them" it answers the read
   part only. Not for quota fairness, cluster health or free capacity, one
@@ -231,7 +232,8 @@ With full coverage, idle GPU-hours equal idle GPUs times the window in hours.
 Show utilization with no decimals, GPUs with one decimal, and GPU-hours as
 whole numbers prefixed with ≈. Call coverage full only when n equals S. Below
 50% coverage, say the holder only has data for part of the window and that
-its GPU-hours cover only that part. Then lead with its latest samples (the
+its GPU-hours cover only that part. Never fill the gaps: a missing sample is
+no data, not idle time. Then lead with its latest samples (the
 `idle since` flag) rather than its average.
 
 ### Stage 5 — Classify
@@ -246,19 +248,21 @@ its GPU-hours cover only that part. Then lead with its latest samples (the
 
 Flags that qualify a class, shown in the class column:
 
-- **bursty:** never below 50% coverage. Otherwise: avg <
-  `well_utilized_threshold` but p95 ≥ it. The peaks use the GPUs; say "bursty,
-  not idle", and never suggest it gives up all its GPUs. It needs at least 2
-  samples, and at least 10% of n, at or above `well_utilized_threshold`; one
-  high sample is a spike, not bursts.
+- **bursty:** do not flag it when coverage is below 50% or when the holder is
+  flagged `idle since`. Otherwise flag it when avg < `well_utilized_threshold`
+  but p95 ≥ it. The peaks use the GPUs;
+  say "bursty, not idle", and never suggest it gives up all its GPUs. It needs
+  at least 2 samples, and at least 10% of n, at or above
+  `well_utilized_threshold`; one high sample is a spike, not bursts.
 - **idle since `<time>`:** the latest 3 or more samples are all below
   `idle_threshold` and an earlier sample is not. Give the time of the first of
   those latest samples; the average hides it.
 - **memory-loaded:** `IDLE` with average GPU memory utilization ≥ 50%. A
   model is loaded but not computing, typical of idle notebooks and inference
   endpoints without traffic.
-- **fractional:** held GPUs are not a whole number, or a listed workload of
-  the holder holds less than one GPU. Fractional workloads can share a device,
+- **fractional:** the holder's current allocation (from Stage 2) is not a
+  whole number, or a listed workload of the holder holds less than one GPU. An
+  average over the window is not evidence. Fractional workloads can share a device,
   so the holder's utilization is approximate; say so once.
 
 Rank holders by idle GPUs, largest first. When the user asks for efficiency,

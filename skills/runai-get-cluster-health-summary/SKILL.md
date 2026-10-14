@@ -81,7 +81,7 @@ the full answer. Write requests are the exception: make zero MCP calls.
 
 - **Run:ai MCP server, required**, with read access to node pools, node health,
   cluster inventory, cluster metrics, workload counts, workload lists,
-  workload status, and workload specs.
+  workload status, workload specs, and workload history.
 - **No Kubernetes access is used.** The skill is MCP-only by design. If the MCP
   is unavailable, say so and stop; do not fall back to `kubectl` and do not
   estimate numbers.
@@ -107,6 +107,7 @@ the full answer. Write requests are the exception: make zero MCP calls.
 | `list_workloads` | The oldest pending workloads, with requested pools and GPUs. |
 | `get_workload_status` | `phaseMessage`, `phaseReason`, conditions, and events for one pending workload. |
 | `get_workload_spec` | Placement of a pending workload (`nodeType`, affinity, pools) when its request fits the free GPUs. |
+| `get_workload_history` | Older events of that workload, to prove a placement mismatch the newest events no longer show. |
 
 ## Instructions — workflow
 
@@ -184,11 +185,17 @@ Read every returned event with its timestamp, not only the newest:
 When a not-enough-resources reason appears although a requested pool has
 `gpusFree >= requestedGpu`, call `get_workload_spec` for that workload first.
 If its spec pins placement (`nodeType`, `nodeAffinityRequired`, or
-`podAffinity`), class it `SPEC` and name the pin: free GPUs exist, so the pin
-is what keeps the workload off them. The events need not show it; the newest
-ones often name only the GPU shortage.
+`podAffinity`), look for proof that the pin matches no node: an event saying a
+node selector or affinity did not match. The newest events often name only the
+GPU shortage, so when the status events do not show it, call
+`get_workload_history` for that workload once and read its older events.
 
-Without such a pin, keep `CAPACITY` and name the possible cause from the
+- A mismatch event found → class it `SPEC` and name the pin.
+- No mismatch event → keep `CAPACITY`, and name the pin as a possible cause the
+  tools cannot confirm: node labels are not exposed, and the pinned nodes may
+  simply be full.
+
+Without a pin, keep `CAPACITY` and name the possible cause from the
 evidence, never as fact:
 
 - More than one GPU node in the pool (`gpuNodes > 1`): free GPUs can be split
@@ -309,8 +316,8 @@ Utilization: 0/8 GPUs allocated; GPU utilization 1h avg 0%.
   nodes, or an `Unschedulable` pool.
 - Show the raw numbers behind every verdict.
 - Report missing metrics as unavailable; never estimate them.
-- At most `pending_sample` status calls, plus one spec call per workload whose
-  request fits the free GPUs.
+- At most `pending_sample` status calls, plus one spec call and at most one
+  history call per workload whose request fits the free GPUs.
 
 ## Limitations
 

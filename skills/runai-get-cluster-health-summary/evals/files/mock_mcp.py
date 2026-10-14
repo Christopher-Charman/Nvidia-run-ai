@@ -240,8 +240,8 @@ STATUS_SIGNALS = {
         "k8sPhase": "Pending",
         "conditions": [{"type": "PodScheduled", "status": "False", "reason": "Unschedulable",
                         "message": "no nodes with enough resources were found: 4 node(s) didn't have enough resources: GPUs.",
-                        "lastTransitionTime": "2026-10-07T13:00:00Z"}],
-        "events": [{"createdAt": "2026-10-07T13:00:00Z", "type": "Warning", "reason": "Unschedulable",
+                        "lastTransitionTime": "2026-10-07T13:20:00Z"}],
+        "events": [{"createdAt": "2026-10-07T13:20:00Z", "type": "Warning", "reason": "Unschedulable",
                     "message": "no nodes with enough resources were found: 4 node(s) didn't have enough resources: GPUs."}],
     },
     "fresh-1": {"k8sPhase": "Pending", "conditions": [], "events": []},
@@ -605,6 +605,34 @@ def get_workload_status(args):
 
 SPEC_PLACEMENT = {"pinned-h200": {"nodeType": "gpu-h200"}}
 
+# Older scheduler events that no longer appear among the recent status events.
+HISTORY_EVENTS = {
+    "pinned-h200": [{"createdAt": "2026-10-07T13:00:30Z", "type": "Warning", "reason": "Unschedulable",
+                     "message": "0/4 nodes are available: 4 node(s) didn't match Pod's node affinity/selector."}],
+}
+
+
+def get_workload_history(args):
+    require_known(args, {"workloadId", "limit", "offset"})
+    workload_id = args.get("workloadId")
+    row = next((item for item in WORKLOADS if item["id"] == workload_id), None)
+    if row is None:
+        raise ToolError(f"not_found: workload {workload_id} not found")
+    limit = int(args.get("limit") or 20)
+    offset = int(args.get("offset") or 0)
+    if limit < 1 or limit > 50 or offset < 0:
+        raise ToolError("validation: limit must be 1-50 and offset non-negative")
+    events = STATUS_SIGNALS.get(row["name"], {}).get("events", []) + HISTORY_EVENTS.get(row["name"], [])
+    records = [{"meta": {"creationTimestamp": event["createdAt"], "type": "Event"},
+                "spec": {"event": event}} for event in events]
+    records.append({"meta": {"creationTimestamp": row["createdAt"], "type": "PhaseUpdate"},
+                    "spec": {"phaseUpdate": {"phase": "Pending", "phaseMessage": ""}}})
+    records.sort(key=lambda record: record["meta"]["creationTimestamp"], reverse=True)
+    result = {"workloadId": row["id"], "type": row["type"], "records": records[offset:offset + limit]}
+    if offset + limit < len(records):
+        result["next"] = offset + limit
+    return result
+
 
 def get_workload_spec(args):
     """Return the compact requested-spec summary, with scheduler messages for pending work."""
@@ -657,6 +685,7 @@ TOOLS = {
                               ["clusterId"]),
         "handler": get_cluster_physical_inventory,
     },
+    # Like the real server, the description advertises nodePoolName scoping that the backend does not apply.
     "get_cluster_metrics": {
         "description": "Get a cluster's resource capacity and consumption over time: allocatedGpu, unallocatedGpu, totalGpu, gpuUtilization, gpuMemoryUtilization, cpuUtilization, cpuMemoryUtilization, avgWorkloadWaitTime, workloadsCount. Scope to one node pool with nodePoolName. window is one of last_1h, last_24h, last_7d, last_30d (default last_1h). partialData is true when some metrics failed; failed metrics are absent. Read-only.",
         "inputSchema": schema({
@@ -696,6 +725,12 @@ TOOLS = {
         "description": "Get one workload's current phase, phaseMessage, phaseReason, k8sPhase, conditions, and up to 5 recent events. For 'why' questions check phaseMessage first, then condition and event reasons. Read-only.",
         "inputSchema": schema({"workloadId": {"type": "string"}}, ["workloadId"]),
         "handler": get_workload_status,
+    },
+    "get_workload_history": {
+        "description": "Call when the user asks about a workload's event history \u2014 what happened to a workload (job) over time and the lifecycle events logged along the way. Returns a chronological, paginated list of history records, newest first; each record is a phase update or an event (a lifecycle event with its reason and message). Pass the returned next value as offset to get older records. Read-only.",
+        "inputSchema": schema({"workloadId": {"type": "string"}, "limit": {"type": "integer"},
+                               "offset": {"type": "integer"}}, ["workloadId"]),
+        "handler": get_workload_history,
     },
     "get_workload_spec": {
         "description": "Call when the user asks what a workload (job) requested or how it is configured \u2014 the resources it asked for, the image it runs, its environment variables, volumes, or node placement \u2014 or why it is pending scheduling. Returns a compact requested-spec summary by default (image, compute, storage, scaling, placement such as nodePools, nodeType, nodeAffinityRequired, podAffinity, tolerations, and scheduling); set includeFullSpec for the complete spec. Also returns allocated resources and, for pending workloads, the scheduler's pending messages. Read-only.",

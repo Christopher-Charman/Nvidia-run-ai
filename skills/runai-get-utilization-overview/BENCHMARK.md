@@ -35,7 +35,8 @@ NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
     utilization, so every pool returns cluster-wide series.
   - `unallocatedGpu` is always absent.
   - Inventory counts allocated GPUs as whole devices.
-- **Live cluster.** Not evaluated yet. See Limitations.
+- **Live cluster.** No full live round. Revision 5 had a six-run live spot
+  check; see Revision 5 Spot Check and Limitations.
 
 ## Tier 1 — Static Validation
 
@@ -133,8 +134,8 @@ and 0% in every sample after. Two rules combined to cause it:
 
 **Revision 5:**
 - Fewer than 20 samples report a `peak`, not a p95.
-- Bursty needs at least 2 high samples and at least 10% of them, and never
-  applies below 50% coverage.
+- Bursty needs at least 2 high samples and at least 10% of them. It never
+  applies below 50% coverage or to a holder flagged `idle since`.
 - A new `idle since <time>` flag marks holders whose latest 3 or more samples
   are all below 5% after a busier start. Answers lead with it, and sparse
   series lead with it rather than with the average.
@@ -154,30 +155,43 @@ affected cases were run with the skill: A1, A3, A9, A10, C3, C9, C11.
   - unsupported causes (C3, C9);
   - the missing "memory unavailable on 2.20" statement (C9, C11);
   - Opus not loading the skill for C11.
-- **Rule moved and re-checked.** The coverage condition was then moved to the
-  front of the bursty rule (see Live). A re-run of A1, C3, and C11 on Sonnet
-  and Opus passed A1 and C3 on both, with `nlp-research` still bursty.
-- **C11 after the move.** Both models loaded the skill and reported `idle
-  since` without bursty. Both still fail C11:
-  - Sonnet left out the memory statement.
-  - Opus extrapolated GPU-hours across the gaps between samples (≈260
-    instead of ≈73 for the sampled time). The skill counts only sampled time,
-    because a gap means no data, not idleness.
 - **Without the skill (C9, C11):** no model passed (0 of 6).
 
-**Live**, on the test cluster with "Which projects hold GPUs but aren't
-actually using them?" through a read-only MCP server:
+**Fixes after review and live checks.** The final text adds five changes:
 
-- **`idle since`:** every run flagged all three projects (since 10-11 and
-  10-12).
-- **Single-spike projects:** no run called them bursty.
-- **Sparse samples:** values from them were labeled `peak`, and the 29%
-  coverage was stated.
-- **First draft of the rule:** in 2 of 2 Sonnet runs, `hc-team-a`, which has
-  three busy samples at 29% coverage, was still called bursty. Opus got it
-  right.
-- **After the move:** with the coverage condition first, 1 of 3 Sonnet runs
-  called it bursty.
+- **Exclusive flags:** a holder flagged `idle since` is never bursty. Before
+  this, Sonnet still called sparse projects bursty in 2 of 3 live runs; the
+  50% coverage condition alone did not hold.
+- **Fractional:** it now uses the current allocation. An average such as 7.5
+  held GPUs from an allocation that changed 4 → 8 had been labeled
+  fractional.
+- **Trigger phrase:** "is project X actually using its GPUs?". Opus had not
+  loaded the skill for C11.
+- **Gaps:** GPU-hours never fill the gaps between samples.
+- **Wording:** the bursty rule reworded for clarity.
+
+**Mock, final text:**
+
+| Check | Sonnet 5 | Opus 4.8 |
+| --- | --- | --- |
+| `nlp-research` still bursty (A1, C3) | 2/2 | 2/2 |
+| `batch-etl` flagged fractional, no false fractional (A1, A2) | 2/2 | 2/2 |
+| C11 loads the skill and reports `idle since`, not bursty | 3/3 | 4/4 (after the trigger phrase) |
+| C11 pass | 3/3 | 1/4 |
+
+Opus fails C11 by computing GPU-hours as if the GPUs were idle across the
+gaps (≈290 instead of ≈73 for the sampled time). It did so in 3 of 4 runs,
+and in 1 of 2 after the "never fill the gaps" rule.
+
+**Live**, on the test cluster with "Which projects hold GPUs but aren't
+actually using them?" through a read-only MCP server (final text, 3 Sonnet 5
+runs and 1 Opus 4.8 run):
+
+- Every run flagged all three projects `idle since` 10-11 or 10-12.
+- No run called a project bursty or fractional.
+- Values from sparse samples were labeled `peak`.
+- Three runs led with the projects having gone idle; one Sonnet run led with
+  the average.
 
 ## Grading
 
@@ -282,9 +296,15 @@ datasets and mocks, so compare each revision with its own baseline.
   - Rules for mixed read and write requests and for cost.
   - Trigger wording.
   - `SKILL.md` trimmed below the 5,000-token Tier 1 limit.
-- **Revision 4 → 5** (from a live answer on sparse series): `peak` instead of
-  p95 below 20 samples; bursty needs 2 high samples and 50% coverage; the
-  `idle since` flag. Checked by spot checks only; see Revision 5 Spot Check.
+- **Revision 4 → 5** (from a live answer on sparse series and review):
+  - `peak` instead of p95 below 20 samples.
+  - Bursty needs 2 high samples and 50% coverage, and never applies with
+    `idle since`.
+  - The `idle since` flag.
+  - Fractional from the current allocation.
+  - No gap filling in GPU-hours.
+  - One trigger phrase.
+  - Checked by spot checks only; see Revision 5 Spot Check.
 
 ## Known Weak Spots
 
@@ -303,8 +323,8 @@ datasets and mocks, so compare each revision with its own baseline.
   instead of utilization.
 - **Sonnet candidate selection.** It checked `doc-ocr` instead of `genomics`
   once (A10), so the unmeasured holder went unreported.
-- **Bursty at low coverage (Sonnet, live).** In 1 of 3 runs on the final text,
-  Sonnet still called a 29%-coverage project bursty.
+- **GPU-hours across gaps (Opus).** On sparse series Opus sometimes counts the
+  gaps between samples as idle time (C11).
 - **Old-cluster caveat.** Sonnet sometimes leaves out that GPU memory
   utilization is unavailable on a 2.20 cluster (C9, C11).
 - **Short route-out answers (Claude).** For "is the cluster healthy?" the
