@@ -1,4 +1,7 @@
-# Benchmark — runai-get-cluster-health-summary
+# Local evaluation — runai-get-cluster-health-summary
+
+The certified `BENCHMARK.md` next to `SKILL.md` is generated and signed by
+NVSkills CI, so it must not be edited by hand. This file keeps the local runs.
 
 ## Status
 
