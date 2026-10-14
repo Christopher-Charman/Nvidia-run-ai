@@ -2,13 +2,17 @@
 
 ## Status
 
-Preliminary local evaluation, run on 2026-10-08 to 2026-10-11. It is not
+Preliminary local evaluation, run on 2026-10-08 to 2026-10-14. It is not
 NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
 
-- **Skill revision.** The final `SKILL.md` is revision 4. The extended mock
-  run and both full live rounds measured revisions 1 to 3; revision 4 adds two
-  event-reading rules and review fixes, and was checked with live spot checks.
-  See Revision history.
+- **Skill revision.** The final `SKILL.md` is revision 5.
+  - The extended mock run and both full live rounds measured revisions 1 to 3.
+  - Revision 4 adds two event-reading rules and review fixes, and was checked
+    with live spot checks.
+  - Revision 5 reads the workload spec for pending work that fits the free
+    GPUs and stops scoping cluster metrics to a pool. It was checked with a
+    mock spot check and a live spot check.
+  - See Revision history.
 - **Mock fixture.** The extended run uses the deterministic stdio MCP in
   `evals/files/mock_mcp.py`. Cluster `10000000-0000-4000-8000-0000000000a1`
   replays responses recorded on 2026-10-07 from a live Run:ai cluster through
@@ -131,6 +135,53 @@ The first two rows of the last column use the final text; the other three
 used a draft that differs only in the `SPEC` row, which those prompts do not
 reach.
 
+### Revision 5 Spot Check (2026-10-14)
+
+**What the revision 4 answer got wrong.** On 2026-10-14, after a node
+restart, a revision 4 health answer on the same cluster classed the pinned
+job `CAPACITY`:
+
+- It guessed at a GPU held outside Run:ai accounting.
+- The real cause is in the job's spec: it pins `nodeType: gpu-h200`, and the
+  pool's only GPU node is a V100.
+- The workload history shows the affinity mismatch on 10-08, 10-11 and
+  10-12. Since 10-13 every scheduling event names only the GPU shortage, so
+  none of the events `get_workload_status` returns showed the pin.
+
+Revision 5 adds one `get_workload_spec` call when a not-enough-resources
+workload asks for no more GPUs than are free; a placement pin then makes it
+`SPEC`.
+
+**Mock.** The mock now mirrors both behaviors:
+
+- The pinned job's events name only the GPU shortage, and the pin is in its
+  spec.
+- `get_cluster_metrics` returns cluster-wide series for any `nodePoolName`,
+  as the real backend does.
+
+The five affected cases (A1, A3, A7, A8, C3), both arms, three models:
+
+| Model | MCP-only pass | MCP+skill pass | Pinned job classed `SPEC` (skill) |
+| --- | ---: | ---: | --- |
+| Codex GPT-5.6 Sol (+ AGENTS guidance) | 3/5 | 5/5 | 5/5, one spec call each |
+| Claude Sonnet 5 | 0/5 | 5/5 | 5/5, one spec call each |
+| Claude Opus 4.8 | 1/5 | 5/5 | 5/5, one spec call each |
+
+No skill-arm run passed `nodePoolName` to `get_cluster_metrics`. The MCP-only
+runs did on 1 to 3 cases per model.
+
+**Live**, against the same cluster with "Is the cluster healthy? Give me a
+verdict per node pool." (2 Sonnet 5 runs, 1 Opus 4.8 run; read-only MCP
+server without write tools):
+
+- Every run loaded the skill and made one spec call for the pinned job.
+- Every run classed it `SPEC` and gave the cluster `DEGRADED`, with 2
+  `CAPACITY` and 1 `SPEC` in the default pool.
+- No run scoped `get_cluster_metrics` to a pool.
+- The answers state that no node matches the pin. The MCP does not expose node
+  labels, so that comes from the GPU model in the inventory and the pin in the
+  spec.
+
 ### Revision 2 (2026-10-08)
 
 The single GPU pool reported 4 free GPUs, but fractional pods outside Run:ai
@@ -252,6 +303,12 @@ and `codex` (`azure/openai/gpt-5.6-sol`) through NVIDIA inference, Docker,
   revision: such old errors never make a workload `SPEC`; an `UNCLASSIFIED`
   class gives every sampled workload a class; `nodePoolName` is no longer sent
   to `list_node_pools`, which rejects it.
+- **Revision 4 → 5** (from a live answer on 2026-10-14):
+  - A not-enough-resources workload whose request fits the free GPUs gets one
+    `get_workload_spec` call. A `nodeType` or affinity pin makes it `SPEC`.
+  - `get_cluster_metrics` is no longer scoped to a pool, because the current
+    server ignores `nodePoolName` for allocation and utilization. Utilization
+    per pool is routed to `runai-get-utilization-overview`.
 
 On the mock, the three revisions are within about 2 passes of each other per
 model, which is within run-to-run variance for one attempt per case. The
@@ -290,7 +347,9 @@ exercises little.
 
 - Not NVCARPS-certified; one attempt per case on the mock; LLM judge.
 - Revision 4 was checked with 5 live prompts on one model, not re-run on the
-  mock or in a full live round.
+  mock or in a full live round. Revision 5 was checked on the 5 affected mock
+  cases and with 3 live runs of one prompt; the full mock run and the live
+  rounds measured earlier revisions on the earlier mock.
 - Mock fault scenarios are synthetic; only the healthy cluster is a live
   recording. The live cluster has one GPU node with simulated GPUs, so
   multi-node fragmentation and real utilization were not exercised live.
