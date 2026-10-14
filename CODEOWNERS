@@ -238,6 +238,19 @@ control-plane/infra/openapi/scripts/openapi-scanner @dsx-ai-factory/appsec-guild
 /runai-cluster/cluster/runai-chart/charts/crds/crds/kai.resources_nodepools.yaml @dsx-ai-factory/resource-mgmt
 /runai-cluster/cluster/runai-chart/charts/crds/crds/kai.resources_projects.yaml @dsx-ai-factory/resource-mgmt
 
+# Viper - CRDs
+/runai-cluster/cluster/sdk/config/crd/bases/run.ai_datavolumes.yaml @dsx-ai-factory/workloads
+/runai-cluster/cluster/runai-crd-upgrader/crds/run.ai_datavolumes.yaml @dsx-ai-factory/workloads
+/runai-cluster/cluster/runai-chart/charts/crds/crds/run.ai_datavolumes.yaml @dsx-ai-factory/workloads
+
+# Fox - CRDs
+/runai-cluster/cluster/runai-crd-upgrader/crds/run.ai_restartrequest.yaml @dsx-ai-factory/workload-runtime
+/runai-cluster/cluster/runai-chart/charts/crds/crds/run.ai_restartrequest.yaml @dsx-ai-factory/workload-runtime
+/runai-cluster/cluster/runai-crd-upgrader/crds/run.ai_workloadrunner.yaml @dsx-ai-factory/workload-runtime
+/runai-cluster/cluster/runai-chart/charts/crds/crds/run.ai_workloadrunner.yaml @dsx-ai-factory/workload-runtime
+/runai-cluster/cluster/runai-crd-upgrader/crds/run_ai_application.yaml @dsx-ai-factory/workload-runtime
+/runai-cluster/cluster/runai-chart/charts/crds/crds/run_ai_application.yaml @dsx-ai-factory/workload-runtime
+
 # Suricata - runai-chart ClusterRoles for Suricata services
 /runai-cluster/cluster/runai-chart/templates/clusterroles/accessrule-controller.yaml @dsx-ai-factory/resource-mgmt
 /runai-cluster/cluster/runai-chart/templates/clusterroles/agent.yaml @dsx-ai-factory/resource-mgmt
