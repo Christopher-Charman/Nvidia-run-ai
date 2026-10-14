@@ -29,12 +29,9 @@ metadata:
 ## Purpose
 
 Answer one question: **are the GPUs that teams hold actually computing, and
-where is held capacity wasted?** This is the allocation-versus-utilization
-axis: "held" means GPUs allocated to running workloads; "utilization" is the
-share of those held GPUs that is computing. Lead with the biggest waste, back
-every class with avg and p95 utilization, and name the idle workloads behind
-it. Quota (deserved versus allocated) is a different axis and a different
-skill.
+where is held capacity wasted?** "Held" means allocated to running workloads;
+"utilization" is how much of the held capacity computes. Quota (deserved
+versus allocated) belongs to another skill.
 
 **Read-only:** inspect and report only. Never stop, suspend, delete, or scale
 workloads, and never change quota, projects, or node pools. Never run
@@ -99,9 +96,8 @@ Two kinds of request get a fixed treatment instead:
   metrics, workload lists, and workload metrics.
 - **The cluster must collect GPU metrics.** When a utilization series is
   missing, the holder is `UNKNOWN`; the skill never estimates it.
-- **No Kubernetes access is used.** The skill is MCP-only by design. If the MCP
-  is unavailable, say so and stop; do not fall back to `kubectl`,
-  `nvidia-smi`, or DCGM, and do not estimate numbers.
+- **MCP only.** If the MCP is unavailable, say so and stop; no `kubectl`,
+  `nvidia-smi`, or DCGM fallback and no estimates.
 
 ## Parameters
 
@@ -226,7 +222,7 @@ Use the n samples that have allocation `a > 0` and utilization `u`:
 | --- | --- |
 | Held GPUs | mean of `a` |
 | Utilization avg | `sum(a × u) / sum(a)` (the plain mean of `u` when `a` is constant) |
-| Utilization p95 | sort `u` ascending and take the value at rank `ceil(0.95 × n)` |
+| Utilization p95 | sort `u` ascending and take the value at rank `ceil(0.95 × n)`; with n < 20 that is the highest sample, so label it `peak` |
 | Idle GPUs | `held × (1 − avg / 100)` |
 | Idle GPU-hours | `sum(a × (1 − u / 100)) × step hours` |
 | Coverage | `n / S`, always shown as `n of S samples` |
@@ -235,7 +231,8 @@ With full coverage, idle GPU-hours equal idle GPUs times the window in hours.
 Show utilization with no decimals, GPUs with one decimal, and GPU-hours as
 whole numbers prefixed with ≈. Call coverage full only when n equals S. Below
 50% coverage, say the holder only has data for part of the window and that
-its GPU-hours cover only that part.
+its GPU-hours cover only that part. Then lead with its latest samples (the
+`idle since` flag) rather than its average.
 
 ### Stage 5 — Classify
 
@@ -249,8 +246,14 @@ its GPU-hours cover only that part.
 
 Flags that qualify a class, shown in the class column:
 
-- **bursty:** avg < `well_utilized_threshold` but p95 ≥ it. The peaks use the
-  GPUs; say "bursty, not idle", and never suggest it gives up all its GPUs.
+- **bursty:** never below 50% coverage. Otherwise: avg <
+  `well_utilized_threshold` but p95 ≥ it. The peaks use the GPUs; say "bursty,
+  not idle", and never suggest it gives up all its GPUs. It needs at least 2
+  samples, and at least 10% of n, at or above `well_utilized_threshold`; one
+  high sample is a spike, not bursts.
+- **idle since `<time>`:** the latest 3 or more samples are all below
+  `idle_threshold` and an earlier sample is not. Give the time of the first of
+  those latest samples; the average hides it.
 - **memory-loaded:** `IDLE` with average GPU memory utilization ≥ 50%. A
   model is loaded but not computing, typical of idle notebooks and inference
   endpoints without traffic.
@@ -291,7 +294,8 @@ answer it first, then give the table.
 1. **Line 1:** the biggest waste —
    `<holder> holds <held> GPUs at <avg>% average (p95 <p95>%) over <window>: ≈<idle> idle GPUs, ≈<hours> idle GPU-hours.`
    When no holder is `IDLE` or `UNDER_UTILIZED`, say so with the lowest
-   average instead.
+   average instead. When holders are flagged `idle since`, line 1 names them
+   and the time first.
 2. **Table**, ranked: holder, held GPUs, util avg, util p95, class (with
    flags), idle GPUs, idle GPU-hours.
 3. **Idle right now:** the workloads from Stage 6 with their idle GPUs.
@@ -373,6 +377,5 @@ Next: runai-audit-assigned-quota to reclaim quota from team-blue; stopping idle 
 ## References
 
 - `references/utilization-accounting.md` — why held, allocated, and utilized
-  GPU numbers disagree (cluster dilution, pool scoping, fractional GPUs, GPU
-  memory versus compute, idle snapshots, quota versus utilization). Read it
-  when the numbers do not reconcile or the user asks why.
+  GPU numbers disagree. Read it when they do not reconcile or the user asks
+  why.

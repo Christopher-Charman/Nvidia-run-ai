@@ -2,15 +2,18 @@
 
 ## Status
 
-Preliminary local evaluation, run on 2026-10-12 and 2026-10-13. It is not
+Preliminary local evaluation, run on 2026-10-12 to 2026-10-14. It is not
 NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
 
-- **Skill revision.** The final `SKILL.md` is revision 4.
-  - Revision 4 was measured on the final dataset (33 cases) and the final mock,
-    with both arms rerun.
+- **Skill revision.** The final `SKILL.md` is revision 5.
+  - Revision 4 was measured in full on 33 cases with both arms rerun; the
+    extended run below is that measurement. Revision 4 answers an independent
+    review; see Independent review.
+  - Revision 5 changes how sparse series are read. It was checked with a mock
+    spot check on the affected cases and with live checks; see Revision 5
+    Spot Check. Its dataset adds one case (34 in total).
   - Revisions 1 to 3 were measured on an earlier 30-case dataset and mock; see
     Revision history.
-  - Revision 4 answers an independent review; see Independent review.
 - **Mock fixture.** The extended run uses the deterministic stdio MCP in
   `evals/files/mock_mcp.py`, with three clusters:
   - `10000000-0000-4000-8000-0000000000a1` replays responses recorded on
@@ -23,7 +26,9 @@ NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
     memory-loaded, fractional, and unmeasured holders. Its allocations
     reconcile per workload, project, department, pool, and cluster.
   - `40000000-0000-4000-8000-0000000000e1` is synthetic and runs version
-    2.20.
+    2.20. Since revision 5 it also holds `legacy-asr`, a project with a
+    sparse series (7 of 28 samples): one busy sample at the start of the week,
+    then 0%.
 - **Backend behavior the mock reproduces:**
   - Org-unit metrics reject `gpuMemoryUtilization` before version 2.21.
   - `get_cluster_metrics` ignores `nodePoolName` for allocation, capacity, and
@@ -38,7 +43,7 @@ NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
 | --- | --- | --- |
 | `tier1 --no-llm`, external profile | SkillEvaluator 0.5.0, SkillSpector, gitleaks | PASS. Quality 97.0/100 (A). SkillSpector analysis complete, no findings. Advisories: MEDIUM recommended `version` field, LOW description length. |
 | `validate --external --no-dedup --no-llm` | NV-BASE 3.7.1 | 19 of 21 checks pass. Quality 98.0/100 (A). Findings: MEDIUM no `allowed-tools` or `permissions` declared while a network capability is detected; LOW description length; LOW "complex language" (the class names contain "utilized"). The merged `runai-get-cluster-health-summary` gets the same MEDIUM finding from this NV-BASE version. |
-| `tier3 validate --strict` | SkillEvaluator 0.5.0 | PASS. 5/5 checks, 33 cases. |
+| `tier3 validate --strict` | SkillEvaluator 0.5.0 | PASS. 5/5 checks, 34 cases. |
 
 ## Extended Run — MCP-only vs MCP+skill (Mock)
 
@@ -113,6 +118,66 @@ server and backend source. Revision 4 addresses its findings:
 
 The review's call counts also showed that a cluster-wide total costs one
 `get_cluster_metrics` call; revision 4 uses it when the user asks for a total.
+
+## Revision 5 Spot Check (2026-10-14)
+
+**What revision 4 got wrong.** A revision 4 answer on the live test cluster
+had every number right, but classified two projects UNDER_UTILIZED and
+bursty. Their sparse series (8 of 28 samples) had one busy sample on 10-08
+and 0% in every sample after. Two rules combined to cause it:
+
+- With fewer than 20 samples, the p95 rank is the highest sample, so one
+  spike set p95 to 100% and the bursty flag.
+- "Never call a bursty holder idle" then hid that the projects had computed
+  nothing for days.
+
+**Revision 5:**
+- Fewer than 20 samples report a `peak`, not a p95.
+- Bursty needs at least 2 high samples and at least 10% of them, and never
+  applies below 50% coverage.
+- A new `idle since <time>` flag marks holders whose latest 3 or more samples
+  are all below 5% after a busier start. Answers lead with it, and sparse
+  series lead with it rather than with the average.
+
+**Mock.** The version 2.20 cluster gained `legacy-asr`, which has the same
+shape. C9 now covers it, and a new case, C11, asks about it directly. The
+affected cases were run with the skill: A1, A3, A9, A10, C3, C9, C11.
+
+| Model | Pass | `legacy-asr` called bursty | `idle since` reported (C9, C11) | `nlp-research` still bursty |
+| --- | ---: | ---: | --- | --- |
+| Codex GPT-5.6 Sol (+ AGENTS guidance) | 7/7 | 0 | 2/2 | 5/5 |
+| Claude Sonnet 5 | 3/7 | 0 | 2/2 | 5/5 |
+| Claude Opus 4.8 | 4/7 | 0 | 1/2 (skill not loaded on C11) | 5/5 |
+
+- **Misses (none from the new rules):**
+  - a counting slip (A9) and an arithmetic slip (A3);
+  - unsupported causes (C3, C9);
+  - the missing "memory unavailable on 2.20" statement (C9, C11);
+  - Opus not loading the skill for C11.
+- **Rule moved and re-checked.** The coverage condition was then moved to the
+  front of the bursty rule (see Live). A re-run of A1, C3, and C11 on Sonnet
+  and Opus passed A1 and C3 on both, with `nlp-research` still bursty.
+- **C11 after the move.** Both models loaded the skill and reported `idle
+  since` without bursty. Both still fail C11:
+  - Sonnet left out the memory statement.
+  - Opus extrapolated GPU-hours across the gaps between samples (≈260
+    instead of ≈73 for the sampled time). The skill counts only sampled time,
+    because a gap means no data, not idleness.
+- **Without the skill (C9, C11):** no model passed (0 of 6).
+
+**Live**, on the test cluster with "Which projects hold GPUs but aren't
+actually using them?" through a read-only MCP server:
+
+- **`idle since`:** every run flagged all three projects (since 10-11 and
+  10-12).
+- **Single-spike projects:** no run called them bursty.
+- **Sparse samples:** values from them were labeled `peak`, and the 29%
+  coverage was stated.
+- **First draft of the rule:** in 2 of 2 Sonnet runs, `hc-team-a`, which has
+  three busy samples at 29% coverage, was still called bursty. Opus got it
+  right.
+- **After the move:** with the coverage condition first, 1 of 3 Sonnet runs
+  called it bursty.
 
 ## Grading
 
@@ -217,6 +282,9 @@ datasets and mocks, so compare each revision with its own baseline.
   - Rules for mixed read and write requests and for cost.
   - Trigger wording.
   - `SKILL.md` trimmed below the 5,000-token Tier 1 limit.
+- **Revision 4 → 5** (from a live answer on sparse series): `peak` instead of
+  p95 below 20 samples; bursty needs 2 high samples and 50% coverage; the
+  `idle since` flag. Checked by spot checks only; see Revision 5 Spot Check.
 
 ## Known Weak Spots
 
@@ -235,6 +303,10 @@ datasets and mocks, so compare each revision with its own baseline.
   instead of utilization.
 - **Sonnet candidate selection.** It checked `doc-ocr` instead of `genomics`
   once (A10), so the unmeasured holder went unreported.
+- **Bursty at low coverage (Sonnet, live).** In 1 of 3 runs on the final text,
+  Sonnet still called a 29%-coverage project bursty.
+- **Old-cluster caveat.** Sonnet sometimes leaves out that GPU memory
+  utilization is unavailable on a 2.20 cluster (C9, C11).
 - **Short route-out answers (Claude).** For "is the cluster healthy?" the
   Claude models call the cluster healthy from free-GPU counts alone (B2).
   Without the skill, they report cluster-wide utilization as each pool's
@@ -243,13 +315,12 @@ datasets and mocks, so compare each revision with its own baseline.
 ## Limitations
 
 - Not NVCARPS-certified; one attempt per case on the mock; LLM judge.
-- **No live-cluster evaluation yet.**
-  - The available test cluster uses simulated GPUs that report 100% for every
-    allocated GPU.
-  - A live round needs workloads seeded with the simulator's utilization
+- **No full live round.** Revision 5 was checked live with one prompt (6
+  runs) on the test cluster.
+  - The cluster's simulated GPUs reported 100% for every allocated GPU before
+    its restarts and 0% after, so its utilization does not reflect real work.
+  - A full round needs workloads seeded with the simulator's utilization
     annotation (`run.ai/simulated-gpu-utilization`).
-  - The real MCP server's behavior is covered only through the recorded
-    replay cluster and the backend behaviors the mock reproduces.
 - **Pool scoping in the MCP server.** The node-pool filter of
   `get_cluster_metrics` belongs in the MCP server, which should call the
   node-pool metrics endpoint. Until then the skill avoids it.

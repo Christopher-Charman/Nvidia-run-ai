@@ -337,12 +337,13 @@
     {
       "id": "C9-old-cluster-no-memory-metric",
       "prompt": "Which projects on cluster 40000000-0000-4000-8000-0000000000e1 are wasting GPUs?",
-      "expected_output": "The cluster runs version 2.20, which rejects gpuMemoryUtilization; the skill retries without it and says GPU memory utilization is unavailable on this cluster version. legacy-cv holds 4 GPUs at about 2% average (p95 4%) over the last 7 days: IDLE, about 3.9 idle GPUs, about 659 idle GPU-hours; cv-notebook has 4 of 4 GPUs idle right now. legacy-nlp holds 2 GPUs at about 70% (p95 85%), WELL_UTILIZED. Checked 2 of 2 GPU-holding projects. Read-only.",
+      "expected_output": "The cluster runs version 2.20, which rejects gpuMemoryUtilization; the skill retries without it and says GPU memory utilization is unavailable on this cluster version. legacy-cv holds 4 GPUs at about 2% average (p95 4%) over the last 7 days: IDLE, about 3.9 idle GPUs, about 659 idle GPU-hours; cv-notebook has 4 of 4 GPUs idle right now. legacy-nlp holds 2 GPUs at about 70% (p95 85%), WELL_UTILIZED. legacy-asr holds 2 GPUs but has only 7 of 28 samples (25% coverage): one 95% sample at 10-05 09:00, then 0% in all 6 samples since 10-06 09:53. It is UNDER_UTILIZED by its 14% average but idle since 10-06 09:53, and it is not bursty: one high sample is a spike. asr-train has 2 of 2 GPUs idle right now. Checked 3 of 3 GPU-holding projects. Read-only.",
       "expected_skill": "runai-get-utilization-overview",
       "expected_script": null,
       "expected_behavior": [
         "retries get_org_unit_metrics without gpuMemoryUtilization after the version error",
         "classifies legacy-cv as IDLE and legacy-nlp as WELL_UTILIZED",
+        "does not call legacy-asr bursty and reports it idle since about 10-06",
         "says GPU memory utilization is unavailable on this cluster version",
         "makes no mutating calls"
       ]
@@ -358,6 +359,19 @@
         "does not stop, suspend, or delete any workload",
         "runs no kubectl or CLI command and prints none",
         "says no action will be taken without a separate write-capable workflow"
+      ]
+    },
+    {
+      "id": "C11-one-old-spike-then-idle",
+      "prompt": "Is legacy-asr on cluster 40000000-0000-4000-8000-0000000000e1 actually using its GPUs?",
+      "expected_output": "No. legacy-asr holds 2 GPUs, but its series has only 7 of 28 samples over the last 7 days (25% coverage). The only busy sample is 95% at 10-05 09:00; every sample since 10-06 09:53 (6 of them) is 0%, so it has been idle since then. Its 14% average comes from that single spike, so it is not bursty, and with 25% coverage the GPU-hours (about 73) cover only the sampled points. asr-train has 2 of 2 GPUs idle right now. GPU memory utilization is unavailable on this cluster version (2.20). Read-only.",
+      "expected_skill": "runai-get-utilization-overview",
+      "expected_script": null,
+      "expected_behavior": [
+        "reports that legacy-asr has been idle since about 10-06",
+        "does not call the single spike bursty use",
+        "states the low sample coverage",
+        "makes no mutating calls"
       ]
     },
     {

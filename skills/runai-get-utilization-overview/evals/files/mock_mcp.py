@@ -80,13 +80,15 @@ DEPARTMENT_BY_ID = {dept["id"]: dept for dept in DEPARTMENTS}
 
 
 def project(cluster_id, project_id, name, department, pool, deserved, limit, gpus,
-            util=(0,), memory=(0,), *, since=None, missing=()):
+            util=(0,), memory=(0,), *, since=None, missing=(), spike=None, every=1):
+    """spike=(value, until) overrides utilization before `until`; every=k keeps every k-th sample
+    of the project's own series, as sparse recording does on a live cluster."""
     dept = next(item for item in DEPARTMENTS
                 if item["clusterId"] == cluster_id and item["name"] == department)
     return {"clusterId": cluster_id, "id": project_id, "name": name, "departmentId": dept["id"],
             "department": department, "pool": pool, "deserved": deserved, "limit": limit,
             "gpus": gpus, "util": list(util), "memory": list(memory), "since": since,
-            "missing": set(missing)}
+            "missing": set(missing), "spike": spike, "every": every}
 
 
 LIVE_SINCE = "2026-10-08T10:24:43Z"
@@ -115,6 +117,8 @@ PROJECTS = [
     project(LAB_CLUSTER, "4600302", "kb-search", "applied", "l40s-infer", 1, 1, 0.5, [0, 1, 1, 2], [25]),
     project(OLD_CLUSTER, "4700101", "legacy-cv", "legacy", "default", 4, 8, 4, [1, 1, 2, 4], [70]),
     project(OLD_CLUSTER, "4700102", "legacy-nlp", "legacy", "default", 2, 4, 2, [60, 70, 65, 85], [55]),
+    project(OLD_CLUSTER, "4700103", "legacy-asr", "legacy", "default", 2, 2, 2, [0], [0],
+            spike=(95, "2026-10-05T12:00:00Z"), every=4),
 ]
 PROJECT_BY_ID = {item["id"]: item for item in PROJECTS}
 
@@ -195,6 +199,7 @@ WORKLOADS = [
     workload(29, "spark-etl", "Running", "Training", "data-eng", 0, created="2026-10-06T08:00:00Z", util=[0]),
     workload(30, "cv-notebook", "Running", "Workspace", "legacy-cv", 4, idle=4.0, created="2026-10-01T08:00:00Z"),
     workload(31, "nlp-train", "Running", "Training", "legacy-nlp", 2, created="2026-10-02T08:00:00Z"),
+    workload(32, "asr-train", "Running", "Training", "legacy-asr", 2, idle=2.0, created="2026-10-01T08:00:00Z"),
 ]
 
 STATUS_SIGNALS = {
@@ -362,6 +367,13 @@ def cycle(values, index):
     return values[index % len(values)]
 
 
+def utilization(item, source, index, moment):
+    spike = item["spike"]
+    if source == "util" and spike and moment < parse_time(spike[1]):
+        return spike[0]
+    return cycle(item[source], index)
+
+
 def org_point(members, metric, index, moment):
     """Aggregate one org-unit sample: allocation is summed, utilization is allocation-weighted."""
     holders = [item for item in members if holds_gpus(item, moment)]
@@ -371,7 +383,7 @@ def org_point(members, metric, index, moment):
     if metric == "gpuAllocation":
         return allocated
     source = "util" if metric == "gpuUtilization" else "memory"
-    return round(sum(item["gpus"] * cycle(item[source], index) for item in holders) / allocated, 2)
+    return round(sum(item["gpus"] * utilization(item, source, index, moment) for item in holders) / allocated, 2)
 
 
 def resolve_org_unit(args):
@@ -438,9 +450,10 @@ def get_org_unit_metrics(args):
         if name in missing:
             result["partialData"] = True
             continue
+        every = PROJECT_BY_ID[unit["id"]]["every"] if org_type == "project" else 1
         points = []
         for index, moment in enumerate(times):
-            value = org_point(members, name, index, moment)
+            value = org_point(members, name, index, moment) if index % every == 0 else None
             if value is not None:
                 points.append({"t": stamp(moment), "v": value})
         if points:
@@ -469,7 +482,7 @@ def cluster_point(cluster_id, pools, metric, index, moment):
         return None
     source = "util" if metric == "gpuUtilization" else "memory"
     outside = sum(OUTSIDE_BUSY_GPUS.get((cluster_id, pool), 0) for pool in pools) * 100
-    busy = sum(item["gpus"] * cycle(item[source], index) for item in holders) + outside
+    busy = sum(item["gpus"] * utilization(item, source, index, moment) for item in holders) + outside
     return round(busy / total, 2)
 
 
