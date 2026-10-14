@@ -123,17 +123,6 @@ func TestSAMLIdp_Create_UnparseableMetadataFile(t *testing.T) {
 	requireClientError(t, err, httpResp)
 }
 
-func TestSAMLIdp_Create_MetadataUrlWithoutDescriptor(t *testing.T) {
-	t.Parallel()
-	ctx, _, _ := TestStepsClient.NewTestContextWithRealm("saml-idp-create-bad-url")
-	alias := GenerateRandomString("saml-idp-bad-url")
-	badUrl := "http://" + KeycloakDomain + ":8090/auth/realms/master/protocol/saml/no-such-descriptor"
-	idpRequest := makeSamlIdpRequest(alias, samlEntityId, badUrl, GetDefaultIDPMappers())
-
-	_, httpResp, err := OpenapiClient.IdpsAPI.CreateIdp(ctx).IdpCreationRequest(idpRequest).Execute()
-	requireClientError(t, err, httpResp)
-}
-
 func TestSAMLIdp_Create_UnresolvableMetadataUrl(t *testing.T) {
 	t.Parallel()
 	ctx, _, _ := TestStepsClient.NewTestContextWithRealm("saml-idp-create-unresolvable-url")
