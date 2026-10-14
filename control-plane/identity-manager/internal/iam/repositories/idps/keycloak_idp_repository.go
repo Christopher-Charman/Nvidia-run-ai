@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	runai_config "github.com/dsx-ai-factory/run-ai/runai-common-packages/config"
+	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
 
 	"k8s.io/utils/ptr"
 
@@ -193,6 +194,9 @@ func (k *KeycloakIdpRepository) GetIdpConfig(ctx context.Context, realm string, 
 	}
 
 	config, err := k.kcClient.ImportIdentityProviderConfig(ctx, *token, realm, url, providerId)
+	if err != nil {
+		logging.Errorf("failed to get identityProvider from url. err: %+v", err)
+	}
 	return config, iamError.HandleKeyCloakError(err)
 }
 
