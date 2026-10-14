@@ -15,8 +15,10 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/internal/generated/pkg/api"
+	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/config"
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/database/models"
 	openapi "github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client/generated"
+	runai_config "github.com/dsx-ai-factory/run-ai/runai-common-packages/config"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/logging"
 	"github.com/dsx-ai-factory/run-ai/runai-common-packages/runaictx"
 )
@@ -28,6 +30,14 @@ const maxBlockingOrgUnitsInMessage = 10
 // before the save, so the stored org-unit values always agree with the saved flags. The returned resets are
 // already committed in org-unit-service and cannot be rolled back, so a failed save must report them.
 func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, before, after models.Nodepool) ([]string, *api.Error) {
+	if !capabilitiesChanged(before, after) {
+		return nil, nil
+	}
+	if !runai_config.Get[*config.EditableNodepoolCapabilities]().Enabled {
+		return nil, api.NewError(http.StatusBadRequest,
+			fmt.Sprintf("Changing the scheduling capabilities of nodepool %s is not supported yet", after.Name), nil)
+	}
+
 	if before.AllowQuota && !after.AllowQuota {
 		if apiErr := s.validateCanTurnOff(ctx, after, "quota",
 			openapi.ORGUNITSNODEPOOLSUMMARYTYPE_HAS_QUOTA, "QUOTAS_TO_DEFAULT"); apiErr != nil {
@@ -43,6 +53,13 @@ func (s *NodePoolsApiService) applyCapabilityTransitions(ctx context.Context, be
 	}
 
 	return s.resetTurnedOffCapabilities(ctx, before, after)
+}
+
+func capabilitiesChanged(before, after models.Nodepool) bool {
+	return before.AllowQuota != after.AllowQuota ||
+		before.AllowRanks != after.AllowRanks ||
+		before.AllowCpuQuota != after.AllowCpuQuota ||
+		before.AllowAdjustableWeights != after.AllowAdjustableWeights
 }
 
 func resetsAppliedHint(applied []string) string {

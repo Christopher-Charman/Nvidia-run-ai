@@ -17,11 +17,13 @@ import (
 
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/internal/generated/pkg/api"
 	bc_mocks "github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/mocks/pkg/clients/backend"
+	cluster_config "github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/config"
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/database/dao"
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/database/models"
 	"github.com/dsx-ai-factory/run-ai/control-plane/cluster-service/pkg/services"
 	openapi "github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client/generated"
 	org_unit_service_client_mock "github.com/dsx-ai-factory/run-ai/control-plane/org-unit-service/pkg/client/mocks"
+	runai_config "github.com/dsx-ai-factory/run-ai/runai-common-packages/config"
 )
 
 var _ = Describe("Nodepool scheduling capability transitions", Ordered, func() {
@@ -35,9 +37,11 @@ var _ = Describe("Nodepool scheduling capability transitions", Ordered, func() {
 		cluster, err := dao.CreateCluster(ctx, &models.Cluster{Name: "cluster-for-np-capabilities", TenantId: tenantId, Domain: "xyz", Version: "v2.24"})
 		Expect(err).To(BeNil())
 		clusterId = cluster.ID.String()
+		Expect(runai_config.Set(&cluster_config.EditableNodepoolCapabilities{Enabled: true})).To(Succeed())
 	})
 
 	AfterAll(func() {
+		Expect(runai_config.Set(&cluster_config.EditableNodepoolCapabilities{Enabled: false})).To(Succeed())
 		deleteNodepools(createdNodepools)
 		_ = dao.DeleteCluster(ctx, clusterId, tenantId)
 	})
@@ -264,4 +268,54 @@ var _ = Describe("Nodepool scheduling capability transitions", Ordered, func() {
 		Expect(storedCapabilities(np.Id).Ranks).To(BeTrue())
 	})
 
+	Context("while editing capabilities is turned off", func() {
+		BeforeEach(func() {
+			Expect(runai_config.Set(&cluster_config.EditableNodepoolCapabilities{Enabled: false})).To(Succeed())
+		})
+
+		AfterEach(func() {
+			Expect(runai_config.Set(&cluster_config.EditableNodepoolCapabilities{Enabled: true})).To(Succeed())
+		})
+
+		It("refuses a PATCH that changes a flag, without any org-unit call", func() {
+			np := createNodepool(clusterId)
+
+			response := patchCapabilities(np.Id, api.SchedulingCapabilitiesNullable{Ranks: ptr.To(false)})
+			Expect(response.Code).To(Equal(http.StatusBadRequest))
+			Expect(response.Body.(api.Error).Message).To(ContainSubstring("not supported yet"))
+			Expect(storedCapabilities(np.Id).Ranks).To(BeTrue())
+		})
+
+		It("refuses a PUT that changes a flag", func() {
+			np := createNodepool(clusterId)
+
+			fields := nodepoolUpdateFields(fmt.Sprintf("-capabilities-gated-%d", len(createdNodepools)), nil)
+			fields.SchedulingCapabilities = api.SchedulingCapabilitiesNullable{AdjustableWeights: ptr.To(!np.SchedulingCapabilities.AdjustableWeights)}
+			response, err := nodepoolService.UpdateNodepool(ctx, np.Id, *fields)
+			Expect(err).To(BeNil())
+			Expect(response.Code).To(Equal(http.StatusBadRequest))
+			Expect(storedCapabilities(np.Id).AdjustableWeights).To(Equal(np.SchedulingCapabilities.AdjustableWeights))
+		})
+
+		It("accepts the stored flags sent back unchanged", func() {
+			np := createNodepool(clusterId)
+			stored := np.SchedulingCapabilities
+
+			response := patchCapabilities(np.Id, api.SchedulingCapabilitiesNullable{
+				Quota:             ptr.To(stored.Quota),
+				Ranks:             ptr.To(stored.Ranks),
+				CpuQuota:          ptr.To(stored.CpuQuota),
+				AdjustableWeights: ptr.To(stored.AdjustableWeights),
+			})
+			Expect(response.Code).To(Equal(http.StatusOK))
+		})
+
+		It("accepts a PUT without schedulingCapabilities", func() {
+			np := createNodepool(clusterId)
+
+			response, err := nodepoolService.UpdateNodepool(ctx, np.Id, *nodepoolUpdateFields(fmt.Sprintf("-capabilities-gated-%d", len(createdNodepools)), nil))
+			Expect(err).To(BeNil())
+			Expect(response.Code).To(Equal(http.StatusOK))
+		})
+	})
 })
