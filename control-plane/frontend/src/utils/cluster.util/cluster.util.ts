@@ -28,19 +28,26 @@ export const clusterUtil = {
   isLwsInstalledInCluster,
   findClusterById,
   formatClusterNameWithVersion,
-  isClusterReachable,
+  isClusterUsable,
 };
 
-// Degraded states still have a live cluster behind them; gating on Connected alone hides it from
-// features that don't depend on what is degraded, e.g. CLI install when only GPU fractions are missing.
-const REACHABLE_CLUSTER_STATES: ReadonlySet<ClusterState> = new Set<ClusterState>([
-  ClusterState.Connected,
-  ClusterState.MissingPrerequisites,
-  ClusterState.ServiceIssues,
-]);
+// Missing only the GPU fractions prerequisite leaves the rest of the cluster fully usable. Since 3.0
+// that is the default state of a real-GPU install on the GPU Operator's default driver.
+function isClusterUsable(state?: ClusterState, dependencies?: ClusterDependenciesStatus): boolean {
+  if (state === ClusterState.Connected) return true;
+  if (state !== ClusterState.MissingPrerequisites || !dependencies) return false;
+  return isOnlyGpuFractioningMissing(dependencies);
+}
 
-function isClusterReachable(state?: ClusterState): boolean {
-  return !!state && REACHABLE_CLUSTER_STATES.has(state);
+function isOnlyGpuFractioningMissing(dependencies: ClusterDependenciesStatus): boolean {
+  const missing = getMissingPrerequisites(dependencies);
+  const gpuFractioning = dependencies.required?.["gpu-stack"]?.components?.["gpu-fractioning"];
+  return (
+    missing.length === 1 &&
+    missing[0] === "gpu-stack" &&
+    gpuFractioning?.available === false &&
+    isFractioningOnlyGpuStackFailure(dependencies)
+  );
 }
 
 function isKnativeInstalledInCluster(cluster: ClustersMinimalData): boolean {
