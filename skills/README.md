@@ -15,7 +15,6 @@ skills/<skill-name>/
 ├── references/         # deep-dive domain knowledge, loaded on demand
 ├── evals/
 │   ├── evals.json      # trigger + output-quality test cases (agentskills schema)
-│   ├── config.yml      # Tier 3 run policy (sibling skills staged with the skill)
 │   ├── files/          # inputs staged into the eval sandbox (e.g. a mock MCP server)
 │   ├── environment/    # Tier 3 container config (mcp_servers.toml, …)
 │   └── README.md       # local evaluation results (mock and live runs)
