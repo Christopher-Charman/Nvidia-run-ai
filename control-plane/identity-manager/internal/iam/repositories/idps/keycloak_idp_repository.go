@@ -207,6 +207,9 @@ func (k *KeycloakIdpRepository) GetIdpConfigFromFile(ctx context.Context, realm 
 	}
 
 	config, err := k.kcClient.ImportIdentityProviderConfigFromFile(ctx, *token, realm, providerId, fileName, fileBody)
+	if err != nil {
+		logging.Errorf("failed to get identityProvider from url. err: %+v", err)
+	}
 	return config, iamError.HandleKeyCloakError(err)
 }
 
