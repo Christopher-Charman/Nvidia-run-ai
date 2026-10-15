@@ -23,13 +23,21 @@ type WorkloadSlim struct {
 	DistributedFramework string
 }
 
+const (
+	typeField                 = "type"
+	nameField                 = "name"
+	clusterIDField            = "clusterId"
+	projectNameField          = "projectName"
+	distributedFrameworkField = "distributedFramework"
+)
+
 // FilterFieldsToColumn returns the fields GET /api/v1/workloads-slim can be filtered by.
 func (WorkloadSlim) FilterFieldsToColumn() queryapi.APIFieldsMapping {
 	return queryapi.APIFieldsMapping{
-		"type":                 queryapi.NewFieldMapping("type"),
-		"name":                 queryapi.NewFieldMapping("name"),
-		"clusterId":            queryapi.NewFieldMapping("cluster_id"),
-		"projectName":          queryapi.NewFieldMapping("project_name"),
-		"distributedFramework": queryapi.NewFieldMapping("distributed_framework"),
+		typeField:                 queryapi.NewFieldMapping("type"),
+		nameField:                 queryapi.NewFieldMapping("name"),
+		clusterIDField:            queryapi.NewFieldMapping("cluster_id"),
+		projectNameField:          queryapi.NewFieldMapping("project_name"),
+		distributedFrameworkField: queryapi.NewFieldMapping("distributed_framework"),
 	}
 }
