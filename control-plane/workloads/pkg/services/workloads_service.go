@@ -417,11 +417,7 @@ func (s *WorkloadsService) InternalEnrichOrgUnitRanking(ctx context.Context, int
 
 // GetWorkloads - List workloads. [Experimental]
 func (s *WorkloadsService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string,
-	filterBy []string, search string, verbosity api.WorkloadVerbosity) (api.ImplResponse, error) {
-	if verbosity != "" && !verbosity.IsValid() {
-		return ErrorToApiError(fmt.Errorf("invalid verbosity '%s', allowed values are %v", verbosity, api.AllowedWorkloadVerbosityEnumValues), http.StatusBadRequest), nil
-	}
-
+	filterBy []string, search string) (api.ImplResponse, error) {
 	tenantId, apiErr := services_utils.ParseTenantId(ctx)
 	if apiErr != nil {
 		return NewErrorResponse(apiErr), nil
@@ -432,10 +428,6 @@ func (s *WorkloadsService) GetWorkloads(ctx context.Context, deleted bool, offse
 	permittedScopes, err := authorization_client.ParsePermittedScopes(ctx)
 	if err != nil {
 		permittedScopes = nil
-	}
-
-	if verbosity == api.WORKLOADVERBOSITY_SLIM {
-		return s.getWorkloadsSlim(ctx, tenantId, permittedScopes, deleted, offset, limit, sortOrder, sortBy, filterBy, search), nil
 	}
 
 	filters, filterErr := queryapi.NewParser(models.WorkloadView{}.FilterFieldsToColumn()).Filters(filterBy)
@@ -470,37 +462,41 @@ func (s *WorkloadsService) GetWorkloads(ctx context.Context, deleted bool, offse
 	return api.Response(http.StatusOK, response), nil
 }
 
-// getWorkloadsSlim serves GET /api/v1/workloads?verbosity=slim from the workloads table, so only fields stored on the
-// workload can be filtered and sorted by. Each workload has only the slim fields filled; the others are left empty.
-func (s *WorkloadsService) getWorkloadsSlim(ctx context.Context, tenantId uint, permittedScopes *authorization_api.PermittedScopes,
-	deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string) api.ImplResponse {
+// GetWorkloadsSlim - List workloads, slim. Serves GET /api/v1/workloads-slim from the workloads table, sorted by id.
+func (s *WorkloadsService) GetWorkloadsSlim(ctx context.Context, offset int32, limit int32, sortOrder string, filterBy []string) (api.ImplResponse, error) {
+	tenantId, apiErr := services_utils.ParseTenantId(ctx)
+	if apiErr != nil {
+		return NewErrorResponse(apiErr), nil
+	}
+
+	limit = setDefaultLimit(limit)
+
+	permittedScopes, err := authorization_client.ParsePermittedScopes(ctx)
+	if err != nil {
+		permittedScopes = nil
+	}
+
 	filters, filterErr := queryapi.NewParser(models.WorkloadSlim{}.FilterFieldsToColumn()).Filters(filterBy)
 	if filterErr != nil {
-		return ErrorToApiError(filterErr, http.StatusBadRequest)
+		return ErrorToApiError(filterErr, http.StatusBadRequest), nil
 	}
 
-	sortColumn, sortError := queryapi.NewParser(models.WorkloadSlim{}.SortFieldsToColumn()).GetMapping(sortBy)
-	if sortError != nil {
-		return ErrorToApiError(sortError, http.StatusBadRequest)
-	}
-
-	workloads, dbErr := s.WorkloadsDao.DbGetWorkloadsSlim(ctx, tenantId, permittedScopes, deleted, offset, limit, sortOrder, sortColumn, filters, search)
+	workloads, dbErr := s.WorkloadsDao.DbGetWorkloadsSlim(ctx, tenantId, permittedScopes, offset, limit, sortOrder, filters)
 	if dbErr != nil {
-		return NewErrorResponse(dbErr)
+		return NewErrorResponse(dbErr), nil
 	}
 
-	response := api.GetWorkloads200Response{
-		Workloads: make([]api.Workload, 0, len(*workloads)),
+	response := api.GetWorkloadsSlimResponse{
+		Workloads: make([]api.WorkloadSlim, 0, len(*workloads)),
 	}
 	for _, workload := range *workloads {
-		response.Workloads = append(response.Workloads, api.Workload{
+		response.Workloads = append(response.Workloads, api.WorkloadSlim{
 			Id:                   workload.ID.String(),
 			Name:                 workload.Name,
 			Type:                 workload.Type,
-			ProjectId:            workload.ProjectID,
 			ProjectName:          workload.ProjectName,
 			ClusterId:            workload.ClusterID.String(),
-			ExternalWorkloadName: workload.ExternalWorkloadName,
+			DistributedFramework: workload.DistributedFramework,
 		})
 	}
 
@@ -509,7 +505,7 @@ func (s *WorkloadsService) getWorkloadsSlim(ctx context.Context, tenantId uint, 
 		response.Next = recordsCount + offset
 	}
 
-	return api.Response(http.StatusOK, response)
+	return api.Response(http.StatusOK, response), nil
 }
 
 // SyncWorkloads - Sync workloads.

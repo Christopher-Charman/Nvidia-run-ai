@@ -603,19 +603,17 @@ func (w *WorkloadsDao) DbGetWorkloads(
 	return workloads, nil
 }
 
-// DbGetWorkloadsSlim lists workloads from the workloads table instead of the view: only the WorkloadSlim columns,
-// without pod aggregates, and including workloads created after the last materialized view refresh.
+// DbGetWorkloadsSlim lists the active workloads from the workloads table instead of the view, sorted by id: only the
+// WorkloadSlim columns, without pod aggregates, and including workloads created after the last materialized view
+// refresh.
 func (w *WorkloadsDao) DbGetWorkloadsSlim(
 	ctx context.Context,
 	tenantId uint,
 	permittedScopes *openapi.PermittedScopes,
-	deleted bool,
 	offset int32,
 	limit int32,
 	sortOrder string,
-	sortBy string,
 	filterBy []queryapi.Filter,
-	search string,
 ) (*[]models.WorkloadSlim, *api.Error) {
 	dbErr := api.NewError(http.StatusInternalServerError, "Failed to list workloads", nil)
 
@@ -625,8 +623,9 @@ func (w *WorkloadsDao) DbGetWorkloadsSlim(
 
 	query := tx.
 		Table(WorkloadsTableName).
-		Select("id, name, type, project_id, project_name, cluster_id, external_workload_name").
-		Where("tenant_id = ?", tenantId)
+		Select("id, name, type, project_name, cluster_id, distributed_framework").
+		Where("tenant_id = ?", tenantId).
+		Where("deleted_at IS NULL")
 
 	if permittedScopes != nil {
 		if permittedScopes.System == nil || !*permittedScopes.System {
@@ -634,19 +633,9 @@ func (w *WorkloadsDao) DbGetWorkloadsSlim(
 		}
 	}
 
-	// WorkloadSlim has no DeletedAt field, so gorm doesn't add the soft-delete condition by itself
-	if deleted {
-		query = query.Where("deleted_at IS NOT NULL")
-	} else {
-		query = query.Where("deleted_at IS NULL")
-	}
-
 	query = query.WithEnricher(querydbenrich.Filters(filterBy))
 
-	if sortBy != "" {
-		query = query.Order(querydbenrich.FormatSortClause(sortBy, sortOrder))
-	}
-	query = query.Order("id DESC")
+	query = query.Order(querydbenrich.FormatSortClause("id", sortOrder))
 
 	if offset != 0 {
 		query = query.Offset(int(offset))
@@ -654,10 +643,6 @@ func (w *WorkloadsDao) DbGetWorkloadsSlim(
 
 	if limit != 0 {
 		query = query.Limit(int(limit))
-	}
-
-	if search != "" {
-		query = query.WithEnricher(dbenrich.TSSearch(search, "search_vector"))
 	}
 
 	err := query.Find(workloads)

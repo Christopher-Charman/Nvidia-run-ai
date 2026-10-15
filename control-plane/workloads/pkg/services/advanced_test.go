@@ -242,7 +242,7 @@ var _ = Describe("Workloads-Pods API advanced tests", Ordered, func() {
 			// Wait for all goroutines to finish
 			wg.Wait()
 
-			apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "totalPendingTimeSeconds", []string{}, "", "")
+			apiResponse, _ := workloadsService.GetWorkloads(ctx, false, 0, 0, "", "totalPendingTimeSeconds", []string{}, "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse := httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(4))
@@ -255,7 +255,7 @@ var _ = Describe("Workloads-Pods API advanced tests", Ordered, func() {
 			Expect(workloadsResponse.Workloads[3].TotalPendingTimeSeconds).ToNot(BeNil())
 			Expect(*workloadsResponse.Workloads[3].TotalPendingTimeSeconds).To(Equal(int32(2)))
 
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{"totalPendingTimeSeconds>=2"}, "", "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{"totalPendingTimeSeconds>=2"}, "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse = httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(2))
@@ -264,7 +264,7 @@ var _ = Describe("Workloads-Pods API advanced tests", Ordered, func() {
 			Expect(workloadsResponse.Workloads[1].TotalPendingTimeSeconds).ToNot(BeNil())
 			Expect(*workloadsResponse.Workloads[1].TotalPendingTimeSeconds).To(Equal(int32(2)))
 
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "totalRunningTimeSeconds", []string{}, "", "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "totalRunningTimeSeconds", []string{}, "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse = httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(4))
@@ -277,7 +277,7 @@ var _ = Describe("Workloads-Pods API advanced tests", Ordered, func() {
 			Expect(workloadsResponse.Workloads[3].TotalRunningTimeSeconds).ToNot(BeNil())
 			Expect(*workloadsResponse.Workloads[3].TotalRunningTimeSeconds).To(Equal(int32(2)))
 
-			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{"totalRunningTimeSeconds<=1"}, "", "")
+			apiResponse, _ = workloadsService.GetWorkloads(ctx, false, 0, 0, "", "", []string{"totalRunningTimeSeconds<=1"}, "")
 			Expect(apiResponse.Code).To(Equal(http.StatusOK))
 			workloadsResponse = httpResponseBodyToWorkloadsResponse(apiResponse)
 			Expect(len(workloadsResponse.Workloads)).To(Equal(2))

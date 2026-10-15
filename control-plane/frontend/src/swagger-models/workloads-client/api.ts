@@ -8742,6 +8742,25 @@ export interface GetWorkloadsSetting {
     'stage'?: string;
 }
 /**
+ * The response of GET /api/v1/workloads-slim.
+ * @export
+ * @interface GetWorkloadsSlimResponse
+ */
+export interface GetWorkloadsSlimResponse {
+    /**
+     * 
+     * @type {number}
+     * @memberof GetWorkloadsSlimResponse
+     */
+    'next'?: number;
+    /**
+     * 
+     * @type {Array<WorkloadSlim>}
+     * @memberof GetWorkloadsSlimResponse
+     */
+    'workloads': Array<WorkloadSlim>;
+}
+/**
  * Specifies the authentication method to use when accessing the Git repository. This is required for private repositories - `password` - Authenticate using a username and password. - `ssh-key` - Authenticate using an SSH private key.
  * @export
  * @enum {string}
@@ -24151,6 +24170,49 @@ export interface WorkloadRequestResources {
     'extendedResources'?: Array<WorkloadsExtendedResource> | null;
 }
 /**
+ * A workload as returned by GET /api/v1/workloads-slim.
+ * @export
+ * @interface WorkloadSlim
+ */
+export interface WorkloadSlim {
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'type'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'projectName': string;
+    /**
+     * The id of the cluster.
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'clusterId': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof WorkloadSlim
+     */
+    'distributedFramework'?: string;
+}
+/**
  * 
  * @export
  * @enum {string}
@@ -25182,20 +25244,6 @@ export interface WorkloadTypesForSync {
      */
     'workloadTypes'?: Array<WorkloadTypeForSync>;
 }
-/**
- *
- * @export
- * @enum {string}
- */
-
-export const WorkloadVerbosity = {
-    Full: 'full',
-    Slim: 'slim'
-} as const;
-
-export type WorkloadVerbosity = typeof WorkloadVerbosity[keyof typeof WorkloadVerbosity];
-
-
 /**
  * Quantity of an extended resource.
  * @export
@@ -37712,11 +37760,10 @@ export const WorkloadsApiAxiosParamCreator = function (configuration?: Configura
          * @param {'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName'} [sortBy] Sort results by a parameter.
          * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with. Dates are in ISO 8601 timestamp format and available for operators &#x60;&#x3D;&#x3D;&#x60;, &#x60;!&#x3D;&#x60;, &#x60;&lt;&#x3D;&#x60; and &#x60;&gt;&#x3D;&#x60;.
          * @param {string} [search] Filter results by a free text search.
-         * @param {WorkloadVerbosity} [verbosity] Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkloads: async (deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, verbosity?: WorkloadVerbosity, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+        getWorkloads: async (deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/workloads`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -37761,8 +37808,58 @@ export const WorkloadsApiAxiosParamCreator = function (configuration?: Configura
                 localVarQueryParameter['search'] = search;
             }
 
-            if (verbosity !== undefined) {
-                localVarQueryParameter['verbosity'] = verbosity;
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Retrieve a list of active workloads with only their identity fields, sorted by id. Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately. 
+         * @summary List workloads, slim.
+         * @param {number} [offset] The offset of the first item returned in the collection.
+         * @param {number} [limit] The maximum number of entries to return.
+         * @param {'asc' | 'desc'} [sortOrder] Sort results in descending or ascending order.
+         * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkloadsSlim: async (offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', filterBy?: Array<string>, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/workloads-slim`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (sortOrder !== undefined) {
+                localVarQueryParameter['sortOrder'] = sortOrder;
+            }
+
+            if (filterBy) {
+                localVarQueryParameter['filterBy'] = filterBy.join(COLLECTION_FORMATS.csv);
             }
 
 
@@ -38528,12 +38625,25 @@ export const WorkloadsApiFp = function(configuration?: Configuration) {
          * @param {'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName'} [sortBy] Sort results by a parameter.
          * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with. Dates are in ISO 8601 timestamp format and available for operators &#x60;&#x3D;&#x3D;&#x60;, &#x60;!&#x3D;&#x60;, &#x60;&lt;&#x3D;&#x60; and &#x60;&gt;&#x3D;&#x60;.
          * @param {string} [search] Filter results by a free text search.
-         * @param {WorkloadVerbosity} [verbosity] Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, verbosity?: WorkloadVerbosity, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetWorkloads200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, verbosity, options);
+        async getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetWorkloads200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
+        /**
+         * Retrieve a list of active workloads with only their identity fields, sorted by id. Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately. 
+         * @summary List workloads, slim.
+         * @param {number} [offset] The offset of the first item returned in the collection.
+         * @param {number} [limit] The maximum number of entries to return.
+         * @param {'asc' | 'desc'} [sortOrder] Sort results in descending or ascending order.
+         * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getWorkloadsSlim(offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', filterBy?: Array<string>, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetWorkloadsSlimResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getWorkloadsSlim(offset, limit, sortOrder, filterBy, options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
         /**
@@ -38849,12 +38959,24 @@ export const WorkloadsApiFactory = function (configuration?: Configuration, base
          * @param {'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName'} [sortBy] Sort results by a parameter.
          * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with. Dates are in ISO 8601 timestamp format and available for operators &#x60;&#x3D;&#x3D;&#x60;, &#x60;!&#x3D;&#x60;, &#x60;&lt;&#x3D;&#x60; and &#x60;&gt;&#x3D;&#x60;.
          * @param {string} [search] Filter results by a free text search.
-         * @param {WorkloadVerbosity} [verbosity] Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, verbosity?: WorkloadVerbosity, options?: any): AxiosPromise<GetWorkloads200Response> {
-            return localVarFp.getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, verbosity, options).then((request) => request(axios, basePath));
+        getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, options?: any): AxiosPromise<GetWorkloads200Response> {
+            return localVarFp.getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Retrieve a list of active workloads with only their identity fields, sorted by id. Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately. 
+         * @summary List workloads, slim.
+         * @param {number} [offset] The offset of the first item returned in the collection.
+         * @param {number} [limit] The maximum number of entries to return.
+         * @param {'asc' | 'desc'} [sortOrder] Sort results in descending or ascending order.
+         * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkloadsSlim(offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', filterBy?: Array<string>, options?: any): AxiosPromise<GetWorkloadsSlimResponse> {
+            return localVarFp.getWorkloadsSlim(offset, limit, sortOrder, filterBy, options).then((request) => request(axios, basePath));
         },
         /**
          * Retrieves workload data by telemetry type. Optionally filter by specific workload phases.  Telemetry Types: - WORKLOADS_COUNT: Count of workloads - GPU_ALLOCATION: GPU allocation metrics - PENDING_TIME_DISTRIBUTION: Distribution of workloads by current pending time (time since entering Pending phase).   For this type, results are automatically grouped by 4 time buckets and any additional groupBy parameters. - IDLE_ALLOCATED_GPUS: Sum of idle allocated GPU devices across workloads 
@@ -39178,13 +39300,27 @@ export class WorkloadsApi extends BaseAPI {
      * @param {'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName'} [sortBy] Sort results by a parameter.
      * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with. Dates are in ISO 8601 timestamp format and available for operators &#x60;&#x3D;&#x3D;&#x60;, &#x60;!&#x3D;&#x60;, &#x60;&lt;&#x3D;&#x60; and &#x60;&gt;&#x3D;&#x60;.
      * @param {string} [search] Filter results by a free text search.
-     * @param {WorkloadVerbosity} [verbosity] Response verbosity level. Defaults to full. slim reads the workloads table directly instead of the workloads view, so newly created workloads are returned immediately, and fills only id, name, type, projectId, projectName, clusterId and externalWorkloadName for each workload; the other fields are left empty. With slim, filterBy and sortBy accept only fields stored on the workload itself.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof WorkloadsApi
      */
-    public getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, verbosity?: WorkloadVerbosity, options?: AxiosRequestConfig) {
-        return WorkloadsApiFp(this.configuration).getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, verbosity, options).then((request) => request(this.axios, this.basePath));
+    public getWorkloads(deleted?: boolean, offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', sortBy?: 'type' | 'name' | 'clusterId' | 'projectId' | 'projectName' | 'departmentId' | 'departmentName' | 'createdAt' | 'deletedAt' | 'submittedBy' | 'phase' | 'completedAt' | 'nodepool' | 'distributedFramework' | 'allocatedGPU' | 'idleAllocatedGpus' | 'phaseUpdatedAt' | 'category' | 'priority' | 'totalPendingTimeSeconds' | 'totalRunningTimeSeconds' | 'priorityClassName' | 'preemptibility' | 'guaranteedRuntimeEndsAt' | 'aiApplicationId' | 'aiApplicationName', filterBy?: Array<string>, search?: string, options?: AxiosRequestConfig) {
+        return WorkloadsApiFp(this.configuration).getWorkloads(deleted, offset, limit, sortOrder, sortBy, filterBy, search, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Retrieve a list of active workloads with only their identity fields, sorted by id. Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately. 
+     * @summary List workloads, slim.
+     * @param {number} [offset] The offset of the first item returned in the collection.
+     * @param {number} [limit] The maximum number of entries to return.
+     * @param {'asc' | 'desc'} [sortOrder] Sort results in descending or ascending order.
+     * @param {Array<string>} [filterBy] Filter results by a parameter. Use the format field-name operator value. Operators are &#x60;&#x3D;&#x3D;&#x60; Equals, &#x60;!&#x3D;&#x60; Not equals, &#x60;&lt;&#x3D;&#x60; Less than or equal, &#x60;&gt;&#x3D;&#x60; Greater than or equal, &#x60;&#x3D;@&#x60; contains, &#x60;!@&#x60; Does not contain, &#x60;&#x3D;^&#x60; Starts with and &#x60;&#x3D;$&#x60; Ends with.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkloadsApi
+     */
+    public getWorkloadsSlim(offset?: number, limit?: number, sortOrder?: 'asc' | 'desc', filterBy?: Array<string>, options?: AxiosRequestConfig) {
+        return WorkloadsApiFp(this.configuration).getWorkloadsSlim(offset, limit, sortOrder, filterBy, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
