@@ -55,6 +55,8 @@ type Inspector struct {
 	uncachedSequence uint64
 }
 
+// NewInspector creates a metadata cache with at most four concurrent acquisitions.
+// A nil fetcher uses FetchRemote; a nonpositive TTL uses DefaultCacheTTL.
 func NewInspector(fetch FetchFunc, ttl time.Duration) *Inspector {
 	if fetch == nil {
 		fetch = FetchRemote
@@ -69,11 +71,15 @@ func NewInspector(fetch FetchFunc, ttl time.Duration) *Inspector {
 	return inspector
 }
 
+// Inspect returns normalized metadata using the configured fetcher. The service
+// must authorize each request first and supply a scope derived from trusted identity.
 func (i *Inspector) Inspect(ctx context.Context, selection Selection, scope, credential string) (*Result, error) {
 	return i.InspectWithFetch(ctx, selection, scope, credential, i.fetch)
 }
 
-// InspectWithFetch lets a service supply already-authorized uploaded bytes without storing credentials or request callbacks in cached records.
+// InspectWithFetch runs a service-provided fetcher inside the acquisition limit,
+// allowing uploaded-chart reads to share the same bounds as remote downloads.
+// Authorization is the caller's responsibility, including on cache hits.
 func (i *Inspector) InspectWithFetch(ctx context.Context, selection Selection, scope, credential string, fetch FetchFunc) (*Result, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -112,6 +118,8 @@ func (i *Inspector) InspectWithFetch(ctx context.Context, selection Selection, s
 			i.mu.Unlock()
 			return nil, acquisitionError(503, "chart_inspection_capacity", "Chart inspection capacity reached; retry shortly.")
 		}
+		// One disconnected waiter must not cancel work still needed by others.
+		// The shared deadline and releaseWaiter bound its lifetime instead.
 		workCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), downloadTimeout)
 		flight = &inspectionFlight{done: make(chan struct{}), cancel: cancel}
 		i.flights[key] = flight
@@ -139,6 +147,8 @@ func (i *Inspector) InspectWithFetch(ctx context.Context, selection Selection, s
 	}
 }
 
+// Stop abandoned work when its last waiter leaves. run retains the active slot
+// until the fetcher exits, so cancellation cannot bypass the concurrency limit.
 func (i *Inspector) releaseWaiter(key string, flight *inspectionFlight) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -195,6 +205,8 @@ func cacheableNGCRepository(selection Selection) bool {
 	return err == nil && u.Scheme == httpsScheme && ngcHost(u.Hostname())
 }
 
+// Decode a fresh object per caller so response mutation cannot alter the cache.
+// UseNumber preserves large integer defaults across the JSON round trip.
 func decodeResult(data []byte) (*Result, error) {
 	var result Result
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -205,6 +217,8 @@ func decodeResult(data []byte) (*Result, error) {
 	return &result, nil
 }
 
+// Include caller scope and a salted credential fingerprint so different access
+// contexts cannot share metadata and raw key material is not retained in cache keys.
 func (i *Inspector) key(selection Selection, scope, credential string) string {
 	fingerprint := hmac.New(sha256.New, i.salt[:])
 	_, _ = fingerprint.Write([]byte(credential))

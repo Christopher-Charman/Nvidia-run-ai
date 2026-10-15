@@ -29,6 +29,8 @@ const (
 	maxYAMLScalarBytes = 4 << 20
 )
 
+// Limits apply to expanded values, not only input bytes: aliases can repeat a
+// small source node many times before the result is serialized.
 type yamlBudget struct {
 	nodes int
 	bytes int
@@ -42,6 +44,9 @@ func (b *yamlBudget) charge(value string) error {
 	return nil
 }
 
+// ParseArchive reads bounded root metadata from a single-root gzip/tar archive.
+// It returns errors for unsafe or malformed archives, but reports missing or
+// unusable question declarations in Result so callers can distinguish them.
 func ParseArchive(data []byte) (*Result, error) {
 	if len(data) > maxCompressedBytes {
 		return nil, fmt.Errorf("chart archive exceeds 32 MiB")
@@ -179,6 +184,8 @@ func ParseArchive(data []byte) (*Result, error) {
 	return out, nil
 }
 
+// Read through the gzip trailer to validate its checksum and reject payloads
+// hidden after the tar end marker; legal zero padding is still accepted.
 func consumeTarPadding(reader io.Reader) error {
 	buffer := make([]byte, 32<<10)
 	for {
@@ -197,6 +204,8 @@ func consumeTarPadding(reader io.Reader) error {
 	}
 }
 
+// Decode to nodes before conversion so aliases, duplicate keys and expansion
+// budgets are checked before allocating an unrestricted object graph.
 func yamlObject(data []byte) (map[string]any, error) {
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	var document yaml.Node

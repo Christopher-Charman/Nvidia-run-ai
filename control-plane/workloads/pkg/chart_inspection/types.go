@@ -4,17 +4,23 @@
 package chart_inspection
 
 const (
-	QuestionsAbsent   = "absent"
-	QuestionsUsable   = "usable"
+	// QuestionsAbsent means neither supported root questions filename exists.
+	QuestionsAbsent = "absent"
+	// QuestionsUsable means the entire declaration passed supported validation.
+	QuestionsUsable = "usable"
+	// QuestionsUnusable means a declaration exists but no partial form is returned.
 	QuestionsUnusable = "unusable"
 )
 
+// Warning describes ignored metadata, advisory checks or an unusable declaration.
 type Warning struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 	Path    string `json:"path"`
 }
 
+// Result contains normalized form metadata and the digest of the inspected bytes.
+// It exposes neither the raw questions document nor the complete chart defaults.
 type Result struct {
 	ChartName       string           `json:"chartName"`
 	ChartVersion    string           `json:"chartVersion"`

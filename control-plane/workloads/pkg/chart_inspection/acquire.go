@@ -44,6 +44,8 @@ type Selection struct {
 	ChartURL     string
 }
 
+// FetchFunc acquires archive bytes with the supplied context and resolved credential.
+// Custom upload fetchers must enforce access to stored bytes and honor cancellation.
 type FetchFunc func(context.Context, Selection, string) ([]byte, error)
 
 func (s Selection) validate() error {
@@ -85,7 +87,9 @@ func newRemoteFetcher(resolver hostResolver, dial dialFunc) *remoteFetcher {
 	return &remoteFetcher{resolver: resolver, dial: dial}
 }
 
-// FetchRemote downloads public HTTP(S) archives or an exact repository version without installing a chart.
+// FetchRemote downloads an HTTP(S) archive or exact repository version without
+// installing it. Private/internal addresses are rejected; saved credentials are
+// accepted only for HTTPS NGC sources and are not forwarded across origins.
 func FetchRemote(ctx context.Context, selection Selection, apiKey string) ([]byte, error) {
 	return newRemoteFetcher(net.DefaultResolver, (&net.Dialer{Timeout: downloadTimeout}).DialContext).fetch(ctx, selection, apiKey)
 }
@@ -119,6 +123,8 @@ func (f *remoteFetcher) fetch(ctx context.Context, selection Selection, apiKey s
 	}
 	defer transport.CloseIdleConnections()
 	client := &http.Client{Transport: transport, Timeout: downloadTimeout}
+	// Repository entries and redirects may point elsewhere. Keep credentials
+	// tied to the original origin even when the target address is public.
 	origin := *u
 	client.CheckRedirect = func(next *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {

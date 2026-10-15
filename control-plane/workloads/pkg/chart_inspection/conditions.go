@@ -20,6 +20,9 @@ type conditionParser struct {
 	references []string
 }
 
+// Validate the restricted visibility grammar and collect referenced values paths.
+// This parses comparisons, boolean literals, &&, || and parentheses; it does not
+// evaluate expressions or run a general-purpose template/expression language.
 func parseCondition(value string) ([]string, error) {
 	if len(value) > 4096 {
 		return nil, fmt.Errorf("condition is too long")

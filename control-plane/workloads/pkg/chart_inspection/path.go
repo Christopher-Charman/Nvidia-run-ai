@@ -13,6 +13,9 @@ import (
 
 var pathIdentifier = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_-]*`)
 
+// Accept a bounded values-path grammar: dotted keys, bracketed array indices
+// and JSON-quoted keys. Reserved keys are rejected because consumers may apply
+// these bindings to JavaScript objects.
 func parsePath(value string) ([]any, error) {
 	if value == "" || len(value) > 512 {
 		return nil, fmt.Errorf("invalid values path")
@@ -118,6 +121,8 @@ func readPath(values map[string]any, segments []any) (any, bool) {
 	return value, true
 }
 
+// Equivalent spellings such as service.port and service["port"] must identify
+// the same binding when checking duplicates and visibility dependencies.
 func canonicalPath(segments []any) string {
 	var out strings.Builder
 	for _, segment := range segments {

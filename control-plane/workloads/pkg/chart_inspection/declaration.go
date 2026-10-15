@@ -63,6 +63,8 @@ func words(value string) map[string]bool {
 	return out
 }
 
+// Build the form separately and publish it only after all fields and visibility
+// dependencies validate. A partial form could omit required configuration.
 func parseDeclaration(declaration, defaults map[string]any, out *Result) {
 	v := &declarationValidator{defaults: defaults, groupNames: map[string]bool{}, warnings: []Warning{}, groups: []map[string]any{}}
 	v.ignoreUnknown(declaration, words("questions groups"), "$")
@@ -159,6 +161,8 @@ func (v *declarationValidator) parseGroups(value any) error {
 	return nil
 }
 
+// Root fields start at depth zero; four child levels allow five levels total.
+// Child paths are absolute chart values paths, not relative to their parent.
 func (v *declarationValidator) question(value any, depth int, parent, parentGroup, where string) (map[string]any, error) {
 	if depth > 4 {
 		return nil, fmt.Errorf("%s exceeds four child levels", where)
@@ -340,6 +344,8 @@ func (v *declarationValidator) question(value any, depth int, parent, parentGrou
 	return question, nil
 }
 
+// Reject bindings that would overwrite one another or require the same values
+// container to be both an object and an array.
 func (tree *pathTree) insert(path []any) error {
 	node := tree
 	for _, segment := range path {
@@ -369,6 +375,8 @@ func (tree *pathTree) insert(path []any) error {
 	return nil
 }
 
+// Resolve references after every field is known, allowing forward references.
+// Parent visibility and show_if dependencies share one graph for cycle detection.
 func (v *declarationValidator) checkConditions() error {
 	known := map[string]bool{}
 	for _, q := range v.questions {
