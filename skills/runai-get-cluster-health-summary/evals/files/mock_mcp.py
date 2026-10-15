@@ -606,9 +606,14 @@ def get_workload_status(args):
 SPEC_PLACEMENT = {"pinned-h200": {"nodeType": "gpu-h200"}}
 
 # Older scheduler events that no longer appear among the recent status events.
+# Each retry logs another shortage event, so at the default page size the
+# affinity mismatch lands on the second history page.
 HISTORY_EVENTS = {
     "pinned-h200": [{"createdAt": "2026-10-07T13:00:30Z", "type": "Warning", "reason": "Unschedulable",
-                     "message": "0/4 nodes are available: 4 node(s) didn't match Pod's node affinity/selector."}],
+                     "message": "0/4 nodes are available: 4 node(s) didn't match Pod's node affinity/selector."}]
+    + [{"createdAt": f"2026-10-07T13:{minute:02d}:00Z", "type": "Warning", "reason": "Unschedulable",
+        "message": "no nodes with enough resources were found: 4 node(s) didn't have enough resources: GPUs."}
+       for minute in range(1, 20)],
 }
 
 

@@ -188,7 +188,9 @@ If its spec pins placement (`nodeType`, `nodeAffinityRequired`, or
 `podAffinity`), look for proof that the pin matches no node: an event saying a
 node selector or affinity did not match. The newest events often name only the
 GPU shortage, so when the status events do not show it, call
-`get_workload_history` for that workload once and read its older events.
+`get_workload_history` for that workload with `limit=50` and read its older
+events. A retrying scheduler logs a shortage event on every retry, so if no
+mismatch event appears and the response has `next`, follow it, up to 3 pages.
 
 - A mismatch event found → class it `SPEC` and name the pin.
 - No mismatch event → keep `CAPACITY`, and name the pin as a possible cause the
@@ -316,8 +318,8 @@ Utilization: 0/8 GPUs allocated; GPU utilization 1h avg 0%.
   nodes, or an `Unschedulable` pool.
 - Show the raw numbers behind every verdict.
 - Report missing metrics as unavailable; never estimate them.
-- At most `pending_sample` status calls, plus one spec call and at most one
-  history call per workload whose request fits the free GPUs.
+- At most `pending_sample` status calls, plus one spec call and at most 3
+  history pages per workload whose request fits the free GPUs.
 
 ## Limitations
 
