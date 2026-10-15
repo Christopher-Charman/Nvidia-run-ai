@@ -312,49 +312,19 @@ describe("cluster.util", () => {
     });
   });
 
-  describe("isClusterUsable", () => {
-    const gpuStack = (fractioningAvailable: boolean, nvidiaAvailable = true) => ({
-      available: fractioningAvailable && nvidiaAvailable,
-      reason: "not ready: MpsdReady",
-      components: {
-        "gpu-fractioning": { available: fractioningAvailable, reason: "not ready: MpsdReady" },
-        nvidia: { available: nvidiaAvailable },
+  describe("isClusterReachable", () => {
+    it.each([ClusterState.Connected, ClusterState.MissingPrerequisites, ClusterState.ServiceIssues])(
+      "treats %s as reachable",
+      (state) => {
+        expect(clusterUtil.isClusterReachable(state)).toBe(true);
       },
-    });
-    const onlyFractioningMissing = { required: { "gpu-stack": gpuStack(false) } };
+    );
 
-    it("treats a Connected cluster as usable", () => {
-      expect(clusterUtil.isClusterUsable(ClusterState.Connected)).toBe(true);
-    });
-
-    it("treats a cluster missing only the GPU fractions prerequisite as usable", () => {
-      expect(clusterUtil.isClusterUsable(ClusterState.MissingPrerequisites, onlyFractioningMissing)).toBe(true);
-    });
-
-    it("does not treat a cluster missing another required prerequisite as usable", () => {
-      const dependencies = {
-        required: { "gpu-stack": gpuStack(false), prometheus: { available: false, reason: "not installed" } },
-      };
-      expect(clusterUtil.isClusterUsable(ClusterState.MissingPrerequisites, dependencies)).toBe(false);
-    });
-
-    it("does not treat a cluster whose NVIDIA stack also fails as usable", () => {
-      const dependencies = { required: { "gpu-stack": gpuStack(false, false) } };
-      expect(clusterUtil.isClusterUsable(ClusterState.MissingPrerequisites, dependencies)).toBe(false);
-    });
-
-    it("does not treat MissingPrerequisites without dependencies as usable", () => {
-      expect(clusterUtil.isClusterUsable(ClusterState.MissingPrerequisites)).toBe(false);
-    });
-
-    it.each([
-      ClusterState.ServiceIssues,
-      ClusterState.WaitingToConnect,
-      ClusterState.Disconnected,
-      ClusterState.Unknown,
-      undefined,
-    ])("does not treat %s as usable", (state) => {
-      expect(clusterUtil.isClusterUsable(state, onlyFractioningMissing)).toBe(false);
-    });
+    it.each([ClusterState.WaitingToConnect, ClusterState.Disconnected, ClusterState.Unknown, undefined])(
+      "treats %s as unreachable",
+      (state) => {
+        expect(clusterUtil.isClusterReachable(state)).toBe(false);
+      },
+    );
   });
 });

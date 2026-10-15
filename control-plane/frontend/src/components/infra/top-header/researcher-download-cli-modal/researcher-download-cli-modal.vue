@@ -239,7 +239,7 @@ export default defineComponent({
     clusterOptions(): IClusterSelectOption[] {
       return this.clusterStore.clusterList
         .filter((c) => {
-          return c.version && c.domain && clusterUtil.isClusterUsable(c.state, c.dependenciesStatus);
+          return c.version && c.domain && clusterUtil.isClusterReachable(c.state);
         })
         .map((c: ClustersMinimalData) => {
           return {

@@ -112,7 +112,7 @@ export default defineComponent({
       try {
         const cluster = await clusterService.getClusterByUuid(props.clusterUuid);
 
-        if (cluster && clusterUtil.isClusterUsable(cluster.status?.state, cluster.status?.dependencies)) {
+        if (cluster && clusterUtil.isClusterReachable(cluster.status?.state)) {
           emit("update:is-cluster-connected", true);
 
           shouldShowLoading.value = false;
