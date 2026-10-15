@@ -6422,6 +6422,31 @@
           }
         ]
       },
+      "GpuResourceRequest": {
+        "properties": {
+          "deserved": {
+            "type": "number",
+            "format": "double",
+            "description": "The GPU quota assigned to this org-unit. Required for node pools with quota enabled. For node pools with quota disabled, it must be 0 or omitted.",
+            "example": 1000,
+            "x-go-pointer": true
+          },
+          "limit": {
+            "type": "number",
+            "format": "double",
+            "description": "The maximum GPU device allocation the org-unit can get from this node pool, representing the maximum sum of assigned quota and over-quota GPUs. Set to null for unlimited.",
+            "nullable": true,
+            "example": 0
+          },
+          "overQuotaWeight": {
+            "type": "number",
+            "format": "double",
+            "description": "The weight assigned to determine the org-unit's share of over-quota resources within its rank. When multiple org-units share the same rank in a node pool, resources are distributed proportionally based on their weights. Valid values: 1–20. Requires over-quota weight to be enabled. When enabled, the default is 2. See [GPU over quota](/run-ai/self-hosted/documentation/platform-management/manage-ai-initiatives/organization/projects) for more details.\n",
+            "nullable": true,
+            "example": 2
+          }
+        }
+      },
       "ResourcesNullable": {
         "properties": {
           "nodePool": {
@@ -6447,10 +6472,10 @@
           "gpu": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/NonNullResource"
+                "$ref": "#/components/schemas/GpuResourceRequest"
               },
               {
-                "description": "Defines the GPU quota assignment, maximum GPU device allocation, and weight assigned that determines the fairshare of over-quota resources. Optional. Set it for node pools with quota enabled; if omitted, the GPU quota is set to 0. For node pools with quota disabled, deserved must be 0 and limit must be -1 or omitted."
+                "description": "Defines the GPU quota assignment, maximum GPU device allocation, and weight assigned that determines the fairshare of over-quota resources. Required for node pools with quota enabled. For node pools with quota disabled, deserved must be 0 or omitted and limit must be -1 or omitted."
               }
             ]
           },

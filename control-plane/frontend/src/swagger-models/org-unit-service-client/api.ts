@@ -2752,6 +2752,31 @@ export interface GetSyncProjects200Response {
 /**
  * 
  * @export
+ * @interface GpuResourceRequest
+ */
+export interface GpuResourceRequest {
+    /**
+     * The GPU quota assigned to this org-unit. Required for node pools with quota enabled. For node pools with quota disabled, it must be 0 or omitted.
+     * @type {number}
+     * @memberof GpuResourceRequest
+     */
+    'deserved'?: number;
+    /**
+     * The maximum GPU device allocation the org-unit can get from this node pool, representing the maximum sum of assigned quota and over-quota GPUs. Set to null for unlimited.
+     * @type {number}
+     * @memberof GpuResourceRequest
+     */
+    'limit'?: number | null;
+    /**
+     * The weight assigned to determine the org-unit\'s share of over-quota resources within its rank. When multiple org-units share the same rank in a node pool, resources are distributed proportionally based on their weights. Valid values: 1–20. Requires over-quota weight to be enabled. When enabled, the default is 2. See [GPU over quota](/run-ai/self-hosted/documentation/platform-management/manage-ai-initiatives/organization/projects) for more details. 
+     * @type {number}
+     * @memberof GpuResourceRequest
+     */
+    'overQuotaWeight'?: number | null;
+}
+/**
+ * 
+ * @export
  * @interface HttpResponse
  */
 export interface HttpResponse {
@@ -6747,7 +6772,7 @@ export interface ResourcesNullable {
  */
 export interface ResourcesNullableGpu {
     /**
-     * The GPU quota assigned to this org-unit.
+     * The GPU quota assigned to this org-unit. Required for node pools with quota enabled. For node pools with quota disabled, it must be 0 or omitted.
      * @type {number}
      * @memberof ResourcesNullableGpu
      */
