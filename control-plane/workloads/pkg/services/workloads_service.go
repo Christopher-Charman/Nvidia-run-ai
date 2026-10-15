@@ -416,7 +416,8 @@ func (s *WorkloadsService) InternalEnrichOrgUnitRanking(ctx context.Context, int
 }
 
 // GetWorkloads - List workloads. [Experimental]
-func (s *WorkloadsService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string, verbosity api.WorkloadVerbosity) (api.ImplResponse, error) {
+func (s *WorkloadsService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string,
+	filterBy []string, search string, verbosity api.WorkloadVerbosity) (api.ImplResponse, error) {
 	if verbosity != "" && !verbosity.IsValid() {
 		return ErrorToApiError(fmt.Errorf("invalid verbosity '%s', allowed values are %v", verbosity, api.AllowedWorkloadVerbosityEnumValues), http.StatusBadRequest), nil
 	}
