@@ -74,7 +74,7 @@ the shared `build/makefile/javascript.mk` and pins the Node image via
 |--------|-------------|
 | `make build` | `build-js` + `copy-openapi-spec` — build the app, then copy the public OpenAPI spec into the Docker build context |
 | `make build-js` | Runs `npm i --save-dev && npm run build` inside the `node:22-bullseye` container (this is what local-dev.sh invokes) |
-| `make copy-openapi-spec` | Copies `../infra/openapi/specs/runai-public.yaml` into `dist/openapi/` |
+| `make copy-openapi-spec` | Copies `../infra/openapi/build/_build/runaiApi.swagger.yaml` into `dist/openapi/` |
 | `make test` | `test-js` — Vitest unit tests in the Node container |
 | `make lint` | `lint-js` + `js-checks` — ESLint (auto-fix) plus the TS/ESLint threshold checks |
 | `make js-checks` | TS type check + ESLint a11y/security thresholds in a single container |

@@ -14,7 +14,7 @@ The Makefile overrides `NODEJS_VERSION=22-bullseye`.
 |--------|-------------|
 | `build` | `build-js` + `copy-openapi-spec` — build the app then copy the public OpenAPI spec into the build context |
 | `build-js` | Runs `npm i --save-dev && npm run build` inside `node:22-bullseye` (this is what local-dev.sh runs). `npm run build` = `vue-tsc --noEmit && vite build` → `dist/` |
-| `copy-openapi-spec` | Copies `../infra/openapi/specs/runai-public.yaml` → `dist/openapi/runai-api.yaml` |
+| `copy-openapi-spec` | Copies `../infra/openapi/build/_build/runaiApi.swagger.yaml` → `dist/openapi/runai-api.yaml` |
 | `test` | `test-js` — Vitest unit tests in the Node container |
 | `lint` | `lint-js` + `js-checks` — ESLint auto-fix plus TS/ESLint threshold checks |
 | `js-checks` | TS type check + ESLint a11y/security thresholds in one container |
