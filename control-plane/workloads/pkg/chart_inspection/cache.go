@@ -28,6 +28,9 @@ type cacheEntry struct {
 	data    []byte
 	expires time.Time
 }
+
+// inspectionFlight tracks one acquisition and its result. Eligible NGC requests
+// share it; each waiter can leave independently without cancelling the others.
 type inspectionFlight struct {
 	done    chan struct{}
 	cancel  context.CancelFunc
@@ -161,6 +164,8 @@ func (i *Inspector) releaseWaiter(key string, flight *inspectionFlight) {
 	}
 }
 
+// run completes an acquisition for its waiters and releases its capacity slot.
+// Only successful metadata still needed by a live waiter is eligible for caching.
 func (i *Inspector) run(ctx context.Context, key string, flight *inspectionFlight, selection Selection, credential string, fetch FetchFunc, cacheable bool) {
 	defer flight.cancel()
 	data, err := fetch(ctx, selection, credential)

@@ -4,40 +4,43 @@
 package chart_inspection
 
 import (
-	"reflect"
-	"testing"
+	"fmt"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestValuesPathParsesBrackets(t *testing.T) {
-	got, err := parsePath(`workers[0]["display.name"].enabled`)
-	if err != nil || !reflect.DeepEqual(got, []any{"workers", 0, "display.name", "enabled"}) {
-		t.Fatalf("path = %#v, %v", got, err)
-	}
-}
+var _ = Describe("Values paths and visibility conditions", func() {
+	It("parses array indices and quoted keys containing dots", func() {
+		got, err := parsePath(`workers[0]["display.name"].enabled`)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(got).To(Equal([]any{"workers", 0, "display.name", "enabled"}))
+	})
 
-func TestValuesPathRejectsUnsafeOrAmbiguousKeys(t *testing.T) {
+	invalidPaths := []TableEntry{}
 	for _, value := range []string{"", "a.0", "a[-1]", "a[10001]", "a.constructor", `a["prototype"]`, `a["__proto__"]`, "a..b", "a[b]"} {
-		t.Run(value, func(t *testing.T) {
-			if _, err := parsePath(value); err == nil {
-				t.Fatal("invalid path accepted")
-			}
-		})
+		invalidPaths = append(invalidPaths, Entry(fmt.Sprintf("rejects %q", value), value))
 	}
-}
+	DescribeTable("unsafe or ambiguous paths", func(value string) {
+		_, err := parsePath(value)
+		Expect(err).To(HaveOccurred())
+	}, invalidPaths)
 
-func TestConditionRestrictedGrammar(t *testing.T) {
-	for _, text := range []string{"true", "false", "enabled=true", "name=longhorn", "name=", "name!=", `(enabled=true || count=2) && name!='hidden'`, `a["display.name"]=hello`} {
-		t.Run(text, func(t *testing.T) {
-			if _, err := parseCondition(text); err != nil {
-				t.Fatal(err)
-			}
-		})
+	validConditions := []TableEntry{}
+	for _, value := range []string{"true", "false", "enabled=true", "name=longhorn", "name=", "name!=", `(enabled=true || count=2) && name!='hidden'`, `a["display.name"]=hello`} {
+		validConditions = append(validConditions, Entry(fmt.Sprintf("accepts %q", value), value))
 	}
-	for _, text := range []string{"", "x", "!x=true", "x == true", "x=true &&", "(x=true", "constructor=true", "a.0=true", "x=true; run()", "x=true & y=false"} {
-		t.Run("reject "+text, func(t *testing.T) {
-			if _, err := parseCondition(text); err == nil {
-				t.Fatal("invalid condition accepted")
-			}
-		})
+	DescribeTable("supported visibility conditions", func(value string) {
+		_, err := parseCondition(value)
+		Expect(err).NotTo(HaveOccurred())
+	}, validConditions)
+
+	invalidConditions := []TableEntry{}
+	for _, value := range []string{"", "x", "!x=true", "x == true", "x=true &&", "(x=true", "constructor=true", "a.0=true", "x=true; run()", "x=true & y=false"} {
+		invalidConditions = append(invalidConditions, Entry(fmt.Sprintf("rejects %q", value), value))
 	}
-}
+	DescribeTable("unsupported visibility conditions", func(value string) {
+		_, err := parseCondition(value)
+		Expect(err).To(HaveOccurred())
+	}, invalidConditions)
+})

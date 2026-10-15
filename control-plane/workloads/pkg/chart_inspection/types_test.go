@@ -5,19 +5,27 @@ package chart_inspection
 
 import (
 	"encoding/json"
-	"testing"
+	"fmt"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestWarningJSONAlwaysIncludesPath(t *testing.T) {
-	encoded, err := json.Marshal(Warning{Code: "EXAMPLE", Message: "Example"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var got map[string]any
-	if err := json.Unmarshal(encoded, &got); err != nil {
-		t.Fatal(err)
-	}
-	if _, exists := got["path"]; !exists {
-		t.Fatalf("warning path omitted: %s", encoded)
-	}
-}
+var _ = Describe("Inspection response diagnostics", func() {
+	It("Warning JSON Always Includes Path", func() {
+		encoded, err := json.Marshal(Warning{Code: "EXAMPLE", Message: "Example"})
+		Expect(err).NotTo(HaveOccurred())
+
+		var got map[string]any
+		{
+			err := json.Unmarshal(encoded, &got)
+			Expect(err).NotTo(HaveOccurred())
+		}
+		{
+			_, exists := got["path"]
+			Expect(exists).To(BeTrue(), func() string {
+				return fmt.Sprintf("warning path omitted: %s", encoded)
+			})
+		}
+	})
+})
