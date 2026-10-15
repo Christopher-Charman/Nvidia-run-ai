@@ -38,8 +38,9 @@ NVCARPS-certified; the certified Tier 3 card comes from the NVCARPS CI run.
     utilization, so every pool returns cluster-wide series.
   - `unallocatedGpu` is always absent.
   - Inventory counts allocated GPUs as whole devices.
-- **Live cluster.** No full live round. Revision 5 had a six-run live spot
-  check; see Revision 5 Spot Check and Limitations.
+- **Live cluster.** No full live round. Revision 5 was spot-checked live with
+  one prompt, 17 runs in five wording rounds; the reported results are the 4
+  runs of the final text. See Revision 5 Spot Check and Limitations.
 
 ## Tier 1 — Static Validation
 
@@ -137,8 +138,9 @@ and 0% in every sample after. Two rules combined to cause it:
 
 **Revision 5:**
 - Fewer than 20 samples report a `peak`, not a p95.
-- Bursty needs at least 2 high samples and at least 10% of them. It never
-  applies below 50% coverage or to a holder flagged `idle since`.
+- Bursty needs at least 2 high samples, and high samples must be at least 10%
+  of n, the samples with allocation and utilization data. It never applies
+  below 50% coverage or to a holder flagged `idle since`.
 - A new `idle since <time>` flag marks holders whose latest 3 or more samples
   are all below 5% after a busier start. Answers lead with it, and sparse
   series lead with it rather than with the average.
@@ -187,8 +189,18 @@ gaps (≈290 instead of ≈73 for the sampled time). It did so in 3 of 4 runs,
 and in 1 of 2 after the "never fill the gaps" rule.
 
 **Live**, on the test cluster with "Which projects hold GPUs but aren't
-actually using them?" through a read-only MCP server (final text, 3 Sonnet 5
-runs and 1 Opus 4.8 run):
+actually using them?" through a read-only MCP server. The prompt ran 17 times;
+no run belongs to more than one round:
+
+| Round | Text | Runs |
+| --- | --- | --- |
+| 1 | First revision 5 text | 2 Sonnet 5, 1 Opus 4.8 |
+| 2 | Coverage condition moved first in the bursty rule | 3 Sonnet 5 |
+| 3 | Bursty rule reworded after review | 3 Sonnet 5 (2 called sparse projects bursty) |
+| 4 | Exclusive flags | 3 Sonnet 5, 1 Opus 4.8 |
+| 5 | Final text | 3 Sonnet 5, 1 Opus 4.8 |
+
+Final text (round 5):
 
 - Every run flagged all three projects `idle since` 10-11 or 10-12.
 - No run called a project bursty or fractional.
@@ -264,7 +276,7 @@ runs and 1 Opus 4.8 run):
 
 ## Revision History
 
-| Model | Rev 1 | Rev 2 | Rev 3 | Rev 4 (final) |
+| Model | Rev 1 | Rev 2 | Rev 3 | Rev 4 (last full run) |
 | --- | ---: | ---: | ---: | ---: |
 | Codex GPT-5.6 Sol | 25/30 | 28/30 | 27/30 | 30/33 |
 | Claude Sonnet 5 | 19/30 | 25/30 | 21/30 | 24/33 |
@@ -338,8 +350,8 @@ datasets and mocks, so compare each revision with its own baseline.
 ## Limitations
 
 - Not NVCARPS-certified; one attempt per case on the mock; LLM judge.
-- **No full live round.** Revision 5 was checked live with one prompt (6
-  runs) on the test cluster.
+- **No full live round.** Revision 5 was checked live with one prompt (17
+  runs in five rounds, 4 on the final text) on the test cluster.
   - The cluster's simulated GPUs reported 100% for every allocated GPU before
     its restarts and 0% after, so its utilization does not reflect real work.
   - A full round needs workloads seeded with the simulator's utilization

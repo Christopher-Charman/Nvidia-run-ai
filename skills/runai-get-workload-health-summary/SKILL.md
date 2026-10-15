@@ -77,7 +77,7 @@ scope.
 | --- | --- | --- |
 | `cluster_id` | Always | Selects the cluster. |
 | `filter` | Overview | Compose from phase, kind, project, department, node pool, node, age, idle threshold, over-quota, priority, image, or owner. |
-| `sort` | Optional | Use a documented `list_workloads` `sortBy` field with `sortOrder=asc|desc`. Sort restart count, error rate, or measured idle duration only after fetching their evidence because those are not server fields. |
+| `sort` | Optional | Use a documented `list_workloads` `sortBy` field with `sortOrder=asc` or `sortOrder=desc`. Sort restart count, error rate, or measured idle duration only after fetching their evidence because those are not server fields. |
 | `limit` | Optional | Default `50`; cap output and offer to widen. |
 | `metrics_window` | Optional | Default `1h`; use for metrics and idle/error enrichment. |
 | `correlation_budget` | Failed correlation | Maximum `50` failed workloads. If the complete scoped set is larger, report correlation as incomplete and suppress node-issue labels. |

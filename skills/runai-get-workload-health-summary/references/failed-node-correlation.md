@@ -40,6 +40,8 @@ includes `phase=Failed` or the user asks whether failures share a node.
 7. Always identify affected projects and departments. A failure list is useful
    only when every row can be routed to an owner. Keep a department column even
    when every row shares the department used as the filter; do not rely on the
-   surrounding sentence as a substitute for row-level attribution.
+   surrounding sentence as a substitute for row-level attribution. When neither
+   `list_workloads` nor `get_workload_status` returns a department for a row,
+   write `unavailable` in its cell; never infer it from the project name.
 8. Inference workloads are SLA-bearing. Mark them as escalation candidates even
    when they are not part of the node-correlation cluster.
