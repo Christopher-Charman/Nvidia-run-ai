@@ -120,7 +120,8 @@ func TestSAMLIdp_Create_UnparseableMetadataFile(t *testing.T) {
 	idpRequest := makeSamlIdpFileRequest(alias, samlEntityId, "metadata.xml", "this is not saml metadata", GetDefaultIDPMappers())
 
 	_, httpResp, err := OpenapiClient.IdpsAPI.CreateIdp(ctx).IdpCreationRequest(idpRequest).Execute()
-	requireClientError(t, err, httpResp)
+	require.Error(t, err)
+	require.Equal(t, http.StatusBadRequest, httpResp.StatusCode)
 }
 
 func TestSAMLIdp_Create_UnresolvableMetadataUrl(t *testing.T) {
@@ -163,7 +164,8 @@ func TestSAMLIdp_Update_UnparseableMetadataFile(t *testing.T) {
 	invalidRequest := makeSamlIdpFileRequest(alias, entityId, "metadata.xml", "this is not saml metadata", mappers)
 
 	httpResp, err := OpenapiClient.IdpsAPI.UpdateIdp(ctx, alias).IdpCreationRequest(invalidRequest).Execute()
-	requireClientError(t, err, httpResp)
+	require.Error(t, err)
+	require.Equal(t, http.StatusBadRequest, httpResp.StatusCode)
 }
 
 func TestSAMLIdp_Update_Invalid(t *testing.T) {
@@ -290,8 +292,6 @@ func makeSamlIdpFileRequest(alias, entityId, fileName, xmlContent string, mapper
 	}
 }
 
-// makeSamlIdpRawFileRequest sends metadataXmlFile verbatim, unlike
-// makeSamlIdpFileRequest, so the base64 decoding itself can be exercised.
 func makeSamlIdpRawFileRequest(alias, entityId, fileName, metadataXmlFile string, mappers *openapi.Mappers) openapi.IdpCreationRequest {
 	metadataType := openapi.SAMLCREATIONDATAMETADATAXMLTYPEENUM_FILE
 	return openapi.IdpCreationRequest{
@@ -305,15 +305,6 @@ func makeSamlIdpRawFileRequest(alias, entityId, fileName, metadataXmlFile string
 		}),
 		Mappers: mappers,
 	}
-}
-
-// requireClientError asserts the class of failure rather than an exact code,
-// for the cases where Keycloak decides the status. What must hold is that bad
-// metadata from the caller is never reported as a server fault.
-func requireClientError(t *testing.T, err error, httpResp *http.Response) {
-	require.Error(t, err)
-	require.GreaterOrEqual(t, httpResp.StatusCode, http.StatusBadRequest)
-	require.Less(t, httpResp.StatusCode, http.StatusInternalServerError)
 }
 
 func newRandomSamlIdpTestDataWithRealm() (string, string, string, *openapi.Mappers) {
