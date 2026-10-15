@@ -17,19 +17,17 @@ func (c PodResourceClaimArray) Value() (driver.Value, error) {
 	return string(valueString), err
 }
 
-// Scan tolerates a SQL NULL input (unlike TolerationArray's naive version)
-// because resource_claims is added to the live pods table and all pre-upgrade
-// rows read as NULL until something writes them. Mirrors NodeAffinity's
-// defensive handling, added here for the same reason.
+// Scan resets the receiver for both SQL NULL (pre-upgrade rows, since
+// resource_claims was added to the live pods table) and JSON null (what Value
+// writes for a nil array), so a reused destination never keeps stale claims.
+// Decoding into c rather than &c is what lets JSON null clear *c.
 func (c *PodResourceClaimArray) Scan(value interface{}) error {
-	if value == nil {
-		return nil
-	}
 	valueBytes, ok := value.([]byte)
 	if !ok || len(valueBytes) == 0 {
+		*c = nil
 		return nil
 	}
-	if err := json.Unmarshal(valueBytes, &c); err != nil {
+	if err := json.Unmarshal(valueBytes, c); err != nil {
 		return err
 	}
 	return nil

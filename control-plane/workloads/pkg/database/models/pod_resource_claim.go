@@ -8,6 +8,7 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 )
 
 type PodResourceClaim struct {
@@ -22,9 +23,20 @@ func (c PodResourceClaim) Value() (driver.Value, error) {
 	return string(valueString), err
 }
 
+// Scan resets the receiver before decoding because json.Unmarshal merges into
+// an existing struct, leaving fields absent from the payload (the omitempty
+// pointers) holding stale values from a reused destination.
 func (c *PodResourceClaim) Scan(value interface{}) error {
-	if err := json.Unmarshal(value.([]byte), &c); err != nil {
-		return err
+	*c = PodResourceClaim{}
+	if value == nil {
+		return nil
+	}
+	valueBytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("scan PodResourceClaim: unsupported type %T", value)
+	}
+	if err := json.Unmarshal(valueBytes, c); err != nil {
+		return fmt.Errorf("scan PodResourceClaim: %w", err)
 	}
 	return nil
 }
