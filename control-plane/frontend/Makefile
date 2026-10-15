@@ -15,7 +15,7 @@ DOCKER_NODEJS_TYPECHECK_THRESHOLD_COMMAND=${DOCKER_NODEJS_COMMAND} /bin/sh -c 'n
 DOCKER_NODEJS_LINT_THRESHOLDS_COMMAND=${DOCKER_NODEJS_COMMAND} /bin/sh -c 'npm i --save-dev && npm run lint:thresholds' || ${FAILURE_MESSAGE_HANDLER}
 DOCKER_NODEJS_JS_CHECKS_COMMAND=${DOCKER_NODEJS_COMMAND} /bin/sh -c 'npm i --save-dev && npm run typecheck:threshold && npm run lint:thresholds' || ${FAILURE_MESSAGE_HANDLER}
 
-OPENAPI_SPEC_SRC=../infra/openapi/build/_build/runaiApi.swagger.yaml
+OPENAPI_SPEC_SRC=../infra/openapi/specs/runai-public.yaml
 OPENAPI_SPEC_DST=./dist/openapi/runai-api.yaml
 
 ##@ Basic Commands
