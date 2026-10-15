@@ -28,7 +28,20 @@ export const clusterUtil = {
   isLwsInstalledInCluster,
   findClusterById,
   formatClusterNameWithVersion,
+  isClusterReachable,
 };
+
+// Degraded states still have a live cluster behind them; gating on Connected alone hides it from
+// features that don't depend on what is degraded, e.g. CLI install when only GPU fractions are missing.
+const REACHABLE_CLUSTER_STATES: ReadonlySet<ClusterState> = new Set<ClusterState>([
+  ClusterState.Connected,
+  ClusterState.MissingPrerequisites,
+  ClusterState.ServiceIssues,
+]);
+
+function isClusterReachable(state?: ClusterState): boolean {
+  return !!state && REACHABLE_CLUSTER_STATES.has(state);
+}
 
 function isKnativeInstalledInCluster(cluster: ClustersMinimalData): boolean {
   return cluster.dependenciesStatus?.optional?.knative?.available || false;
