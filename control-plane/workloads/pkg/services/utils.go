@@ -1249,23 +1249,23 @@ func tolerationApiToModel(toleration api.PodToleration) models.Toleration {
 }
 
 // podResourceClaimsApiToModel is a straight pass-through from the API wire
-// shape into the jsonb-backed model slice. Returns nil for a nil/empty input
-// so the resulting pod row has NULL in resource_claims (rather than an empty
-// jsonb array), matching the "report nothing" case.
+// shape into the jsonb-backed model slice. Nil pointer → nil model slice;
+// empty-but-non-nil → empty model slice, matching the Toleration pattern
+// (no empty→nil collapse).
 func podResourceClaimsApiToModel(claims *[]api.PodResourceClaim) models.PodResourceClaimArray {
-	if claims == nil || len(*claims) == 0 {
+	if claims == nil {
 		return nil
 	}
-	result := make(models.PodResourceClaimArray, 0, len(*claims))
-	for _, c := range *claims {
-		result = append(result, models.PodResourceClaim{
-			Name:                       c.Name,
-			ResourceClaimTemplateName:  c.ResourceClaimTemplateName,
-			ResourceClaimName:          c.ResourceClaimName,
-			AllocatedResourceClaimName: c.AllocatedResourceClaimName,
-		})
+	return convutils.ConvertSliceTypes(*claims, podResourceClaimApiToModel)
+}
+
+func podResourceClaimApiToModel(claim api.PodResourceClaim) models.PodResourceClaim {
+	return models.PodResourceClaim{
+		Name:                       claim.Name,
+		ResourceClaimTemplateName:  claim.ResourceClaimTemplateName,
+		ResourceClaimName:          claim.ResourceClaimName,
+		AllocatedResourceClaimName: claim.AllocatedResourceClaimName,
 	}
-	return result
 }
 
 func PodModelToApi(pod models.Pod, projectId string) api.Pod {
@@ -1341,22 +1341,24 @@ func podElementsModelToApi(elements []*models.PodElement) *[]api.PodElement {
 }
 
 // podResourceClaimsModelToApi mirrors podResourceClaimsApiToModel for the
-// read side. nil in → nil out, so a pod with no DRA usage is omitted from
-// the response rather than serialized as an empty array.
+// read side. nil model → nil API (field omitted); the API's *[]-shape is a
+// nullable schema, so a pod with no DRA usage omits the field entirely rather
+// than serializing as an empty array.
 func podResourceClaimsModelToApi(claims models.PodResourceClaimArray) *[]api.PodResourceClaim {
-	if len(claims) == 0 {
+	if claims == nil {
 		return nil
 	}
-	result := make([]api.PodResourceClaim, 0, len(claims))
-	for _, c := range claims {
-		result = append(result, api.PodResourceClaim{
-			Name:                       c.Name,
-			ResourceClaimTemplateName:  c.ResourceClaimTemplateName,
-			ResourceClaimName:          c.ResourceClaimName,
-			AllocatedResourceClaimName: c.AllocatedResourceClaimName,
-		})
-	}
+	result := convutils.ConvertSliceTypes(claims, podResourceClaimModelToApi)
 	return &result
+}
+
+func podResourceClaimModelToApi(claim models.PodResourceClaim) api.PodResourceClaim {
+	return api.PodResourceClaim{
+		Name:                       claim.Name,
+		ResourceClaimTemplateName:  claim.ResourceClaimTemplateName,
+		ResourceClaimName:          claim.ResourceClaimName,
+		AllocatedResourceClaimName: claim.AllocatedResourceClaimName,
+	}
 }
 
 func ContainerModelToApi(container *models.Container) api.Container {
