@@ -70,20 +70,20 @@ type WorkloadsAPI interface {
 	DeleteWorkloadExecute(r ApiDeleteWorkloadRequest) (*http.Response, error)
 
 	/*
-			GetInternalWorkloadsTelemetry Get the internal workloads telemetry.
+		GetInternalWorkloadsTelemetry Get the internal workloads telemetry.
 
-			Internal endpoint to retrieve workload data by telemetry type. Optionally filter by specific workload phases.
+		Internal endpoint to retrieve workload data by telemetry type. Optionally filter by specific workload phases.
 
-		Telemetry Types:
-		- WORKLOADS_COUNT: Count of workloads
-		- GPU_ALLOCATION: GPU allocation metrics
-		- PENDING_TIME_DISTRIBUTION: Distribution of workloads by current pending time (time since entering Pending phase).
-		  For this type, results are automatically grouped by 4 time buckets and any additional groupBy parameters.
-		- IDLE_ALLOCATED_GPUS: Sum of idle allocated GPU devices across workloads
+	Telemetry Types:
+	- WORKLOADS_COUNT: Count of workloads
+	- GPU_ALLOCATION: GPU allocation metrics
+	- PENDING_TIME_DISTRIBUTION: Distribution of workloads by current pending time (time since entering Pending phase).
+	  For this type, results are automatically grouped by 4 time buckets and any additional groupBy parameters.
+	- IDLE_ALLOCATED_GPUS: Sum of idle allocated GPU devices across workloads
 
 
-			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return ApiGetInternalWorkloadsTelemetryRequest
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@return ApiGetInternalWorkloadsTelemetryRequest
 	*/
 	GetInternalWorkloadsTelemetry(ctx context.Context) ApiGetInternalWorkloadsTelemetryRequest
 
@@ -213,14 +213,14 @@ type WorkloadsAPI interface {
 	GetWorkloadsExecute(r ApiGetWorkloadsRequest) (*GetWorkloads200Response, *http.Response, error)
 
 	/*
-			GetWorkloadsSlim List workloads, slim.
+		GetWorkloadsSlim List workloads, slim.
 
-			Retrieve a list of active workloads with only their identity fields, sorted by id.
-		Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately.
+		Retrieve a list of active workloads with only their identity fields, sorted by id.
+	Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately.
 
 
-			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return ApiGetWorkloadsSlimRequest
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@return ApiGetWorkloadsSlimRequest
 	*/
 	GetWorkloadsSlim(ctx context.Context) ApiGetWorkloadsSlimRequest
 
@@ -229,20 +229,20 @@ type WorkloadsAPI interface {
 	GetWorkloadsSlimExecute(r ApiGetWorkloadsSlimRequest) (*GetWorkloadsSlimResponse, *http.Response, error)
 
 	/*
-			GetWorkloadsTelemetry Get the workloads telemetry.
+		GetWorkloadsTelemetry Get the workloads telemetry.
 
-			Retrieves workload data by telemetry type. Optionally filter by specific workload phases.
+		Retrieves workload data by telemetry type. Optionally filter by specific workload phases.
 
-		Telemetry Types:
-		- WORKLOADS_COUNT: Count of workloads
-		- GPU_ALLOCATION: GPU allocation metrics
-		- PENDING_TIME_DISTRIBUTION: Distribution of workloads by current pending time (time since entering Pending phase).
-		  For this type, results are automatically grouped by 4 time buckets and any additional groupBy parameters.
-		- IDLE_ALLOCATED_GPUS: Sum of idle allocated GPU devices across workloads
+	Telemetry Types:
+	- WORKLOADS_COUNT: Count of workloads
+	- GPU_ALLOCATION: GPU allocation metrics
+	- PENDING_TIME_DISTRIBUTION: Distribution of workloads by current pending time (time since entering Pending phase).
+	  For this type, results are automatically grouped by 4 time buckets and any additional groupBy parameters.
+	- IDLE_ALLOCATED_GPUS: Sum of idle allocated GPU devices across workloads
 
 
-			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return ApiGetWorkloadsTelemetryRequest
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@return ApiGetWorkloadsTelemetryRequest
 	*/
 	GetWorkloadsTelemetry(ctx context.Context) ApiGetWorkloadsTelemetryRequest
 
@@ -263,22 +263,22 @@ type WorkloadsAPI interface {
 	InternalCreateWorkloadExecute(r ApiInternalCreateWorkloadRequest) (*Workload, *http.Response, error)
 
 	/*
-			InternalEnrichOrgUnitRanking Enrich org unit ranking with workload counts (Internal API).
+		InternalEnrichOrgUnitRanking Enrich org unit ranking with workload counts (Internal API).
 
-			Internal API for enriching org unit ranking items with workload counts.
+		Internal API for enriching org unit ranking items with workload counts.
 
-		Accepts an array of org unit IDs along with global context (cluster, type, nodepool)
-		and returns workload counts for each ID.
+	Accepts an array of org unit IDs along with global context (cluster, type, nodepool)
+	and returns workload counts for each ID.
 
-		Phase-specific node pool filtering:
-		- RUNNING workloads: filters by currentNodepools (where workload is running)
-		- PENDING workloads: filters by requestedNodepools (only single-nodepool requests)
+	Phase-specific node pool filtering:
+	- RUNNING workloads: filters by currentNodepools (where workload is running)
+	- PENDING workloads: filters by requestedNodepools (only single-nodepool requests)
 
-		Note: All IDs in a single request must be of the same orgUnitType (all projects OR all departments).
+	Note: All IDs in a single request must be of the same orgUnitType (all projects OR all departments).
 
 
-			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return ApiInternalEnrichOrgUnitRankingRequest
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@return ApiInternalEnrichOrgUnitRankingRequest
 	*/
 	InternalEnrichOrgUnitRanking(ctx context.Context) ApiInternalEnrichOrgUnitRankingRequest
 
@@ -440,10 +440,8 @@ func (a *WorkloadsAPIService) CountWorkloadElements(ctx context.Context, workloa
 }
 
 // Execute executes the request
-//
-//	@return CountWorkloadElements200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return CountWorkloadElements200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) CountWorkloadElementsExecute(r ApiCountWorkloadElementsRequest) (*CountWorkloadElements200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -637,10 +635,8 @@ func (a *WorkloadsAPIService) CountWorkloads(ctx context.Context) ApiCountWorklo
 }
 
 // Execute executes the request
-//
-//	@return CountWorkloads200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return CountWorkloads200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) CountWorkloadsExecute(r ApiCountWorkloadsRequest) (*CountWorkloads200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -796,7 +792,7 @@ func (a *WorkloadsAPIService) DeleteWorkload(ctx context.Context, workloadId str
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) DeleteWorkloadExecute(r ApiDeleteWorkloadRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodDelete
@@ -997,10 +993,8 @@ func (a *WorkloadsAPIService) GetInternalWorkloadsTelemetry(ctx context.Context)
 }
 
 // Execute executes the request
-//
-//	@return TelemetryResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return TelemetryResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetInternalWorkloadsTelemetryExecute(r ApiGetInternalWorkloadsTelemetryRequest) (*TelemetryResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1171,10 +1165,8 @@ func (a *WorkloadsAPIService) GetWorkload(ctx context.Context, workloadId string
 }
 
 // Execute executes the request
-//
-//	@return WorkloadDetailed
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return WorkloadDetailed
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadExecute(r ApiGetWorkloadRequest) (*WorkloadDetailed, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1330,10 +1322,8 @@ func (a *WorkloadsAPIService) GetWorkloadAncestors(ctx context.Context, workload
 }
 
 // Execute executes the request
-//
-//	@return Ancestors
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return Ancestors
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadAncestorsExecute(r ApiGetWorkloadAncestorsRequest) (*Ancestors, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1472,10 +1462,8 @@ func (a *WorkloadsAPIService) GetWorkloadElement(ctx context.Context, workloadId
 }
 
 // Execute executes the request
-//
-//	@return WorkloadElementResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return WorkloadElementResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadElementExecute(r ApiGetWorkloadElementRequest) (*WorkloadElementResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1676,10 +1664,8 @@ func (a *WorkloadsAPIService) GetWorkloadElementMetrics(ctx context.Context, wor
 }
 
 // Execute executes the request
-//
-//	@return MetricsCompositeResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return MetricsCompositeResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadElementMetricsExecute(r ApiGetWorkloadElementMetricsRequest) (*MetricsCompositeResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1887,10 +1873,8 @@ func (a *WorkloadsAPIService) GetWorkloadElements(ctx context.Context, workloadI
 }
 
 // Execute executes the request
-//
-//	@return WorkloadElementsResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return WorkloadElementsResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadElementsExecute(r ApiGetWorkloadElementsRequest) (*WorkloadElementsResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2068,10 +2052,8 @@ func (a *WorkloadsAPIService) GetWorkloadEndpoints(ctx context.Context, workload
 }
 
 // Execute executes the request
-//
-//	@return GetWorkloadEndpoints200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return GetWorkloadEndpoints200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadEndpointsExecute(r ApiGetWorkloadEndpointsRequest) (*GetWorkloadEndpoints200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2257,10 +2239,8 @@ func (a *WorkloadsAPIService) GetWorkloadMetrics(ctx context.Context, workloadId
 }
 
 // Execute executes the request
-//
-//	@return MetricsCompositeResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return MetricsCompositeResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadMetricsExecute(r ApiGetWorkloadMetricsRequest) (*MetricsCompositeResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2499,10 +2479,8 @@ func (a *WorkloadsAPIService) GetWorkloads(ctx context.Context) ApiGetWorkloadsR
 }
 
 // Execute executes the request
-//
-//	@return GetWorkloads200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return GetWorkloads200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadsExecute(r ApiGetWorkloadsRequest) (*GetWorkloads200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2701,10 +2679,8 @@ func (a *WorkloadsAPIService) GetWorkloadsSlim(ctx context.Context) ApiGetWorklo
 }
 
 // Execute executes the request
-//
-//	@return GetWorkloadsSlimResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return GetWorkloadsSlimResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadsSlimExecute(r ApiGetWorkloadsSlimRequest) (*GetWorkloadsSlimResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -2943,10 +2919,8 @@ func (a *WorkloadsAPIService) GetWorkloadsTelemetry(ctx context.Context) ApiGetW
 }
 
 // Execute executes the request
-//
-//	@return TelemetryResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return TelemetryResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) GetWorkloadsTelemetryExecute(r ApiGetWorkloadsTelemetryRequest) (*TelemetryResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -3141,10 +3115,8 @@ func (a *WorkloadsAPIService) InternalCreateWorkload(ctx context.Context) ApiInt
 }
 
 // Execute executes the request
-//
-//	@return Workload
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return Workload
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) InternalCreateWorkloadExecute(r ApiInternalCreateWorkloadRequest) (*Workload, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -3307,10 +3279,8 @@ func (a *WorkloadsAPIService) InternalEnrichOrgUnitRanking(ctx context.Context) 
 }
 
 // Execute executes the request
-//
-//	@return InternalEnrichOrgUnitRankingResponse
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return InternalEnrichOrgUnitRankingResponse
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) InternalEnrichOrgUnitRankingExecute(r ApiInternalEnrichOrgUnitRankingRequest) (*InternalEnrichOrgUnitRankingResponse, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -3455,7 +3425,7 @@ func (a *WorkloadsAPIService) InternalPatchWorkloadPhase(ctx context.Context, wo
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) InternalPatchWorkloadPhaseExecute(r ApiInternalPatchWorkloadPhaseRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPatch
@@ -3628,7 +3598,7 @@ func (a *WorkloadsAPIService) InternalSyncWorkloads(ctx context.Context) ApiInte
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) InternalSyncWorkloadsExecute(r ApiInternalSyncWorkloadsRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPost
@@ -3785,7 +3755,7 @@ func (a *WorkloadsAPIService) PatchWorkloadPhase(ctx context.Context, workloadId
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) PatchWorkloadPhaseExecute(r ApiPatchWorkloadPhaseRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPatch
@@ -3953,10 +3923,8 @@ func (a *WorkloadsAPIService) PostSyncPodgroupsBackwards(ctx context.Context, cl
 }
 
 // Execute executes the request
-//
-//	@return string
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return string
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) PostSyncPodgroupsBackwardsExecute(r ApiPostSyncPodgroupsBackwardsRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -4112,10 +4080,8 @@ func (a *WorkloadsAPIService) PostSyncPodsBackwards(ctx context.Context, cluster
 }
 
 // Execute executes the request
-//
-//	@return string
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return string
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) PostSyncPodsBackwardsExecute(r ApiPostSyncPodsBackwardsRequest) (string, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -4271,7 +4237,7 @@ func (a *WorkloadsAPIService) SyncJobsBackwards(ctx context.Context, clusterId s
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) SyncJobsBackwardsExecute(r ApiSyncJobsBackwardsRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPost
@@ -4423,10 +4389,8 @@ func (a *WorkloadsAPIService) SyncPodgroupsBackwards(ctx context.Context, cluste
 }
 
 // Execute executes the request
-//
-//	@return SyncPodsBackwards200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return SyncPodsBackwards200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) SyncPodgroupsBackwardsExecute(r ApiSyncPodgroupsBackwardsRequest) (*SyncPodsBackwards200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -4585,10 +4549,8 @@ func (a *WorkloadsAPIService) SyncPodsBackwards(ctx context.Context, clusterId s
 }
 
 // Execute executes the request
-//
-//	@return SyncPodsBackwards200Response
-//
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+//  @return SyncPodsBackwards200Response
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) SyncPodsBackwardsExecute(r ApiSyncPodsBackwardsRequest) (*SyncPodsBackwards200Response, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
@@ -4749,7 +4711,7 @@ func (a *WorkloadsAPIService) SyncWorkloads(ctx context.Context) ApiSyncWorkload
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) SyncWorkloadsExecute(r ApiSyncWorkloadsRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPost
@@ -4906,7 +4868,7 @@ func (a *WorkloadsAPIService) UpsertWorkload(ctx context.Context, workloadId str
 }
 
 // Execute executes the request
-// /////// RUNAI (remove isResponseFile filter on pointer)//////////
+///////// RUNAI (remove isResponseFile filter on pointer)//////////
 func (a *WorkloadsAPIService) UpsertWorkloadExecute(r ApiUpsertWorkloadRequest) (*http.Response, error) {
 	var (
 		localVarHTTPMethod = http.MethodPut
