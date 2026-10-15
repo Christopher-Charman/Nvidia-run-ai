@@ -386,7 +386,7 @@ var _ = Describe("sync workloads", func() {
 
 			}
 
-			listReq, err := workloadsService.GetWorkloads(ctx, false, 0, 50, "", "", []string{}, "", "")
+			listReq, err := workloadsService.GetWorkloads(ctx, false, 0, 50, "", "", []string{}, "")
 			Expect(err).To(BeNil())
 			Expect(listReq.Code).To(Equal(http.StatusOK))
 			Expect(len(listReq.Body.(api.GetWorkloads200Response).Workloads)).To(Equal(3))
@@ -417,7 +417,7 @@ var _ = Describe("sync workloads", func() {
 			Expect(listErr).To(BeNil())
 
 			// checking the workload was deleted from the CP
-			listReqPostClusterError, err := workloadsService.GetWorkloads(ctx, false, 0, 50, "", "", []string{}, "", "")
+			listReqPostClusterError, err := workloadsService.GetWorkloads(ctx, false, 0, 50, "", "", []string{}, "")
 
 			Expect(err).To(BeNil())
 			Expect(listReqPostClusterError.Code).To(Equal(http.StatusOK))

@@ -11,31 +11,25 @@ import (
 	"github.com/dsx-ai-factory/run-ai/runai-application-packages/queryapi"
 )
 
-// WorkloadSlim is a workload as returned by GET /api/v1/workloads?verbosity=slim.
+// WorkloadSlim is a workload as returned by GET /api/v1/workloads-slim.
 // It is read from the workloads table rather than the workloads view, so it has no pod aggregates
 // and is never stale.
 type WorkloadSlim struct {
 	ID                   uuid.UUID `gorm:"type:uuid;primaryKey"`
 	Name                 string
 	Type                 string
-	ProjectID            string
 	ProjectName          string
 	ClusterID            uuid.UUID
-	ExternalWorkloadName string
+	DistributedFramework string
 }
 
-// FilterFieldsToColumn returns the filterable fields that are stored on the workloads table.
+// FilterFieldsToColumn returns the fields GET /api/v1/workloads-slim can be filtered by.
 func (WorkloadSlim) FilterFieldsToColumn() queryapi.APIFieldsMapping {
-	viewColumns := WorkloadView{}.FilterFieldsToColumn()
-	tableColumns := queryapi.APIFieldsMapping{}
-	for field := range (Workload{}).filterableColumns() {
-		tableColumns[field] = viewColumns[field]
+	return queryapi.APIFieldsMapping{
+		"type":                 queryapi.NewFieldMapping("type"),
+		"name":                 queryapi.NewFieldMapping("name"),
+		"clusterId":            queryapi.NewFieldMapping("cluster_id"),
+		"projectName":          queryapi.NewFieldMapping("project_name"),
+		"distributedFramework": queryapi.NewFieldMapping("distributed_framework"),
 	}
-	return tableColumns
-}
-
-func (ws WorkloadSlim) SortFieldsToColumn() queryapi.APIFieldsMapping {
-	mapping := ws.FilterFieldsToColumn()
-	mapping["phase"] = queryapi.NewFieldMapping("phase %s, phase_updated_at %s")
-	return mapping
 }

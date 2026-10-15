@@ -108,7 +108,7 @@ func (s *WorkloadsAPIService) InternalEnrichOrgUnitRanking(ctx context.Context, 
 }
 
 // GetWorkloads - List workloads.
-func (s *WorkloadsAPIService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string, verbosity WorkloadVerbosity) (ImplResponse, error) {
+func (s *WorkloadsAPIService) GetWorkloads(ctx context.Context, deleted bool, offset int32, limit int32, sortOrder string, sortBy string, filterBy []string, search string) (ImplResponse, error) {
 	// TODO - update GetWorkloads with the required logic for this service method.
 	// Add api_workloads_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
 
@@ -157,6 +157,32 @@ func (s *WorkloadsAPIService) SyncWorkloads(ctx context.Context, filterBy []stri
 	// return Response(503, Error{}), nil
 
 	return Response(http.StatusNotImplemented, nil), errors.New("SyncWorkloads method not implemented")
+}
+
+// GetWorkloadsSlim - List workloads, slim.
+func (s *WorkloadsAPIService) GetWorkloadsSlim(ctx context.Context, offset int32, limit int32, sortOrder string, filterBy []string) (ImplResponse, error) {
+	// TODO - update GetWorkloadsSlim with the required logic for this service method.
+	// Add api_workloads_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+
+	// TODO: Uncomment the next line to return response Response(200, GetWorkloadsSlimResponse{}) or use other options such as http.Ok ...
+	// return Response(200, GetWorkloadsSlimResponse{}), nil
+
+	// TODO: Uncomment the next line to return response Response(400, Error{}) or use other options such as http.Ok ...
+	// return Response(400, Error{}), nil
+
+	// TODO: Uncomment the next line to return response Response(401, Error{}) or use other options such as http.Ok ...
+	// return Response(401, Error{}), nil
+
+	// TODO: Uncomment the next line to return response Response(403, Error{}) or use other options such as http.Ok ...
+	// return Response(403, Error{}), nil
+
+	// TODO: Uncomment the next line to return response Response(500, Error{}) or use other options such as http.Ok ...
+	// return Response(500, Error{}), nil
+
+	// TODO: Uncomment the next line to return response Response(503, Error{}) or use other options such as http.Ok ...
+	// return Response(503, Error{}), nil
+
+	return Response(http.StatusNotImplemented, nil), errors.New("GetWorkloadsSlim method not implemented")
 }
 
 // GetWorkloadAncestors - Get the workload ancestors.

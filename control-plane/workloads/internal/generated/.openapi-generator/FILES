@@ -254,6 +254,7 @@ pkg/api/model_get_workload_priorities_200_response.go
 pkg/api/model_get_workload_submission_v2_enabled.go
 pkg/api/model_get_workloads_200_response.go
 pkg/api/model_get_workloads_setting.go
+pkg/api/model_get_workloads_slim_response.go
 pkg/api/model_git_authentication_method.go
 pkg/api/model_git_common.go
 pkg/api/model_git_instance.go
@@ -588,6 +589,7 @@ pkg/api/model_workload_patch_fields.go
 pkg/api/model_workload_pods_sync_request.go
 pkg/api/model_workload_priority.go
 pkg/api/model_workload_request_resources.go
+pkg/api/model_workload_slim.go
 pkg/api/model_workload_sort_filter_fields.go
 pkg/api/model_workload_submission_v2_enabled_setting.go
 pkg/api/model_workload_sync_fields.go
@@ -609,7 +611,6 @@ pkg/api/model_workload_type_status.go
 pkg/api/model_workload_type_status_fields.go
 pkg/api/model_workload_type_update_fields.go
 pkg/api/model_workload_types_for_sync.go
-pkg/api/model_workload_verbosity.go
 pkg/api/model_workloads_extended_resource.go
 pkg/api/model_workloads_settings_get_response.go
 pkg/api/model_workloads_settings_key_enum.go
