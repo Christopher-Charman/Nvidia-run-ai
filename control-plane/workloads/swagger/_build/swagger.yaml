@@ -420,6 +420,8 @@ paths:
         Retrieve a list of active workloads with only their identity fields, sorted by id.
         Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately.
       operationId: get_workloads_slim
+      x-test-coverage:
+        - control-plane/workloads/pkg/services/workloads_api_test.go
       x-service: workloads
       x-authorize:
         resource-type: workloads

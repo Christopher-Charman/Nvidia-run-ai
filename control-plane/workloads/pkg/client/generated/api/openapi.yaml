@@ -929,6 +929,8 @@ paths:
       summary: "List workloads, slim."
       tags:
       - Workloads
+      x-test-coverage:
+      - control-plane/workloads/pkg/services/workloads_api_test.go
       x-service: workloads
       x-authorize:
         resource-type: workloads
@@ -13612,7 +13614,6 @@ components:
         maxItems: 10
         type: array
       style: form
-      x-internal: true
     WorkloadId:
       description: The  Universally Unique Identifier (UUID) of the workload.
       explode: false
