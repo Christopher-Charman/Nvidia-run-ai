@@ -47,6 +47,12 @@ products:
         path: archived-versions.yml
 
 redirects:
+  - source: /self-hosted/reference/rest-api/endpoints/ai-applications/ai-applications
+    destination: /run-ai/self-hosted/reference/rest-api/endpoints/ai-applications/list-applications
+    permanent: true
+  - source: /self-hosted/reference/rest-api/endpoints/ai-applications/ai-applications/:slug*
+    destination: /run-ai/self-hosted/reference/rest-api/endpoints/ai-applications/:slug*
+    permanent: true
   - source: /self-hosted/platform-management/runai-scheduler/resource-optimization/fractions
     destination: /self-hosted/platform-management/runai-scheduler/resource-optimization/gpu-fractions/memory-fractions
     permanent: true
@@ -78,5 +84,11 @@ redirects:
     destination: https://run-ai-docs.nvidia.com/multi-tenant/2.24
     permanent: false
   - source: /index.html
-    destination: /self-hosted/documentation/home
+    destination: /run-ai/self-hosted/documentation/home
     permanent: true
+  - source: /saas
+    destination: https://run-ai-docs.nvidia.com/saas
+    permanent: false
+  - source: /saas/:slug*
+    destination: https://run-ai-docs.nvidia.com/saas
+    permanent: false

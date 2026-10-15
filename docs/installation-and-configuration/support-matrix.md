@@ -15,7 +15,7 @@ The support matrix outlines the verified compatibility standards for NVIDIA Run:
 
 <sup>1</sup> GPU Operator 26.7.1 is required to use GPU fractions, alongside CUDA driver r615 or later. GPU Operator 26.7.1 does not default to CUDA driver r615, so the driver version must be set explicitly. See [GPU Memory Fractions](../platform-management/runai-scheduler/resource-optimization/memory-fractions.md#prerequisites).
 
-<sup>2</sup> Applies to GPU Operator 25.10 - 26.3, where the DRA driver is installed separately. For GPU Operator 26.7, the DRA driver is installed by the GPU Operator.
+<sup>2</sup> Applies to a separately installed DRA driver, used when the GPU Operator runs in `ClusterPolicy` mode (the default). With GPU Operator 26.7 in `GPUCluster` mode, the GPU Operator deploys the DRA driver itself. See [NVIDIA Dynamic Resource Allocation (DRA) Driver](installation/guided-installation/prerequisites-and-features.md#nvidia-dynamic-resource-allocation-dra-driver).
 
 ### Features
 
@@ -92,6 +92,7 @@ The following Kubernetes distributions are **partner-compatible**. They are test
 | ---------------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------- |
 | Crusoe Managed Kubernetes (CMK)                                                                | 2.22              | 1.33                    |
 | [Mirantis k0rdent](https://catalog.k0rdent.io/v1.7.0/apps/runai-cp/)                           | 2.22<br>2.23      | 1.32-1.33<br>1.33-1.34  |
+| [OpenNebula Kubernetes Service (OneKS)](https://docs.opennebula.io/7.4/platform_services/oneks/catalog/nvidia_runai_platform/) | 2.25              | 1.34                    |
 | [Rafay platform](https://docs.rafay.co/aiml/app_marketplace/helm_app/apps/runai/requirements/) | 2.23<br>2.24      | 1.33-1.34<br>1.33-1.35  |
 | [Spectro Cloud](https://docs.palette-ai.com/docs/reference/featured-profile-bundles/runai/)    | 2.24              | 1.34                    |
 | [vCluster](https://www.vcluster.com/docs/platform/integrations/certified-stacks/runai)         | 2.24              | 1.34                    |
