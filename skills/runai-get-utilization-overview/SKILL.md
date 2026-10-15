@@ -97,8 +97,6 @@ Two kinds of request get a fixed treatment instead:
   metrics, workload lists, and workload metrics.
 - **The cluster must collect GPU metrics.** When a utilization series is
   missing, the holder is `UNKNOWN`; the skill never estimates it.
-- **MCP only.** If the MCP is unavailable, say so and stop; no `kubectl`,
-  `nvidia-smi`, or DCGM fallback and no estimates.
 
 ## Parameters
 
@@ -156,9 +154,10 @@ Apply in order. A stop means no further MCP calls.
 
 ### Stage 2 — Candidates
 
+Follow `nextOffset` while `hasMore` on every list call in this stage.
+
 - **Projects:** call `list_project_resources` with `clusterId` (and
-  `nodePoolName` when the user named a pool); follow `nextOffset` while
-  `hasMore`. Sum each cell's allocated GPUs (`allocated` under `gpu`) per
+  `nodePoolName` when the user named a pool). Sum each cell's allocated GPUs (`allocated` under `gpu`) per
   project across pools; cells with `allocated` null or 0 (quota only) do not
   count. Before any metric call, write the candidate list sorted by allocated
   GPUs, largest first, as `name (GPUs)`. M is the length of that list,
@@ -193,8 +192,9 @@ pool series from any source come back identical for every pool, say pool
 scoping is unavailable instead of reporting them.
 
 For a cluster-wide waste total, call `get_cluster_metrics` once with
-`clusterId`, `metricTypes=["allocatedGpu","totalGpu","gpuUtilization"]`,
-`window`, and `numberOfSamples=S`, without `nodePoolName`. Its
+`clusterId`, `metricTypes=["allocatedGpu","totalGpu","gpuUtilization"]`, the
+same `window` (or `start` and `end`) and `numberOfSamples=S` as the holder
+calls, without `nodePoolName`. Its
 `gpuUtilization` averages over every GPU in the cluster, allocated or not.
 Convert each sample to held-GPU utilization:
 `u = gpuUtilization × totalGpu / allocatedGpu`. If that exceeds 100, GPUs are
@@ -256,7 +256,9 @@ Flags that qualify a class, shown in the class column:
   `well_utilized_threshold`; one high sample is a spike, not bursts.
 - **idle since `<time>`:** the latest 3 or more samples are all below
   `idle_threshold` and an earlier sample is not. Give the time of the first of
-  those latest samples; the average hides it.
+  those latest samples; the average hides it. When samples are missing between
+  them, say every observed sample since then was idle, not that it ran idle
+  without a break.
 - **memory-loaded:** `IDLE` with average GPU memory utilization ≥ 50%. A
   model is loaded but not computing, typical of idle notebooks and inference
   endpoints without traffic.
@@ -373,10 +375,10 @@ Next: runai-audit-assigned-quota to reclaim quota from team-blue; stopping idle 
 | Error | Cause | Solution |
 | --- | --- | --- |
 | `not_found` or `ambiguous_org_unit` | Wrong name, or a name in several clusters. | Pass `orgId` and `clusterId`; ask if still ambiguous. |
-| `GPU_MEMORY_UTILIZATION metric is not supported for cluster version …` | Cluster older than 2.21. | Retry without `gpuMemoryUtilization`. |
-| Every pool shows the same numbers | Server did not scope the pool. | Use org-unit series per department and pool. |
-| `seriesTruncated: true` | Samples × metrics too large. | Retry once with half the samples. |
 | MCP not connected or auth fails | Server or credentials problem. | Say so and stop. No `kubectl`, no estimates. |
+
+Metric-version errors, truncated series, and identical pool series are
+handled in Stage 3.
 
 ## References
 
