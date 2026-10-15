@@ -458,6 +458,8 @@ paths:
         Workloads are read from the workloads table directly instead of the workloads view, so newly created workloads are returned immediately.
       operationId: get_workloads_slim
       x-service: workloads
+      x-test-coverage:
+        - control-plane/workloads/pkg/services/workloads_api_test.go
       x-authorize:
         resource-type: workloads
         action: read

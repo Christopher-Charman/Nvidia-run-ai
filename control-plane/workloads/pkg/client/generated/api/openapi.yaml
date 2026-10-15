@@ -1039,6 +1039,8 @@ paths:
       tags:
       - Workloads
       x-service: workloads
+      x-test-coverage:
+      - control-plane/workloads/pkg/services/workloads_api_test.go
       x-authorize:
         resource-type: workloads
         action: read
